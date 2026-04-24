@@ -1,0 +1,100 @@
+import React from 'react';
+import { NavLink, Outlet } from 'react-router-dom';
+import { LayoutDashboard, Users, PhoneCall, Settings, LogOut, Menu, X } from 'lucide-react';
+import { cn } from '../utils/cn';
+import { Button } from '../components/Button';
+
+export const Layout: React.FC = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+
+  const navItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+    { icon: Users, label: 'Users', path: '/users' },
+    { icon: PhoneCall, label: 'Calls', path: '/calls' },
+    { icon: Settings, label: 'Settings', path: '/settings' },
+  ];
+
+  return (
+    <div className="flex h-screen bg-background overflow-hidden">
+      {/* Mobile Sidebar Toggle */}
+      <div className="lg:hidden fixed top-4 right-4 z-50">
+        <Button
+          variant="secondary"
+          size="icon"
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        >
+          {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        </Button>
+      </div>
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-40 w-64 bg-secondary border-r border-border transform transition-transform duration-300 lg:translate-x-0 lg:static lg:inset-0',
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
+        <div className="flex flex-col h-full p-6">
+          <div className="flex items-center space-x-3 mb-10 px-2">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <PhoneCall className="text-white" size={18} />
+            </div>
+            <span className="text-xl font-bold tracking-tight">VoicePay</span>
+          </div>
+
+          <nav className="flex-1 space-y-2">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) =>
+                  cn(
+                    'flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group',
+                    isActive
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
+                  )
+                }
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                <item.icon size={20} className="transition-transform group-hover:scale-110" />
+                <span className="font-medium">{item.label}</span>
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="pt-6 border-t border-border">
+            <Button variant="ghost" className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/5">
+              <LogOut size={20} className="mr-3" />
+              Logout
+            </Button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Header */}
+        <header className="h-20 flex items-center justify-between px-8 bg-background/50 backdrop-blur-md border-b border-border z-30">
+          <h1 className="text-lg font-semibold lg:block hidden">System Overview</h1>
+          <div className="flex items-center space-x-4 ml-auto">
+            <div className="flex flex-col items-end mr-2">
+              <span className="text-sm font-medium">Admin User</span>
+              <span className="text-xs text-text-secondary">System Manager</span>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-border flex items-center justify-center border border-primary/20">
+              <Users size={18} className="text-primary" />
+            </div>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto p-8 animate-fade-in custom-scrollbar">
+          <div className="max-w-7xl mx-auto">
+            <Outlet />
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};

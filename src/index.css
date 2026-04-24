@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-text-primary font-sans antialiased;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-card/80 backdrop-blur-md border border-border/50;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-background;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-text-secondary/30;
+}
+
+/* Recharts Customization */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: #27272a;
+}
+
+.recharts-default-tooltip {
+  @apply !bg-card !border-border !rounded-xl !shadow-2xl !p-3;
+}
+
+.recharts-tooltip-label {
+  @apply !text-text-primary !font-medium !mb-1;
+}
