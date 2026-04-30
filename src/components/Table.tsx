@@ -37,8 +37,8 @@ export const TableRow: React.FC<{ children: React.ReactNode; className?: string 
   </tr>
 );
 
-export const TableCell: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
-  <td className={cn('py-4 px-4 text-sm text-text-primary', className)}>
+export const TableCell: React.FC<{ children: React.ReactNode; className?: string; colSpan?: number }> = ({ children, className, colSpan }) => (
+  <td colSpan={colSpan} className={cn('py-4 px-4 text-sm text-text-primary', className)}>
     {children}
   </td>
 );
