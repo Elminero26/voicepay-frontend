@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { User, Call, PaymentStats, CreateUserDTO } from '../types';
 
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -41,11 +41,21 @@ const MOCK_STATS: PaymentStats = {
   ],
 };
 
+// Helper: transforma User del backend → User del frontend
+const mapUser = (u: any): User => ({
+  id: String(u.id),
+  name: u.name ?? '',
+  email: u.email ?? '',
+  role: (u.role === 'admin' ? 'admin' : 'user') as 'admin' | 'user',
+  status: u.active === false ? 'inactive' : 'active',
+  createdAt: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '-',
+});
+
 export const userService = {
   getUsers: async (): Promise<User[]> => {
     try {
       const response = await api.get('/users');
-      return response.data;
+      return response.data.map(mapUser);
     } catch (error) {
       console.warn('Backend not available, using mock data for users');
       return MOCK_USERS;
@@ -54,26 +64,69 @@ export const userService = {
   createUser: async (userData: CreateUserDTO): Promise<User> => {
     try {
       const response = await api.post('/users', userData);
-      return response.data;
+      return mapUser(response.data);
     } catch (error) {
       console.warn('Backend not available, simulating user creation');
       const newUser: User = {
         id: Math.random().toString(36).substr(2, 9),
         ...userData,
-        role: userData.role as any,
+        role: userData.role as 'admin' | 'user',
         status: 'active',
-        createdAt: new Date().toISOString().split('T')[0],
+        createdAt: new Date().toLocaleDateString(),
       };
       return newUser;
     }
   },
+  updateUser: async (id: string, userData: CreateUserDTO): Promise<User> => {
+    try {
+      const response = await api.put(`/users/${id}`, userData);
+      return mapUser(response.data);
+    } catch (error) {
+      console.warn('Backend not available, simulating user update');
+      return { id, ...userData, role: userData.role as 'admin' | 'user', status: 'active', createdAt: new Date().toLocaleDateString() };
+    }
+  },
+  deleteUser: async (id: string): Promise<void> => {
+    try {
+      await api.delete(`/users/${id}`);
+    } catch (error) {
+      console.warn('Backend not available, simulating user deletion');
+    }
+  },
 };
+
+// Helper: transforma Payment del backend → Call del frontend
+const mapPaymentToCall = (p: any): Call => ({
+  id: String(p.id),
+  customerName: p.description ? p.description : `User #${p.userId}`,
+  phoneNumber: '-',
+  status: p.status === 'COMPLETED' ? 'completed'
+         : p.status === 'FAILED'    ? 'failed'
+         : 'in-progress',
+  // BigDecimal llega como string o number desde Spring — parseFloat lo normaliza
+  amount: parseFloat(p.amount) || 0,
+  duration: '-',
+  timestamp: p.createdAt ? new Date(p.createdAt).toLocaleTimeString() : '-',
+});
 
 export const paymentService = {
   getStats: async (): Promise<PaymentStats> => {
     try {
       const response = await api.get('/payments/stats');
-      return response.data;
+      const data = response.data;
+      const completed = Number(data.completed) || 0;
+      const failed    = Number(data.failed)    || 0;
+      const pending   = Number(data.pending)   || 0;
+      const total = completed + failed + pending;
+      return {
+        totalCalls: total,
+        successfulPayments: completed,
+        failedPayments: failed,
+        // BigDecimal → parseFloat para evitar que llegue como string
+        totalRevenue: parseFloat(data.totalAmount) || 0,
+        conversionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
+        chartData: MOCK_STATS.chartData, // Mock hasta que el backend provea datos por día
+      };
     } catch (error) {
       console.warn('Backend not available, using mock data for stats');
       return MOCK_STATS;
@@ -81,13 +134,42 @@ export const paymentService = {
   },
   getRecentCalls: async (): Promise<Call[]> => {
     try {
-      const response = await api.get('/calls/recent');
-      return response.data;
+      const response = await api.get('/payments/recent');
+      return response.data.map(mapPaymentToCall);
     } catch (error) {
-      console.warn('Backend not available, using mock data for calls');
+      console.warn('Backend not available, using mock data for payments');
       return MOCK_CALLS;
     }
   },
+};
+
+// Helper: transforma LiveCall del backend → Call del frontend
+// Estados del backend: CONNECTED | WAITING_CONFIRMATION | COMPLETED | FAILED
+const mapLiveCall = (c: any): Call => ({
+  id: String(c.id),
+  customerName: c.userName || 'Unknown Caller',
+  phoneNumber: c.phoneNumber || '-',
+  status: c.status === 'COMPLETED' ? 'completed'
+        : c.status === 'FAILED'    ? 'failed'
+        : 'in-progress', // CONNECTED y WAITING_CONFIRMATION → in-progress
+  amount: 0,
+  // Calcular duración en vivo desde timestamp usando getDurationSeconds
+  duration: c.timestamp
+    ? `${Math.floor((Date.now() - new Date(c.timestamp).getTime()) / 60000)}m ${Math.floor(((Date.now() - new Date(c.timestamp).getTime()) % 60000) / 1000)}s`
+    : '-',
+  timestamp: c.timestamp ? new Date(c.timestamp).toLocaleTimeString() : '-',
+});
+
+export const ivrService = {
+  getLiveCalls: async (): Promise<Call[]> => {
+    try {
+      const response = await api.get('/ivr/calls/live');
+      return response.data.map(mapLiveCall);
+    } catch (error) {
+      console.warn('Backend not available, using mock data for live calls');
+      return MOCK_CALLS;
+    }
+  }
 };
 
 export default api;

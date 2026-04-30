@@ -15,7 +15,11 @@ export const Layout: React.FC = () => {
   ];
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden bg-grid relative">
+      {/* Decorative Glow */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
+
       {/* Mobile Sidebar Toggle */}
       <div className="lg:hidden fixed top-4 right-4 z-50">
         <Button
@@ -30,7 +34,7 @@ export const Layout: React.FC = () => {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 w-64 bg-secondary border-r border-border transform transition-transform duration-300 lg:translate-x-0 lg:static lg:inset-0',
+          'fixed inset-y-0 left-0 z-40 w-64 glass border-r border-border transform transition-transform duration-300 lg:translate-x-0 lg:static lg:inset-0',
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >

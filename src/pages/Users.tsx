@@ -14,7 +14,7 @@ export const UsersPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formData, setFormData] = useState<CreateUserDTO>({
     name: '',
     email: '',
@@ -36,16 +36,44 @@ export const UsersPage: React.FC = () => {
     }
   };
 
-  const handleCreateUser = async (e: React.FormEvent) => {
+  const handleOpenCreate = () => {
+    setEditingUser(null);
+    setFormData({ name: '', email: '', role: 'user' });
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (user: User) => {
+    setEditingUser(user);
+    setFormData({ name: user.name, email: user.email, role: user.role });
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteUser = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      try {
+        await userService.deleteUser(id);
+        setUsers(users.filter(u => u.id !== id));
+      } catch (error) {
+        console.error('Error deleting user:', error);
+      }
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const newUser = await userService.createUser(formData);
-      setUsers([newUser, ...users]);
+      if (editingUser) {
+        const updatedUser = await userService.updateUser(editingUser.id, formData);
+        setUsers(users.map(u => u.id === editingUser.id ? updatedUser : u));
+      } else {
+        const newUser = await userService.createUser(formData);
+        setUsers([newUser, ...users]);
+      }
       setIsModalOpen(false);
       setFormData({ name: '', email: '', role: 'user' });
     } catch (error) {
-      console.error('Error creating user:', error);
+      console.error('Error saving user:', error);
     } finally {
       setIsSubmitting(false);
     }
@@ -60,7 +88,7 @@ export const UsersPage: React.FC = () => {
           <h2 className="text-2xl font-bold">User Management</h2>
           <p className="text-text-secondary">Manage system administrators and operators.</p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)}>
+        <Button onClick={handleOpenCreate}>
           <Plus size={18} className="mr-2" />
           Create User
         </Button>
@@ -95,7 +123,7 @@ export const UsersPage: React.FC = () => {
                 <TableCell>
                   <div className="flex items-center space-x-3">
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary font-bold">
-                      {user.name.charAt(0)}
+                      {(user.name || 'U').charAt(0)}
                     </div>
                     <div>
                       <p className="font-medium">{user.name}</p>
@@ -117,16 +145,16 @@ export const UsersPage: React.FC = () => {
                       'w-2 h-2 rounded-full mr-2',
                       user.status === 'active' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-text-secondary'
                     )} />
-                    <span className="capitalize">{user.status}</span>
+                    <span className="capitalize">{user.status || 'unknown'}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-text-secondary">{user.createdAt}</TableCell>
+                <TableCell className="text-text-secondary">{user.createdAt || 'N/A'}</TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEdit(user)}>
                       <Edit2 size={14} />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400 hover:text-red-500">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400 hover:text-red-500" onClick={() => handleDeleteUser(user.id)}>
                       <Trash2 size={14} />
                     </Button>
                   </div>
@@ -141,9 +169,9 @@ export const UsersPage: React.FC = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Create New User"
+        title={editingUser ? 'Edit User' : 'Create New User'}
       >
-        <form onSubmit={handleCreateUser} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <label className="text-sm font-medium text-text-secondary">Full Name</label>
             <input
@@ -194,7 +222,7 @@ export const UsersPage: React.FC = () => {
               className="flex-1"
               isLoading={isSubmitting}
             >
-              Create Account
+              {editingUser ? 'Save Changes' : 'Create Account'}
             </Button>
           </div>
         </form>
