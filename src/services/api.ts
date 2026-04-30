@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { User, Call, PaymentStats, CreateUserDTO } from '../types';
+import type { User, Call, PaymentStats, CreateUserDTO, Notification } from '../types';
 
 const API_BASE_URL = '/api';
 
@@ -8,6 +8,15 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+});
+
+// Axios Request Interceptor para inyectar JWT token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('jwt_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 // Mock Data
@@ -169,6 +178,48 @@ export const ivrService = {
       console.warn('Backend not available, using mock data for live calls');
       return MOCK_CALLS;
     }
+  }
+};
+
+// --- Notifications Service ---
+
+const MOCK_NOTIFICATIONS: Notification[] = [
+  { id: 'n1', recipient: '+1 234 567 890', type: 'SMS', status: 'SENT', message: 'Payment of $50.00 successful.', timestamp: '2024-03-24T10:45:00Z' },
+  { id: 'n2', recipient: 'alice@example.com', type: 'EMAIL', status: 'SENT', message: 'Your receipt for recent call.', timestamp: '2024-03-24T10:46:00Z' },
+  { id: 'n3', recipient: '+1 987 654 321', type: 'SMS', status: 'FAILED', message: 'Payment failed. Please update your card.', timestamp: '2024-03-24T11:15:00Z' },
+  { id: 'n4', recipient: 'user_device_123', type: 'PUSH', status: 'PENDING', message: 'New promotion available.', timestamp: '2024-03-24T12:00:00Z' },
+];
+
+export const notificationService = {
+  getNotifications: async (): Promise<Notification[]> => {
+    try {
+      // Endpoint doesn't exist yet, but we map it so it's ready.
+      const response = await api.get('/notifications');
+      // If Vite dev server returns an HTML fallback (string) instead of JSON, throw an error
+      if (!Array.isArray(response.data)) {
+        throw new Error('Invalid response format (not an array)');
+      }
+      return response.data;
+    } catch (error) {
+      console.warn('Backend not available, using mock data for notifications');
+      return MOCK_NOTIFICATIONS;
+    }
+  }
+};
+
+// --- Auth Service ---
+export const authService = {
+  login: async (email: string, password: string):Promise<{token: string}> => {
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      return response.data;
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      throw new Error(error.response?.data?.message || 'Invalid credentials or backend unavailable');
+    }
+  },
+  logout: () => {
+    localStorage.removeItem('jwt_token');
   }
 };
 

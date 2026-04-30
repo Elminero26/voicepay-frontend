@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import type { Call } from '../types';
+import { ivrService } from '../services/api';
 
 /**
  * Hook que gestiona la conexión WebSocket STOMP con el ivr-service.
@@ -14,6 +15,13 @@ export const useLiveCalls = () => {
   const clientRef = useRef<Client | null>(null);
 
   useEffect(() => {
+    // 1. Obtener el estado inicial vía HTTP
+    ivrService.getLiveCalls().then(initialCalls => {
+      setLiveCalls(initialCalls);
+    }).catch(err => console.error("Error fetching initial live calls:", err));
+
+    // 2. Conectar WebSocket para recibir actualizaciones
+
     const client = new Client({
       // Usamos SockJS como transporte (con fallback automático)
       webSocketFactory: () => new SockJS('http://localhost:8082/ws'),

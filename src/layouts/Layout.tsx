@@ -1,16 +1,24 @@
 import React from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Users, PhoneCall, Settings, LogOut, Menu, X } from 'lucide-react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Users, PhoneCall, Settings, LogOut, Menu, X, Bell } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { Button } from '../components/Button';
+import { authService } from '../services/api';
 
 export const Layout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    authService.logout();
+    navigate('/login');
+  };
 
   const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
     { icon: Users, label: 'Users', path: '/users' },
     { icon: PhoneCall, label: 'Calls', path: '/calls' },
+    { icon: Bell, label: 'Notifications', path: '/notifications' },
     { icon: Settings, label: 'Settings', path: '/settings' },
   ];
 
@@ -68,7 +76,7 @@ export const Layout: React.FC = () => {
           </nav>
 
           <div className="pt-6 border-t border-border">
-            <Button variant="ghost" className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/5">
+            <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/5">
               <LogOut size={20} className="mr-3" />
               Logout
             </Button>

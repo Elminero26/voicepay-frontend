@@ -36,4 +36,13 @@ export interface CreateUserDTO {
   role: string;
 }
 
+export interface Notification {
+  id: string;
+  recipient: string;
+  type: 'SMS' | 'EMAIL' | 'PUSH';
+  status: 'SENT' | 'FAILED' | 'PENDING';
+  message: string;
+  timestamp: string;
+}
+
 export {};
