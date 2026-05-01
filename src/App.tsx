@@ -5,10 +5,12 @@ import { UsersPage } from './pages/Users';
 import { Notifications } from './pages/Notifications';
 import { Login } from './pages/Login';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { ToastProvider } from './components/Toast';
 
 function App() {
   return (
-    <Router>
+    <ToastProvider>
+      <Router>
       <Routes>
         <Route path="/login" element={<Login />} />
         
@@ -23,6 +25,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
+    </ToastProvider>
   );
 }
 

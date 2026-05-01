@@ -3,6 +3,7 @@ import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import type { Call } from '../types';
 import { ivrService } from '../services/api';
+import { useToast } from '../components/Toast';
 
 /**
  * Hook que gestiona la conexión WebSocket STOMP con el ivr-service.
@@ -13,6 +14,7 @@ export const useLiveCalls = () => {
   const [liveCalls, setLiveCalls] = useState<Call[]>([]);
   const [connected, setConnected] = useState(false);
   const clientRef = useRef<Client | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     // 1. Obtener el estado inicial vía HTTP
@@ -50,7 +52,20 @@ export const useLiveCalls = () => {
                 ? new Date(c.timestamp).toLocaleTimeString()
                 : '-',
             }));
-            setLiveCalls(mapped);
+            setLiveCalls((prevCalls) => {
+              mapped.forEach(newCall => {
+                const oldCall = prevCalls.find(c => c.id === newCall.id);
+                // Si el estado cambió de in-progress a completed o failed
+                if (oldCall && oldCall.status !== newCall.status) {
+                  if (newCall.status === 'completed') {
+                    toast('Payment Completed', `Payment from ${newCall.customerName} was successful.`, 'success');
+                  } else if (newCall.status === 'failed') {
+                    toast('Payment Failed', `Payment from ${newCall.customerName} failed.`, 'error');
+                  }
+                }
+              });
+              return mapped;
+            });
           } catch (err) {
             console.error('[WebSocket] Error parsing live calls:', err);
           }

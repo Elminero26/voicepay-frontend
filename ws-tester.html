@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>VoicePay WebSocket Tester</title>
+    <!-- Cargamos las librerías STOMP y SockJS desde CDN para no depender de node_modules -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.min.js"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; padding: 2rem; background: #1e1e2f; color: white; text-align: center; }
+        .btn { padding: 15px 30px; font-size: 16px; margin: 10px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; }
+        .btn-success { background-color: #22c55e; color: white; }
+        .btn-error { background-color: #ef4444; color: white; }
+        #log { margin-top: 20px; color: #a1a1aa; font-family: monospace; white-space: pre-wrap; text-align: left; background: #0f0f17; padding: 1rem; border-radius: 8px;}
+    </style>
+</head>
+<body>
+
+    <h2>Simulador de Llamadas (VoicePay STOMP)</h2>
+    <p>Abre tu Dashboard en otra pestaña/pantalla, y haz clic en uno de los botones para disparar los eventos.</p>
+
+    <button class="btn btn-success" onclick="runTest('COMPLETED')">Simular Llamada (Éxito)</button>
+    <button class="btn btn-error" onclick="runTest('FAILED')">Simular Llamada (Fallo)</button>
+
+    <div id="log">Logs de conexión:
+</div>
+
+    <script>
+        function log(msg) {
+            document.getElementById('log').innerHTML += '\n' + new Date().toLocaleTimeString() + ' - ' + msg;
+        }
+
+        function runTest(finalStatus) {
+            const socket = new SockJS('http://localhost:8082/ws');
+            const client = new StompJs.Client({
+                webSocketFactory: () => socket,
+                debug: function (str) { },
+                reconnectDelay: 5000,
+                heartbeatIncoming: 4000,
+                heartbeatOutgoing: 4000,
+            });
+
+            client.onConnect = function (frame) {
+                log('✅ Conectado al Broker WebSocket (ivr-service)');
+                
+                const payload1 = [{
+                    id: "test-call-100",
+                    userName: "Carlos Prueba",
+                    phoneNumber: "+34 600 000 000",
+                    status: "CONNECTED",
+                    timestamp: new Date().toISOString()
+                }];
+
+                log('📡 PASO 1: Enviando llamada en progreso...');
+                client.publish({
+                    destination: '/topic/live-calls',
+                    body: JSON.stringify(payload1)
+                });
+
+                log('⏳ Esperando 4 segundos para el cierre de la llamada...');
+
+                setTimeout(() => {
+                    const payload2 = [{
+                        id: "test-call-100",
+                        userName: "Carlos Prueba",
+                        phoneNumber: "+34 600 000 000",
+                        status: finalStatus,
+                        timestamp: new Date().toISOString()
+                    }];
+
+                    log(`📡 PASO 2: Enviando actualización de llamada (${finalStatus})...`);
+                    client.publish({
+                        destination: '/topic/live-calls',
+                        body: JSON.stringify(payload2)
+                    });
+
+                    log('🏁 Prueba finalizada. Desconectando.');
+                    setTimeout(() => client.deactivate(), 1000);
+                }, 4000);
+            };
+
+            client.onStompError = function (frame) {
+                log('❌ Error STOMP: ' + frame.headers['message']);
+            };
+
+            client.activate();
+        }
+    </script>
+</body>
+</html>
