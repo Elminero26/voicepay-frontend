@@ -55,6 +55,7 @@ const mapUser = (u: any): User => ({
   id: String(u.id),
   name: u.name ?? '',
   email: u.email ?? '',
+  phoneNumber: u.phoneNumber ?? '',
   role: (u.role === 'admin' ? 'admin' : 'user') as 'admin' | 'user',
   status: u.active === false ? 'inactive' : 'active',
   createdAt: u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '-',
@@ -65,17 +66,19 @@ export const userService = {
     try {
       const response = await api.get('/users');
       return response.data.map(mapUser);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error in getUsers:', error.response?.data || error.message);
       console.warn('Backend not available, using mock data for users');
-      return MOCK_USERS;
+      return MOCK_USERS.map(u => ({ ...u, phoneNumber: '+34000000000' }));
     }
   },
   createUser: async (userData: CreateUserDTO): Promise<User> => {
     try {
       const response = await api.post('/users', userData);
       return mapUser(response.data);
-    } catch (error) {
-      console.warn('Backend not available, simulating user creation');
+    } catch (error: any) {
+      console.error('Error in createUser:', error.response?.data || error.message);
+      console.warn('Backend not available or returned error, simulating user creation');
       const newUser: User = {
         id: Math.random().toString(36).substr(2, 9),
         ...userData,
@@ -90,15 +93,23 @@ export const userService = {
     try {
       const response = await api.put(`/users/${id}`, userData);
       return mapUser(response.data);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error in updateUser:', error.response?.data || error.message);
       console.warn('Backend not available, simulating user update');
-      return { id, ...userData, role: userData.role as 'admin' | 'user', status: 'active', createdAt: new Date().toLocaleDateString() };
+      return { 
+        id, 
+        ...userData, 
+        role: userData.role as 'admin' | 'user', 
+        status: 'active', 
+        createdAt: new Date().toLocaleDateString() 
+      };
     }
   },
   deleteUser: async (id: string): Promise<void> => {
     try {
       await api.delete(`/users/${id}`);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error in deleteUser:', error.response?.data || error.message);
       console.warn('Backend not available, simulating user deletion');
     }
   },

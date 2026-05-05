@@ -4,6 +4,7 @@ import { Dashboard } from './pages/Dashboard';
 import { UsersPage } from './pages/Users';
 import { Notifications } from './pages/Notifications';
 import { Login } from './pages/Login';
+import { Settings } from './pages/Settings';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ToastProvider } from './components/Toast';
 
@@ -19,7 +20,7 @@ function App() {
           <Route path="users" element={<UsersPage />} />
           <Route path="calls" element={<div className="p-8 text-center"><h2 className="text-2xl font-bold">Calls History</h2><p className="text-text-secondary mt-2">Module under development.</p></div>} />
           <Route path="notifications" element={<Notifications />} />
-          <Route path="settings" element={<div className="p-8 text-center"><h2 className="text-2xl font-bold">System Settings</h2><p className="text-text-secondary mt-2">Module under development.</p></div>} />
+          <Route path="settings" element={<Settings />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

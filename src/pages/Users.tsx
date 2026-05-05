@@ -18,6 +18,7 @@ export const UsersPage: React.FC = () => {
   const [formData, setFormData] = useState<CreateUserDTO>({
     name: '',
     email: '',
+    phoneNumber: '',
     role: 'user'
   });
 
@@ -38,13 +39,18 @@ export const UsersPage: React.FC = () => {
 
   const handleOpenCreate = () => {
     setEditingUser(null);
-    setFormData({ name: '', email: '', role: 'user' });
+    setFormData({ name: '', email: '', phoneNumber: '', role: 'user' });
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (user: User) => {
     setEditingUser(user);
-    setFormData({ name: user.name, email: user.email, role: user.role });
+    setFormData({ 
+      name: user.name, 
+      email: user.email, 
+      phoneNumber: user.phoneNumber || '',
+      role: user.role 
+    });
     setIsModalOpen(true);
   };
 
@@ -71,7 +77,7 @@ export const UsersPage: React.FC = () => {
         setUsers([newUser, ...users]);
       }
       setIsModalOpen(false);
-      setFormData({ name: '', email: '', role: 'user' });
+      setFormData({ name: '', email: '', phoneNumber: '', role: 'user' });
     } catch (error) {
       console.error('Error saving user:', error);
     } finally {
@@ -86,7 +92,7 @@ export const UsersPage: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold">User Management</h2>
-          <p className="text-text-secondary">Manage system administrators and operators.</p>
+          <p className="text-text-secondary">Manage customers, administrators and operators.</p>
         </div>
         <Button onClick={handleOpenCreate}>
           <Plus size={18} className="mr-2" />
@@ -102,7 +108,7 @@ export const UsersPage: React.FC = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
               <input
                 type="text"
-                placeholder="Search by name or email..."
+                placeholder="Search by name, email or phone..."
                 className="w-full bg-secondary border border-border rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
               />
             </div>
@@ -117,7 +123,7 @@ export const UsersPage: React.FC = () => {
             </div>
           </div>
 
-          <Table headers={['User', 'Role', 'Status', 'Joined Date', 'Actions']}>
+          <Table headers={['User', 'Phone', 'Role', 'Status', 'Actions']}>
             {users.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>
@@ -130,6 +136,9 @@ export const UsersPage: React.FC = () => {
                       <p className="text-xs text-text-secondary">{user.email}</p>
                     </div>
                   </div>
+                </TableCell>
+                <TableCell>
+                  <span className="text-sm font-mono text-primary">{user.phoneNumber || 'N/A'}</span>
                 </TableCell>
                 <TableCell>
                   <span className={cn(
@@ -145,10 +154,9 @@ export const UsersPage: React.FC = () => {
                       'w-2 h-2 rounded-full mr-2',
                       user.status === 'active' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-text-secondary'
                     )} />
-                    <span className="capitalize">{user.status || 'unknown'}</span>
+                    <span className="capitalize">{user.status || 'active'}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-text-secondary">{user.createdAt || 'N/A'}</TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEdit(user)}>
@@ -180,8 +188,21 @@ export const UsersPage: React.FC = () => {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full bg-secondary border border-border rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-              placeholder="e.g. John Doe"
+              placeholder="e.g. Richard Mateo"
             />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-text-secondary">Phone Number (with +)</label>
+            <div className="relative">
+              <input
+                required
+                type="text"
+                value={formData.phoneNumber}
+                onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                className="w-full bg-secondary border border-border rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                placeholder="+34600000000"
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-text-secondary">Email Address</label>
@@ -193,7 +214,7 @@ export const UsersPage: React.FC = () => {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full bg-secondary border border-border rounded-xl py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-                placeholder="john@example.com"
+                placeholder="richard@example.com"
               />
             </div>
           </div>
@@ -204,7 +225,7 @@ export const UsersPage: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               className="w-full bg-secondary border border-border rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all appearance-none"
             >
-              <option value="user">Operator</option>
+              <option value="user">Customer / Operator</option>
               <option value="admin">Administrator</option>
             </select>
           </div>

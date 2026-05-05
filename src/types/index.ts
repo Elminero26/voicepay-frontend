@@ -2,6 +2,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  phoneNumber: string;
   role: 'admin' | 'user';
   status: 'active' | 'inactive';
   createdAt: string;
@@ -33,6 +34,7 @@ export interface PaymentStats {
 export interface CreateUserDTO {
   name: string;
   email: string;
+  phoneNumber: string;
   role: string;
 }
 

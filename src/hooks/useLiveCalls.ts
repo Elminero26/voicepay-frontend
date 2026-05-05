@@ -7,27 +7,27 @@ import { useToast } from '../components/Toast';
 
 /**
  * Hook que gestiona la conexión WebSocket STOMP con el ivr-service.
- * Se suscribe a /topic/live-calls y devuelve los datos en tiempo real.
- * Si el WebSocket falla, hace fallback silencioso con la lista vacía.
  */
 export const useLiveCalls = () => {
   const [liveCalls, setLiveCalls] = useState<Call[]>([]);
   const [connected, setConnected] = useState(false);
   const clientRef = useRef<Client | null>(null);
   const { toast } = useToast();
+  
+  // Guardamos las llamadas anteriores en un Ref para comparar cambios de estado sin disparar re-renders innecesarios
+  const prevCallsRef = useRef<Call[]>([]);
 
   useEffect(() => {
     // 1. Obtener el estado inicial vía HTTP
     ivrService.getLiveCalls().then(initialCalls => {
       setLiveCalls(initialCalls);
+      prevCallsRef.current = initialCalls;
     }).catch(err => console.error("Error fetching initial live calls:", err));
 
     // 2. Conectar WebSocket para recibir actualizaciones
-
     const client = new Client({
-      // Usamos SockJS como transporte (con fallback automático)
       webSocketFactory: () => new SockJS('http://localhost:8082/ws'),
-      reconnectDelay: 5000, // Reconectar cada 5s si se pierde la conexión
+      reconnectDelay: 5000,
 
       onConnect: () => {
         console.log('[WebSocket] ✅ Conectado al ivr-service');
@@ -36,7 +36,8 @@ export const useLiveCalls = () => {
         client.subscribe('/topic/live-calls', (message) => {
           try {
             const rawCalls = JSON.parse(message.body);
-            // Transformar LiveCall[] del backend → Call[] del frontend
+            
+            // Transformar datos del backend al formato del frontend
             const mapped: Call[] = rawCalls.map((c: any) => ({
               id: String(c.id),
               customerName: c.userName || 'Unknown Caller',
@@ -52,20 +53,25 @@ export const useLiveCalls = () => {
                 ? new Date(c.timestamp).toLocaleTimeString()
                 : '-',
             }));
-            setLiveCalls((prevCalls) => {
-              mapped.forEach(newCall => {
-                const oldCall = prevCalls.find(c => c.id === newCall.id);
-                // Si el estado cambió de in-progress a completed o failed
-                if (oldCall && oldCall.status !== newCall.status) {
-                  if (newCall.status === 'completed') {
-                    toast('Payment Completed', `Payment from ${newCall.customerName} was successful.`, 'success');
-                  } else if (newCall.status === 'failed') {
-                    toast('Payment Failed', `Payment from ${newCall.customerName} failed.`, 'error');
-                  }
+
+            // 🔔 Lógica de Notificaciones (FUERA del setState)
+            mapped.forEach(newCall => {
+              const oldCall = prevCallsRef.current.find(c => c.id === newCall.id);
+              
+              // Solo disparamos toast si el estado ha cambiado a finalizado/fallido
+              if (oldCall && oldCall.status === 'in-progress' && newCall.status !== 'in-progress') {
+                if (newCall.status === 'completed') {
+                  toast('Payment Completed', `Payment from ${newCall.customerName} was successful.`, 'success');
+                } else if (newCall.status === 'failed') {
+                  toast('Payment Failed', `Payment from ${newCall.customerName} failed.`, 'error');
                 }
-              });
-              return mapped;
+              }
             });
+
+            // Actualizamos tanto el estado como la referencia
+            setLiveCalls(mapped);
+            prevCallsRef.current = mapped;
+            
           } catch (err) {
             console.error('[WebSocket] Error parsing live calls:', err);
           }
@@ -85,11 +91,10 @@ export const useLiveCalls = () => {
     client.activate();
     clientRef.current = client;
 
-    // Limpieza al desmontar el componente
     return () => {
       client.deactivate();
     };
-  }, []);
+  }, [toast]); // Añadimos toast a las dependencias por seguridad
 
   return { liveCalls, connected };
 };
