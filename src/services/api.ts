@@ -19,11 +19,39 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Axios Response Interceptor para manejar errores globales (401, 403)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const { status } = error.response || {};
+
+    if (status === 401) {
+      // Sesión expirada o no válida
+      console.warn('Session expired or unauthorized. Redirecting to login...');
+      localStorage.removeItem('jwt_token');
+      // Redirección forzada para limpiar estado de la app
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login?expired=true';
+      }
+    }
+
+    if (status === 403) {
+      // Prohibido - Falta de permisos
+      console.error('Access forbidden. Not enough permissions.');
+      if (!window.location.pathname.includes('/access-denied')) {
+        window.location.href = '/access-denied';
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 // Mock Data
 const MOCK_USERS: User[] = [
-  { id: '1', name: 'John Doe', email: 'john@example.com', role: 'admin', status: 'active', createdAt: '2024-03-20' },
-  { id: '2', name: 'Jane Smith', email: 'jane@example.com', role: 'user', status: 'active', createdAt: '2024-03-21' },
-  { id: '3', name: 'Robert Johnson', email: 'robert@example.com', role: 'user', status: 'inactive', createdAt: '2024-03-22' },
+  { id: '1', name: 'John Doe', email: 'john@example.com', phoneNumber: '+1 555 123 456', role: 'admin', status: 'active', createdAt: '2024-03-20' },
+  { id: '2', name: 'Jane Smith', email: 'jane@example.com', phoneNumber: '+1 555 987 654', role: 'user', status: 'active', createdAt: '2024-03-21' },
+  { id: '3', name: 'Robert Johnson', email: 'robert@example.com', phoneNumber: '+1 555 000 111', role: 'user', status: 'inactive', createdAt: '2024-03-22' },
 ];
 
 const MOCK_CALLS: Call[] = [

@@ -10,25 +10,15 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api/auth': {
-        target: 'http://localhost:8080',
+      '/api': {
+        target: 'http://localhost:9000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
       },
-      '/api/users': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
-      },
-      '/api/payments': {
-        target: 'http://localhost:8081',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
-      },
-      '/api/ivr': {
-        target: 'http://localhost:8082',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+      '/ws': {
+        target: 'http://localhost:9000',
+        ws: true,
+        changeOrigin: true
       }
     }
   }

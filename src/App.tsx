@@ -7,6 +7,7 @@ import { Login } from './pages/Login';
 import { Settings } from './pages/Settings';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ToastProvider } from './components/Toast';
+import { AccessDenied } from './pages/AccessDenied';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="calls" element={<div className="p-8 text-center"><h2 className="text-2xl font-bold">Calls History</h2><p className="text-text-secondary mt-2">Module under development.</p></div>} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="access-denied" element={<AccessDenied />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

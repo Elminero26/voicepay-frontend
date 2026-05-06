@@ -26,7 +26,7 @@ export const useLiveCalls = () => {
 
     // 2. Conectar WebSocket para recibir actualizaciones
     const client = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8082/ws'),
+      webSocketFactory: () => new SockJS('/ws'),
       reconnectDelay: 5000,
 
       onConnect: () => {
