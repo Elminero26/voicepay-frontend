@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, Filter, MoreVertical, Edit2, Trash2, Mail } from 'lucide-react';
+import { Plus, Search, Filter, Edit2, Trash2, Mail } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Table, TableRow, TableCell } from '../components/Table';
 import { Button } from '../components/Button';

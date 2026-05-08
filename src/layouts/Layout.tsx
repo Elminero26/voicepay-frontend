@@ -1,17 +1,16 @@
 import React from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { LayoutDashboard, Users, PhoneCall, Settings, LogOut, Menu, X, Bell } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { Button } from '../components/Button';
-import { authService } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 export const Layout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
-  const navigate = useNavigate();
+  const { logout, user } = useAuth();
 
   const handleLogout = () => {
-    authService.logout();
-    navigate('/login');
+    logout();
   };
 
   const navItems = [
@@ -91,8 +90,8 @@ export const Layout: React.FC = () => {
           <h1 className="text-lg font-semibold lg:block hidden">System Overview</h1>
           <div className="flex items-center space-x-4 ml-auto">
             <div className="flex flex-col items-end mr-2">
-              <span className="text-sm font-medium">Admin User</span>
-              <span className="text-xs text-text-secondary">System Manager</span>
+              <span className="text-sm font-medium">{user?.name || 'User'}</span>
+              <span className="text-xs text-text-secondary capitalize">{user?.role || 'System Manager'}</span>
             </div>
             <div className="w-10 h-10 rounded-full bg-border flex items-center justify-center border border-primary/20">
               <Users size={18} className="text-primary" />

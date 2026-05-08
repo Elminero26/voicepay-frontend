@@ -1,16 +1,21 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { PhoneCall, Lock, Mail, AlertCircle } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
-import { authService } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Get the redirect path from location state or default to dashboard
+  const from = location.state?.from?.pathname || '/';
 
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -25,9 +30,8 @@ export const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await authService.login(email, password);
-      localStorage.setItem('jwt_token', response.token);
-      navigate('/');
+      await login(email, password);
+      navigate(from, { replace: true });
     } catch (err: any) {
       setError(err.message || 'Failed to login. Please check your credentials.');
     } finally {

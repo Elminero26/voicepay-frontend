@@ -45,7 +45,7 @@ export const useLiveCalls = () => {
               status: c.status === 'COMPLETED' ? 'completed'
                     : c.status === 'FAILED'    ? 'failed'
                     : 'in-progress',
-              amount: 0,
+              amount: Number(c.callAmount) || 0,
               duration: c.timestamp
                 ? `${Math.floor((Date.now() - new Date(c.timestamp).getTime()) / 60000)}m ${Math.floor(((Date.now() - new Date(c.timestamp).getTime()) % 60000) / 1000)}s`
                 : '-',

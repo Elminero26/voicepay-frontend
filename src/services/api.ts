@@ -10,8 +10,11 @@ const api = axios.create({
   },
 });
 
-// Axios Request Interceptor para inyectar JWT token
+// Axios Request Interceptor para inyectar JWT token y API Key
 api.interceptors.request.use((config) => {
+  // Inyectamos la API Key de seguridad básica
+  config.headers['X-API-KEY'] = 'voicepay-secret-key-2024';
+
   const token = localStorage.getItem('jwt_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -189,6 +192,22 @@ export const paymentService = {
       return MOCK_CALLS;
     }
   },
+  getCalls: async (): Promise<Call[]> => {
+    try {
+      const response = await api.get('/payments');
+      return response.data.map(mapPaymentToCall);
+    } catch (error) {
+      console.warn('Backend not available, using mock data for all calls');
+      // Extend mock calls for the history page
+      return [
+        ...MOCK_CALLS,
+        { id: 'c5', customerName: 'Pam Beesly', phoneNumber: '+1 555 222 333', status: 'completed', amount: 45.5, duration: '3:20', timestamp: '01:15 PM' },
+        { id: 'c6', customerName: 'Andy Bernard', phoneNumber: '+1 555 444 555', status: 'failed', amount: 15.0, duration: '1:10', timestamp: '02:30 PM' },
+        { id: 'c7', customerName: 'Angela Martin', phoneNumber: '+1 555 666 777', status: 'completed', amount: 80.0, duration: '4:45', timestamp: '03:45 PM' },
+        { id: 'c8', customerName: 'Stanley Hudson', phoneNumber: '+1 555 888 999', status: 'completed', amount: 200.0, duration: '10:00', timestamp: '04:20 PM' },
+      ];
+    }
+  },
 };
 
 // Helper: transforma LiveCall del backend → Call del frontend
@@ -200,7 +219,7 @@ const mapLiveCall = (c: any): Call => ({
   status: c.status === 'COMPLETED' ? 'completed'
         : c.status === 'FAILED'    ? 'failed'
         : 'in-progress', // CONNECTED y WAITING_CONFIRMATION → in-progress
-  amount: 0,
+  amount: Number(c.callAmount) || 0,
   // Calcular duración en vivo desde timestamp usando getDurationSeconds
   duration: c.timestamp
     ? `${Math.floor((Date.now() - new Date(c.timestamp).getTime()) / 60000)}m ${Math.floor(((Date.now() - new Date(c.timestamp).getTime()) % 60000) / 1000)}s`
@@ -232,15 +251,15 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 export const notificationService = {
   getNotifications: async (): Promise<Notification[]> => {
     try {
-      // Endpoint doesn't exist yet, but we map it so it's ready.
       const response = await api.get('/notifications');
-      // If Vite dev server returns an HTML fallback (string) instead of JSON, throw an error
-      if (!Array.isArray(response.data)) {
-        throw new Error('Invalid response format (not an array)');
-      }
-      return response.data;
+      // Mapeamos los campos del backend (createdAt) a los del frontend (timestamp)
+      return response.data.map((n: any) => ({
+        ...n,
+        id: String(n.id),
+        timestamp: n.createdAt ? new Date(n.createdAt).toLocaleString() : '-'
+      }));
     } catch (error) {
-      console.warn('Backend not available, using mock data for notifications');
+      console.warn('Backend notifications not available, using mock data');
       return MOCK_NOTIFICATIONS;
     }
   }

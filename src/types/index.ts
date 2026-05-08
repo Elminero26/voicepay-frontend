@@ -14,8 +14,11 @@ export interface Call {
   phoneNumber: string;
   status: 'completed' | 'failed' | 'in-progress';
   amount: number;
-  duration: string;
   timestamp: string;
+  duration?: string;
+  selectedOption?: string;
+  direction?: string;
+  option?: string; // Adding this as I saw it used in Dashboard.tsx
 }
 
 export interface PaymentStats {
@@ -47,4 +50,4 @@ export interface Notification {
   timestamp: string;
 }
 
-export {};
+
