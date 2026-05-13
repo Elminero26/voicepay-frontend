@@ -4,6 +4,7 @@ import { Dashboard } from './pages/Dashboard';
 import { UsersPage } from './pages/Users';
 import { Notifications } from './pages/Notifications';
 import { Login } from './pages/Login';
+import { OAuth2Redirect } from './pages/OAuth2Redirect';
 import { Settings } from './pages/Settings';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ToastProvider } from './components/Toast';
@@ -18,6 +19,7 @@ function App() {
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
             
             <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
               <Route index element={<Dashboard />} />

@@ -22,20 +22,80 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 // Axios Response Interceptor para manejar errores globales (401, 403)
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
     const { status } = error.response || {};
 
-    if (status === 401) {
-      // Sesión expirada o no válida
-      console.warn('Session expired or unauthorized. Redirecting to login...');
-      localStorage.removeItem('jwt_token');
-      // Redirección forzada para limpiar estado de la app
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login?expired=true';
+    // Prevent infinite loops if refresh fails
+    if (status === 401 && !originalRequest._retry && originalRequest.url !== '/auth/refresh') {
+      if (isRefreshing) {
+        return new Promise(function(resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return api(originalRequest);
+        }).catch(err => Promise.reject(err));
       }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const refreshToken = localStorage.getItem('refresh_token');
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+
+        // Llamada al backend para renovar token
+        const response = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
+        const newAuthToken = response.data.token;
+        const newRefreshToken = response.data.refreshToken;
+
+        // Guardamos los nuevos tokens
+        localStorage.setItem('jwt_token', newAuthToken);
+        if (newRefreshToken) localStorage.setItem('refresh_token', newRefreshToken);
+
+        // Actualizamos header y procesamos encolados
+        api.defaults.headers.common['Authorization'] = `Bearer ${newAuthToken}`;
+        originalRequest.headers['Authorization'] = `Bearer ${newAuthToken}`;
+        processQueue(null, newAuthToken);
+
+        return api(originalRequest);
+      } catch (err) {
+        processQueue(err, null);
+        console.warn('Session expired or unauthorized. Redirecting to login...');
+        localStorage.removeItem('jwt_token');
+        localStorage.removeItem('refresh_token');
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login?expired=true';
+        }
+        return Promise.reject(err);
+      } finally {
+        isRefreshing = false;
+      }
+    } else if (status === 401 && originalRequest.url === '/auth/refresh') {
+        localStorage.removeItem('jwt_token');
+        localStorage.removeItem('refresh_token');
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login?expired=true';
+        }
     }
 
     if (status === 403) {
@@ -44,6 +104,10 @@ api.interceptors.response.use(
       if (!window.location.pathname.includes('/access-denied')) {
         window.location.href = '/access-denied';
       }
+    }
+    
+    if (status >= 500) {
+      console.error('Server error occurred:', error.response?.data || error.message);
     }
 
     return Promise.reject(error);
@@ -267,17 +331,18 @@ export const notificationService = {
 
 // --- Auth Service ---
 export const authService = {
-  login: async (email: string, password: string):Promise<{token: string}> => {
+  login: async (email: string, password: string):Promise<{token: string, refreshToken?: string}> => {
     try {
       const response = await api.post('/auth/login', { email, password });
       return response.data;
     } catch (error: any) {
       console.error('Login failed:', error);
-      throw new Error(error.response?.data?.message || 'Invalid credentials or backend unavailable');
+      throw new Error(error.response?.data?.message || 'Invalid credentials or backend unavailable', { cause: error });
     }
   },
   logout: () => {
     localStorage.removeItem('jwt_token');
+    localStorage.removeItem('refresh_token');
   }
 };
 

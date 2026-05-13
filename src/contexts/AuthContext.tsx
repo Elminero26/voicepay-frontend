@@ -10,6 +10,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  handleSocialLogin: (token: string) => void;
   logout: () => void;
   checkSession: () => void;
 }
@@ -24,6 +25,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = useCallback(() => {
     localStorage.removeItem('jwt_token');
+    localStorage.removeItem('refresh_token');
     setToken(null);
     setUser(null);
     // Use window.location instead of navigate for a hard redirect to clear state if needed,
@@ -95,11 +97,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [checkSession, logout, token]);
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     try {
       const response = await authService.login(email, password);
       localStorage.setItem('jwt_token', response.token);
+      if (response.refreshToken) {
+        localStorage.setItem('refresh_token', response.refreshToken);
+      }
       setToken(response.token);
       
       const decoded = parseJwt(response.token);
@@ -119,7 +124,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  const handleSocialLogin = useCallback((token: string) => {
+    localStorage.setItem('jwt_token', token);
+    setToken(token);
+    const decoded = parseJwt(token);
+    if (decoded) {
+      setUser({
+        id: decoded.sub || decoded.userId || '1',
+        name: decoded.name || 'Social User',
+        email: decoded.email || decoded.sub || '',
+        role: decoded.role?.toLowerCase() || 'user',
+        status: 'active',
+        createdAt: '',
+        phoneNumber: ''
+      });
+    }
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -129,6 +151,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!token && !isTokenExpired(token),
         isLoading,
         login,
+        handleSocialLogin,
         logout,
         checkSession,
       }}
