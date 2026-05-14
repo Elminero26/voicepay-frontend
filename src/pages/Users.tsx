@@ -22,10 +22,6 @@ export const UsersPage: React.FC = () => {
     role: 'user'
   });
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
   const fetchUsers = async () => {
     try {
       const data = await userService.getUsers();
@@ -36,6 +32,10 @@ export const UsersPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const handleOpenCreate = () => {
     setEditingUser(null);
@@ -188,7 +188,7 @@ export const UsersPage: React.FC = () => {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full bg-secondary border border-border rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-              placeholder="e.g. Richard Mateo"
+              placeholder="e.g. Cristian"
             />
           </div>
           <div className="space-y-2">

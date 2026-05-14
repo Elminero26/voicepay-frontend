@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Users, PhoneCall, Settings, LogOut, Menu, X, Bell } from 'lucide-react';
+import { LayoutDashboard, Users, PhoneCall, Settings, LogOut, Menu, X, Bell, Network } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { Button } from '../components/Button';
 import { useAuth } from '../contexts/AuthContext';
@@ -17,6 +17,7 @@ export const Layout: React.FC = () => {
     { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
     { icon: Users, label: 'Users', path: '/users' },
     { icon: PhoneCall, label: 'Calls', path: '/calls' },
+    { icon: Network, label: 'IVR Flow', path: '/ivr-flow' },
     { icon: Bell, label: 'Notifications', path: '/notifications' },
     { icon: Settings, label: 'Settings', path: '/settings' },
   ];

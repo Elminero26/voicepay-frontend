@@ -12,10 +12,6 @@ export const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
-
   const fetchNotifications = async () => {
     try {
       const data = await notificationService.getNotifications();
@@ -26,6 +22,10 @@ export const Notifications: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
 
   const getTypeIcon = (type: string) => {
     switch (type) {

@@ -10,6 +10,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { ToastProvider } from './components/Toast';
 import { AccessDenied } from './pages/AccessDenied';
 import { CallsPage } from './pages/Calls';
+import { IvrFlow } from './pages/IvrFlow';
 import { AuthProvider } from './contexts/AuthContext';
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
               <Route index element={<Dashboard />} />
               <Route path="users" element={<UsersPage />} />
               <Route path="calls" element={<CallsPage />} />
+              <Route path="ivr-flow" element={<IvrFlow />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="settings" element={<Settings />} />
               <Route path="access-denied" element={<AccessDenied />} />

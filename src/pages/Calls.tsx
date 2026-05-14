@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Phone, Search, Download, ArrowUpRight, Clock } from 'lucide-react';
+import { Phone, Search, Download, ArrowUpRight, Clock, Network } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Table, TableRow, TableCell } from '../components/Table';
 import { paymentService } from '../services/api';
@@ -186,7 +186,7 @@ export const CallsPage: React.FC = () => {
 
         {/* Calls Table */}
         <div className="relative">
-          <Table headers={['Customer', 'Phone Number', 'Amount', 'Duration', 'Status', 'Time']}>
+          <Table headers={['Customer', 'Phone Number', 'Amount', 'Duration', 'Status', 'Time', 'Actions']}>
             {filteredCalls.map((call) => (
               <TableRow key={call.id} className="group hover:bg-primary/5 transition-colors cursor-pointer">
                 <TableCell>
@@ -223,11 +223,16 @@ export const CallsPage: React.FC = () => {
                   </span>
                 </TableCell>
                 <TableCell className="text-text-secondary text-sm">{call.timestamp}</TableCell>
+                <TableCell>
+                  <a href="/ivr-flow" className="p-2 bg-secondary/50 hover:bg-primary/20 text-text-secondary hover:text-primary rounded-lg transition-colors inline-block" title="View IVR Flow">
+                    <Network size={16} />
+                  </a>
+                </TableCell>
               </TableRow>
             ))}
             {filteredCalls.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-20">
+                <TableCell colSpan={7} className="text-center py-20">
                   <div className="flex flex-col items-center">
                     <div className="p-4 bg-secondary rounded-full mb-4">
                       <Search size={32} className="text-text-secondary opacity-20" />
