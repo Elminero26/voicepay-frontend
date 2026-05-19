@@ -282,13 +282,15 @@ const mapLiveCall = (c: any): Call => ({
   phoneNumber: c.phoneNumber || '-',
   status: c.status === 'COMPLETED' ? 'completed'
         : c.status === 'FAILED'    ? 'failed'
-        : 'in-progress', // CONNECTED y WAITING_CONFIRMATION → in-progress
+        : c.status === 'TRANSFERRED' ? 'in-progress' // O podrías añadir un estado 'transferred'
+        : 'in-progress',
   amount: Number(c.callAmount) || 0,
-  // Calcular duración en vivo desde timestamp usando getDurationSeconds
   duration: c.timestamp
     ? `${Math.floor((Date.now() - new Date(c.timestamp).getTime()) / 60000)}m ${Math.floor(((Date.now() - new Date(c.timestamp).getTime()) % 60000) / 1000)}s`
     : '-',
   timestamp: c.timestamp ? new Date(c.timestamp).toLocaleTimeString() : '-',
+  callEvents: c.callEvents || [],
+  selectedOption: c.selectedOption || null
 });
 
 export const ivrService = {

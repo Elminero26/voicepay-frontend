@@ -4,12 +4,13 @@ import { cn } from '../utils/cn';
 interface CardProps {
   children: React.ReactNode;
   className?: string;
+  contentClassName?: string;
   title?: string;
   description?: string;
   footer?: React.ReactNode;
 }
 
-export const Card: React.FC<CardProps> = ({ children, className, title, description, footer }) => {
+export const Card: React.FC<CardProps> = ({ children, className, contentClassName, title, description, footer }) => {
   return (
     <div className={cn('glass card-hover rounded-2xl p-6 overflow-hidden', className)}>
       {title && (
@@ -18,7 +19,7 @@ export const Card: React.FC<CardProps> = ({ children, className, title, descript
           {description && <p className="text-sm text-text-secondary mt-1">{description}</p>}
         </div>
       )}
-      <div className="relative">{children}</div>
+      <div className={cn('relative', contentClassName)}>{children}</div>
       {footer && <div className="mt-6 pt-4 border-t border-border">{footer}</div>}
     </div>
   );

@@ -44,6 +44,7 @@ export const useLiveCalls = () => {
               phoneNumber: c.phoneNumber || '-',
               status: c.status === 'COMPLETED' ? 'completed'
                     : c.status === 'FAILED'    ? 'failed'
+                    : c.status === 'TRANSFERRED' ? 'completed' // Consideramos transferido como un éxito en el flujo
                     : 'in-progress',
               amount: Number(c.callAmount) || 0,
               duration: c.timestamp
@@ -52,6 +53,8 @@ export const useLiveCalls = () => {
               timestamp: c.timestamp
                 ? new Date(c.timestamp).toLocaleTimeString()
                 : '-',
+              callEvents: c.callEvents || [],
+              selectedOption: c.selectedOption || null,
             }));
 
             // 🔔 Lógica de Notificaciones (FUERA del setState)

@@ -12,13 +12,14 @@ export interface Call {
   id: string;
   customerName: string;
   phoneNumber: string;
-  status: 'completed' | 'failed' | 'in-progress';
+  status: 'COMPLETED' | 'FAILED' | 'WAITING_CONFIRMATION' | 'PROCESSING_PAYMENT' | 'CONNECTED' | 'completed' | 'failed' | 'in-progress';
   amount: number;
   timestamp: string;
   duration?: string;
   selectedOption?: string;
   direction?: string;
   option?: string; // Adding this as I saw it used in Dashboard.tsx
+  callEvents?: string[];
 }
 
 export interface PaymentStats {

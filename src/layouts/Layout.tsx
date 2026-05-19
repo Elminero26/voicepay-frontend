@@ -101,8 +101,8 @@ export const Layout: React.FC = () => {
         </header>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-8 animate-fade-in custom-scrollbar">
-          <div className="max-w-7xl mx-auto">
+        <div className="flex-1 overflow-y-auto p-8 animate-fade-in custom-scrollbar flex flex-col">
+          <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col">
             <Outlet />
           </div>
         </div>
