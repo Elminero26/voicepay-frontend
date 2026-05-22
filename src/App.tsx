@@ -1,39 +1,45 @@
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './layouts/Layout';
-import { Dashboard } from './pages/Dashboard';
-import { UsersPage } from './pages/Users';
-import { Notifications } from './pages/Notifications';
-import { Login } from './pages/Login';
-import { OAuth2Redirect } from './pages/OAuth2Redirect';
-import { Settings } from './pages/Settings';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ToastProvider } from './components/Toast';
-import { AccessDenied } from './pages/AccessDenied';
-import { CallsPage } from './pages/Calls';
-import { IvrFlow } from './pages/IvrFlow';
 import { AuthProvider } from './contexts/AuthContext';
+import { Loader } from './components/Loader';
+
+// Lazy loading features
+const Login = React.lazy(() => import('./features/auth').then(m => ({ default: m.Login })));
+const OAuth2Redirect = React.lazy(() => import('./features/auth').then(m => ({ default: m.OAuth2Redirect })));
+const AccessDenied = React.lazy(() => import('./features/auth').then(m => ({ default: m.AccessDenied })));
+const Dashboard = React.lazy(() => import('./features/dashboard').then(m => ({ default: m.Dashboard })));
+const UsersPage = React.lazy(() => import('./features/users').then(m => ({ default: m.UsersPage })));
+const CallsPage = React.lazy(() => import('./features/calls').then(m => ({ default: m.CallsPage })));
+const IvrFlow = React.lazy(() => import('./features/ivr-flow').then(m => ({ default: m.IvrFlow })));
+const Notifications = React.lazy(() => import('./features/notifications').then(m => ({ default: m.Notifications })));
+const Settings = React.lazy(() => import('./features/settings').then(m => ({ default: m.Settings })));
 
 function App() {
   return (
     <ToastProvider>
       <Router>
         <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
-            
-            <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-              <Route index element={<Dashboard />} />
-              <Route path="users" element={<UsersPage />} />
-              <Route path="calls" element={<CallsPage />} />
-              <Route path="ivr-flow" element={<IvrFlow />} />
-              <Route path="notifications" element={<Notifications />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="access-denied" element={<AccessDenied />} />
-            </Route>
+          <Suspense fallback={<Loader fullScreen />}>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
+              
+              <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+                <Route index element={<Dashboard />} />
+                <Route path="users" element={<UsersPage />} />
+                <Route path="calls" element={<CallsPage />} />
+                <Route path="ivr-flow" element={<IvrFlow />} />
+                <Route path="notifications" element={<Notifications />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="access-denied" element={<AccessDenied />} />
+              </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
         </AuthProvider>
       </Router>
     </ToastProvider>
@@ -41,3 +47,4 @@ function App() {
 }
 
 export default App;
+

@@ -1,12 +1,16 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { ReactFlow, Background, Controls, applyNodeChanges, applyEdgeChanges, Handle, Position, MarkerType } from '@xyflow/react';
 import type { NodeChange, EdgeChange, Edge, Node } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Card } from '../components/Card';
-import { PhoneCall, Globe, ShieldCheck, CreditCard, CheckCircle2, User, HelpCircle, Headset, Zap, Activity } from 'lucide-react';
-import { cn } from '../utils/cn';
+import { Card } from '../../../components/Card';
+import { 
+  PhoneCall, Globe, ShieldCheck, CreditCard, CheckCircle2, 
+  User, HelpCircle, Headset, Zap, Activity, Play, Square, 
+  RefreshCw, Sparkles 
+} from 'lucide-react';
+import { cn } from '../../../utils/cn';
 import { useLiveCalls } from '../hooks/useLiveCalls';
-import type { Call } from '../types';
+import type { Call } from '../../../types';
 
 // Define the node types
 const IvrNode = ({ data, isConnectable }: any) => {
@@ -141,9 +145,171 @@ export const IvrFlow: React.FC = () => {
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<string>('');
 
-  const activeCall = useMemo(() => 
-    liveCalls.find(c => c.id === selectedCallId) || liveCalls[0] || null
-  , [liveCalls, selectedCallId]);
+  // 1. Persistencia: Hydrate cached active call from localStorage if it exists
+  const [cachedCall, setCachedCall] = useState<Call | null>(() => {
+    try {
+      const saved = localStorage.getItem('voicepay_last_active_call');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  // 2. Simulador: states for local simulation
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simStep, setSimStep] = useState(0);
+  const [simPath, setSimPath] = useState<'payment' | 'agent'>('payment');
+  const [simulatedCall, setSimulatedCall] = useState<Call | null>(null);
+  const simTimerRef = useRef<any>(null);
+
+  // Stop/Reset simulation
+  const stopSimulation = useCallback(() => {
+    setIsSimulating(false);
+    setSimStep(0);
+    setSimulatedCall(null);
+    if (simTimerRef.current) {
+      clearInterval(simTimerRef.current);
+      simTimerRef.current = null;
+    }
+  }, []);
+
+  // Start simulation
+  const startSimulation = useCallback((path: 'payment' | 'agent') => {
+    stopSimulation();
+    setIsSimulating(true);
+    setSimPath(path);
+    setSimStep(1);
+  }, [stopSimulation]);
+
+  // Handle simulation timer steps
+  useEffect(() => {
+    if (!isSimulating) return;
+
+    const runStep = () => {
+      setSimStep(prevStep => {
+        const nextStep = prevStep + 1;
+        if (nextStep > 6) {
+          setIsSimulating(false);
+          if (simTimerRef.current) clearInterval(simTimerRef.current);
+          return prevStep;
+        }
+        return nextStep;
+      });
+    };
+
+    simTimerRef.current = setInterval(runStep, 2500);
+
+    return () => {
+      if (simTimerRef.current) clearInterval(simTimerRef.current);
+    };
+  }, [isSimulating]);
+
+  // Construct simulated Call object depending on step and path
+  useEffect(() => {
+    if (!isSimulating || simStep === 0) return;
+
+    const baseCall: Call = {
+      id: 'sim-call-999',
+      customerName: 'Carlos Prueba (Simulado)',
+      phoneNumber: '+34 600 111 222',
+      status: 'in-progress',
+      amount: 0,
+      duration: '0m 0s',
+      timestamp: new Date().toLocaleTimeString(),
+      callEvents: [],
+      selectedOption: undefined,
+    };
+
+    const stepEventsMap: { [key: number]: string[] } = {
+      1: [
+        '📞 Llamada entrante desde +34 600 111 222',
+        '🔄 Estableciendo handshake con el nodo IVR principal...',
+        '✅ Conexión establecida de forma segura'
+      ],
+      2: [
+        '📞 Llamada entrante desde +34 600 111 222',
+        '🔄 Estableciendo handshake con el nodo IVR principal...',
+        '✅ Conexión establecida de forma segura',
+        '🔒 Iniciando proceso de autenticación del llamante...',
+        '👤 Identificando usuario por ID de llamada (CallerID)...',
+        '✅ Usuario autenticado: Carlos Prueba (Cliente VIP)'
+      ],
+      3: [
+        '📞 Llamada entrante desde +34 600 111 222',
+        '✅ Conexión establecida de forma segura',
+        '👤 Usuario autenticado: Carlos Prueba (Cliente VIP)',
+        '📡 Consultando servicio de facturación externa (Payment Service)...',
+        '💳 Factura pendiente localizada: 150.00 € (Vencimiento: hoy)'
+      ],
+      4: [
+        '📞 Llamada entrante desde +34 600 111 222',
+        '👤 Usuario autenticado: Carlos Prueba (Cliente VIP)',
+        '💳 Factura pendiente localizada: 150.00 €',
+        '🔊 Reproduciendo menú principal de opciones de voz (Menú IVR)...',
+        '⏳ Esperando que el usuario ingrese una opción DTMF en el teclado (1 o 2)...'
+      ],
+      5: [
+        '📞 Llamada entrante desde +34 600 111 222',
+        '👤 Usuario autenticado: Carlos Prueba (Cliente VIP)',
+        '💳 Factura pendiente localizada: 150.00 €',
+        '⏳ Esperando selección del usuario...',
+        `⌨️ Evento DTMF detectado: Presionó tecla [${simPath === 'payment' ? '1' : '2'}]`,
+        `📡 Redireccionando llamada según elección del usuario (Opción ${simPath === 'payment' ? '1' : '2'})...`
+      ],
+      6: simPath === 'payment' ? [
+        '📞 Llamada entrante desde +34 600 111 222',
+        '👤 Usuario autenticado: Carlos Prueba (Cliente VIP)',
+        `⌨️ Evento DTMF detectado: Presionó tecla [1]`,
+        '🔐 Iniciando pasarela de pago seguro (VoicePay Gateway)...',
+        '🛡️ Encriptando transacción bancaria con AES-256...',
+        '✅ Pago aprobado con éxito. ID Transacción: #VP-99881',
+        '✉️ Notificación push de confirmación de pago enviada al cliente',
+        '👋 Flujo finalizado con éxito. Liberando línea telefónica.'
+      ] : [
+        '📞 Llamada entrante desde +34 600 111 222',
+        '👤 Usuario autenticado: Carlos Prueba (Cliente VIP)',
+        `⌨️ Evento DTMF detectado: Presionó tecla [2]`,
+        '🎧 Solicitando transferencia de llamada al pool de agentes humanos...',
+        '🔄 Conectando con la cola de atención al cliente (Agent Service)...',
+        '🔊 Reproduciendo música de espera en el canal telefónico...',
+        '✅ Llamada transferida con éxito al Agente: Lucía Gómez (ID #112)',
+        '👋 Salida exitosa del flujo automático de voz.'
+      ]
+    };
+
+    const currentCall: Call = {
+      ...baseCall,
+      amount: simStep >= 3 ? 150.00 : 0,
+      selectedOption: simStep >= 5 ? (simPath === 'payment' ? '1' : '2') : undefined,
+      status: simStep === 6 ? 'completed' : 'in-progress',
+      callEvents: stepEventsMap[simStep] || [],
+    };
+
+    setSimulatedCall(currentCall);
+  }, [isSimulating, simStep, simPath]);
+
+  // Clean simulation and cache in localStorage
+  const resetToPending = () => {
+    stopSimulation();
+    localStorage.removeItem('voicepay_last_active_call');
+    setCachedCall(null);
+    setSelectedCallId(null);
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+  };
+
+  // Determine the active call from WebSocket stream, simulation or cache
+  const activeCall = useMemo(() => {
+    if (isSimulating && simulatedCall) {
+      return simulatedCall;
+    }
+    const current = liveCalls.find(c => c.id === selectedCallId) || liveCalls[0] || null;
+    if (current) {
+      localStorage.setItem('voicepay_last_active_call', JSON.stringify(current));
+      return current;
+    }
+    return cachedCall;
+  }, [isSimulating, simulatedCall, liveCalls, selectedCallId, cachedCall]);
 
   useEffect(() => {
     if (activeCall && !selectedCallId) {
@@ -264,7 +430,7 @@ export const IvrFlow: React.FC = () => {
         <div>
           <div className="flex items-center space-x-3 mb-1">
             <h2 className="text-4xl font-black text-gradient tracking-tighter">IVR Flow Visualizer</h2>
-            {connected && (
+            {connected && !isSimulating && (
               <div className="flex items-center space-x-2 bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -273,12 +439,21 @@ export const IvrFlow: React.FC = () => {
                 <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest">Live Stream</span>
               </div>
             )}
+            {isSimulating && (
+              <div className="flex items-center space-x-2 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                </span>
+                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Local Simulation</span>
+              </div>
+            )}
           </div>
           <p className="text-text-secondary font-medium opacity-70">Real-time decision tree and microservices communication matrix.</p>
         </div>
         
         <div className="flex items-center space-x-6">
-          {liveCalls.length > 0 && (
+          {liveCalls.length > 0 && !isSimulating && (
             <div className="flex flex-col">
               <span className="text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] mb-1.5 ml-1">Active Streams</span>
               <div className="flex items-center space-x-2 glass-dark px-4 py-2 rounded-2xl border border-white/5 shadow-xl">
@@ -334,6 +509,96 @@ export const IvrFlow: React.FC = () => {
                 <span className="text-[10px] font-bold text-text-secondary uppercase tracking-tight">Node: Idle</span>
               </div>
             </div>
+          </div>
+
+          {/* Floating Call Simulator HUD Widget */}
+          <div className="absolute bottom-6 right-6 z-10 glass-dark p-5 rounded-2xl border border-white/10 shadow-2xl backdrop-blur-xl max-w-[320px] w-full flex flex-col space-y-4">
+            <div className="flex items-center justify-between border-b border-white/5 pb-3">
+              <div className="flex items-center space-x-2">
+                <Sparkles size={16} className="text-primary animate-pulse" />
+                <h4 className="text-[11px] font-black text-white uppercase tracking-widest">IVR Local Simulator</h4>
+              </div>
+              <div className="flex items-center space-x-1.5">
+                <span className={cn(
+                  "w-1.5 h-1.5 rounded-full",
+                  isSimulating ? "bg-amber-500 animate-pulse" : "bg-white/20"
+                )} />
+                <span className="text-[9px] font-bold text-text-secondary uppercase tracking-wider">
+                  {isSimulating ? `Paso ${simStep}/6` : "Standby"}
+                </span>
+              </div>
+            </div>
+
+            {!isSimulating ? (
+              <div className="space-y-3">
+                <p className="text-[10px] text-text-secondary leading-relaxed font-medium">
+                  Simula flujos completos del árbol de decisiones IVR directamente en el frontend, sin dependencias del servidor.
+                </p>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    onClick={() => startSimulation('payment')}
+                    className="flex items-center justify-center space-x-1.5 bg-primary/20 hover:bg-primary/30 border border-primary/30 hover:border-primary/50 text-white rounded-xl py-2 px-2.5 text-[10px] font-bold transition-all"
+                  >
+                    <Play size={12} className="text-primary" />
+                    <span>Pago Exitoso</span>
+                  </button>
+                  <button
+                    onClick={() => startSimulation('agent')}
+                    className="flex items-center justify-center space-x-1.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/25 text-white rounded-xl py-2 px-2.5 text-[10px] font-bold transition-all"
+                  >
+                    <Play size={12} className="text-white animate-pulse" />
+                    <span>Transf. Agente</span>
+                  </button>
+                </div>
+                {cachedCall && (
+                  <button
+                    onClick={resetToPending}
+                    className="w-full flex items-center justify-center space-x-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/35 text-red-400 rounded-xl py-2 text-[10px] font-bold transition-all"
+                  >
+                    <RefreshCw size={12} />
+                    <span>Limpiar Caché Local</span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Step Description */}
+                <div className="bg-black/30 p-3 rounded-xl border border-white/5 flex flex-col space-y-1">
+                  <span className="text-[8px] uppercase font-black tracking-widest text-primary">Simulando paso actual</span>
+                  <span className="text-[11px] font-bold text-white leading-tight">
+                    {simStep === 1 && "📞 Recibiendo llamada entrante..."}
+                    {simStep === 2 && "🔒 Autenticando usuario mediante CallerID..."}
+                    {simStep === 3 && "💳 Consultando deuda pendiente en BD..."}
+                    {simStep === 4 && "🔊 Emitiendo menú de opciones IVR..."}
+                    {simStep === 5 && `⌨️ Selección ingresada [Opción ${simPath === 'payment' ? '1' : '2'}]`}
+                    {simStep === 6 && (simPath === 'payment' ? "✅ Transacción procesada con éxito!" : "🎧 Conectando con agente directo...")}
+                  </span>
+                </div>
+
+                {/* Progress bar */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[8px] font-black uppercase text-text-secondary font-mono tracking-wider">
+                    <span>Avance</span>
+                    <span>{Math.round((simStep / 6) * 100)}%</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-primary to-green-500 transition-all duration-500" 
+                      style={{ width: `${(simStep / 6) * 100}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Stop Button */}
+                <button
+                  onClick={stopSimulation}
+                  className="w-full flex items-center justify-center space-x-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 hover:border-red-500/50 text-white rounded-xl py-2 text-[10px] font-bold transition-all animate-pulse"
+                >
+                  <Square size={12} className="fill-white" />
+                  <span>Detener Simulación</span>
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="h-full w-full">
@@ -402,10 +667,14 @@ export const IvrFlow: React.FC = () => {
                   <ShieldCheck size={40} />
                 </div>
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-[10px] uppercase font-black text-primary tracking-widest">Active session</span>
+                  <span className="text-[10px] uppercase font-black text-primary tracking-widest">
+                    {isSimulating ? "SIMULATION SESSION" : "Active session"}
+                  </span>
                   <div className="flex items-center space-x-1">
                     <div className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
-                    <span className="text-[9px] font-black font-mono text-green-500">ENCRYPTED</span>
+                    <span className="text-[9px] font-black font-mono text-green-500">
+                      {isSimulating ? "SIMULATED" : "ENCRYPTED"}
+                    </span>
                   </div>
                 </div>
                 <div className="text-[10px] font-mono text-text-secondary truncate bg-black/20 p-2 rounded-lg border border-white/5">

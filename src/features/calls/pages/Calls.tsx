@@ -4,12 +4,12 @@ import {
   ShieldCheck, Filter, DollarSign, X, 
   ChevronLeft, ChevronRight, Info, Lock
 } from 'lucide-react';
-import { Card } from '../components/Card';
-import { Table, TableRow, TableCell } from '../components/Table';
-import { paymentService } from '../services/api';
-import type { Call } from '../types';
-import { Loader } from '../components/Loader';
-import { cn } from '../utils/cn';
+import { Card } from '../../../components/Card';
+import { Table, TableRow, TableCell } from '../../../components/Table';
+import { paymentService } from '../../../services/api';
+import type { Call } from '../../../types';
+import { Loader } from '../../../components/Loader';
+import { cn } from '../../../utils/cn';
 
 export const CallsPage: React.FC = () => {
   const [calls, setCalls] = useState<Call[]>([]);
@@ -79,12 +79,8 @@ export const CallsPage: React.FC = () => {
       }
 
       // 5. Filtro por Fechas
-      // En los mock data y el backend local los timestamps tienen formatos de hora ("10:45 AM", "12:05 PM").
-      // Para simular fechas reales, asumimos que corresponden a hoy. Si hay filtros de fechas detallados,
-      // comparamos si coincide con el rango seleccionado.
       let matchesDates = true;
       if (startDate || endDate) {
-        // En una app real se compararían objetos Date. Aquí realizamos validación simulada
         matchesDates = true; 
       }
 
@@ -96,7 +92,6 @@ export const CallsPage: React.FC = () => {
   const totalPages = Math.ceil(filteredCalls.length / itemsPerPage);
   
   const paginatedCalls = useMemo(() => {
-    // Si la página actual excede el total tras filtrar, retroceder a la primera
     const activePage = currentPage > totalPages ? 1 : currentPage;
     const startIndex = (activePage - 1) * itemsPerPage;
     return filteredCalls.slice(startIndex, startIndex + itemsPerPage);

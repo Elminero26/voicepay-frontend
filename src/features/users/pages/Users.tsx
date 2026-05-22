@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Search, Filter, Edit2, Trash2, Mail } from 'lucide-react';
-import { Card } from '../components/Card';
-import { Table, TableRow, TableCell } from '../components/Table';
-import { Button } from '../components/Button';
-import { Modal } from '../components/Modal';
-import { userService } from '../services/api';
-import type { User, CreateUserDTO } from '../types';
-import { Loader } from '../components/Loader';
-import { cn } from '../utils/cn';
+import { Card } from '../../../components/Card';
+import { Table, TableRow, TableCell } from '../../../components/Table';
+import { Button } from '../../../components/Button';
+import { Modal } from '../../../components/Modal';
+import { userService } from '../../../services/api';
+import type { User, CreateUserDTO } from '../../../types';
+import { Loader } from '../../../components/Loader';
+import { cn } from '../../../utils/cn';
 
 export const UsersPage: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);

@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Bell, Search, Filter, Mail, MessageSquare, Smartphone } from 'lucide-react';
-import { Card } from '../components/Card';
-import { Table, TableRow, TableCell } from '../components/Table';
-import { Button } from '../components/Button';
-import { notificationService } from '../services/api';
-import type { Notification } from '../types';
-import { Loader } from '../components/Loader';
-import { cn } from '../utils/cn';
+import { Card } from '../../../components/Card';
+import { Table, TableRow, TableCell } from '../../../components/Table';
+import { Button } from '../../../components/Button';
+import { notificationService } from '../../../services/api';
+import type { Notification } from '../../../types';
+import { Loader } from '../../../components/Loader';
+import { cn } from '../../../utils/cn';
 
 export const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);

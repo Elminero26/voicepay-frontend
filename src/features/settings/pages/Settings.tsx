@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Card } from '../components/Card';
-import { Button } from '../components/Button';
+import { Card } from '../../../components/Card';
+import { Button } from '../../../components/Button';
 import { Shield, MessageSquare, Key, Save, Eye, EyeOff, Smartphone } from 'lucide-react';
-import { cn } from '../utils/cn';
-import { useToast } from '../components/Toast';
+import { cn } from '../../../utils/cn';
+import { useToast } from '../../../components/Toast';
 
 export const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'security' | 'twilio'>('security');
@@ -17,7 +17,6 @@ export const Settings: React.FC = () => {
   const [twilioNumber, setTwilioNumber] = useState('');
 
   const handleSave = () => {
-    // Aquí llamaremos al servicio en el futuro
     console.log('Saving settings:', { apiKey, twilioSid, twilioToken, twilioNumber });
     toast('Settings Saved', 'System configuration updated successfully.', 'success');
   };

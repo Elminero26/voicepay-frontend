@@ -13,13 +13,13 @@ import {
   Wifi, WifiOff, Bell, Clock, 
   BarChart2, Percent, ShieldCheck
 } from 'lucide-react';
-import { Card } from '../components/Card';
-import { Table, TableRow, TableCell } from '../components/Table';
-import { paymentService } from '../services/api';
-import { useLiveCalls } from '../hooks/useLiveCalls';
-import type { PaymentStats, Call } from '../types';
-import { Loader } from '../components/Loader';
-import { cn } from '../utils/cn';
+import { Card } from '../../../components/Card';
+import { Table, TableRow, TableCell } from '../../../components/Table';
+import { paymentService } from '../../../services/api';
+import { useLiveCalls } from '../../ivr-flow/hooks/useLiveCalls';
+import type { PaymentStats, Call } from '../../../types';
+import { Loader } from '../../../components/Loader';
+import { cn } from '../../../utils/cn';
 
 interface Toast {
   id: string;
@@ -232,7 +232,7 @@ export const Dashboard: React.FC = () => {
           { name: 'Aug', completed: 4800, failed: 1390 },
           { name: 'Sep', completed: 4300, failed: 1250 },
           { name: 'Oct', completed: 4600, failed: 1300 },
-          { name: 'Nov', completed: 4500, failed: 1290 },
+          { name: 'Nov', completed: 4500, text: '', failed: 1290 },
           { name: 'Dec', completed: 4120, failed: 1620 }
         ],
         revenueChartData: [
@@ -895,7 +895,7 @@ export const Dashboard: React.FC = () => {
                   <TableCell className="font-bold">{payment.customerName}</TableCell>
                   <TableCell className="text-text-secondary font-mono text-sm">{payment.phoneNumber}</TableCell>
                   <TableCell className="font-black">${(payment.amount ?? 0).toFixed(2)}</TableCell>
-                  <TableCell className="text-text-secondary font-bold text-xs">{payment.option || '-'}</TableCell>
+                  <TableCell className="text-text-secondary font-bold text-xs">{payment.selectedOption || '-'}</TableCell>
                   <TableCell className="text-text-secondary font-bold text-xs">{payment.duration || '-'}</TableCell>
                   <TableCell>
                     <div className={cn(

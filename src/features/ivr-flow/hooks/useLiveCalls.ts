@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import type { Call } from '../types';
-import { ivrService } from '../services/api';
-import { useToast } from '../components/Toast';
+import type { Call } from '../../../types';
+import { ivrService } from '../../../services/api';
+import { useToast } from '../../../components/Toast';
 
 /**
  * Hook que gestiona la conexión WebSocket STOMP con el ivr-service.
@@ -97,7 +97,7 @@ export const useLiveCalls = () => {
     return () => {
       client.deactivate();
     };
-  }, [toast]); // Añadimos toast a las dependencias por seguridad
+  }, [toast]);
 
   return { liveCalls, connected };
 };

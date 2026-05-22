@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { PhoneCall, Lock, Mail, AlertCircle } from 'lucide-react';
-import { Card } from '../components/Card';
-import { Button } from '../components/Button';
-import { useAuth } from '../contexts/AuthContext';
+import { Card } from '../../../components/Card';
+import { Button } from '../../../components/Button';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
