@@ -1,107 +1,15 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { ReactFlow, Background, Controls, applyNodeChanges, applyEdgeChanges, Handle, Position, MarkerType } from '@xyflow/react';
+import { ReactFlow, Background, Controls, applyNodeChanges, applyEdgeChanges, MarkerType } from '@xyflow/react';
 import type { NodeChange, EdgeChange, Edge, Node } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Card } from '../../../components/Card';
 import { 
   PhoneCall, Globe, ShieldCheck, CreditCard, CheckCircle2, 
-  User, HelpCircle, Headset, Zap, Activity, Play, Square, 
-  RefreshCw, Sparkles 
+  User, Headset, Activity
 } from 'lucide-react';
-import { cn } from '../../../utils/cn';
 import { useLiveCalls } from '../hooks/useLiveCalls';
 import type { Call } from '../../../types';
-
-// Define the node types
-const IvrNode = ({ data, isConnectable }: any) => {
-  const isCompleted = data.status === 'completed';
-  const isInProgress = data.status === 'in-progress';
-  const isFailed = data.status === 'failed';
-
-  const Icon = data.icon || HelpCircle;
-
-  return (
-    <div className={cn(
-      "px-4 py-3 rounded-2xl border-2 shadow-2xl w-[240px] transition-all duration-500",
-      "glass backdrop-blur-xl relative overflow-hidden group",
-      isCompleted ? "border-green-500/40 bg-green-500/5 shadow-green-500/10" :
-      isInProgress ? "border-primary/50 bg-primary/10 shadow-primary/30 animate-pulse-slow" :
-      isFailed ? "border-red-500/40 bg-red-500/5 shadow-red-500/10" :
-      "border-border/40 bg-secondary/20 opacity-60 grayscale-[0.5]"
-    )}>
-      <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-background !border-2 !border-primary !shadow-glow" isConnectable={isConnectable} />
-      
-      {/* Decorative background glow for active nodes */}
-      {isInProgress && (
-        <div className="absolute -inset-1 bg-primary/20 blur-2xl rounded-full animate-pulse" />
-      )}
-      
-      <div className="relative z-10 flex items-start space-x-4">
-        <div className={cn(
-          "p-2.5 rounded-xl shrink-0 transition-transform duration-500 group-hover:scale-110 shadow-inner",
-          isCompleted ? "bg-green-500/20 text-green-400" :
-          isInProgress ? "bg-primary/20 text-primary" :
-          isFailed ? "bg-red-500/20 text-red-400" :
-          "bg-secondary/50 text-text-secondary"
-        )}>
-          <Icon size={22} className={cn(isInProgress && "animate-bounce-slow")} />
-        </div>
-        <div className="flex-1">
-          <h3 className={cn(
-            "text-sm font-black tracking-tight",
-            isCompleted ? "text-green-400" :
-            isInProgress ? "text-white" :
-            isFailed ? "text-red-400" :
-            "text-text-secondary"
-          )}>{data.label}</h3>
-          <p className="text-[11px] text-text-secondary mt-1 leading-tight font-medium opacity-80">{data.description}</p>
-        </div>
-      </div>
-
-      {data.action && (
-        <div className="mt-3 pt-2 border-t border-white/5 text-[10px] text-text-secondary font-mono bg-black/30 rounded-lg px-2 py-1.5 relative z-10 flex items-center justify-between">
-          <span>DTMF Input:</span>
-          <span className="text-primary font-black bg-primary/10 px-1.5 rounded">{data.action}</span>
-        </div>
-      )}
-
-      {isCompleted && (
-        <div className="absolute top-2 right-2 text-green-500 animate-in zoom-in duration-300">
-          <CheckCircle2 size={16} />
-        </div>
-      )}
-
-      <Handle type="source" position={Position.Bottom} className="!w-3 !h-3 !bg-background !border-2 !border-primary !shadow-glow" isConnectable={isConnectable} />
-    </div>
-  );
-};
-
-const ServiceNode = ({ data }: any) => {
-  const Icon = data.icon || Globe;
-  return (
-    <div className={cn(
-      "px-5 py-4 rounded-2xl border border-white/10 shadow-2xl w-[200px] transition-all duration-300",
-      "glass-dark backdrop-blur-md bg-black/40 group hover:border-primary/30"
-    )}>
-      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-primary !border-none" />
-      <div className="flex items-center space-x-3">
-        <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-transparent text-primary group-hover:rotate-12 transition-transform">
-          <Icon size={20} />
-        </div>
-        <div>
-          <h3 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">{data.label}</h3>
-          <p className="text-[9px] text-text-secondary font-mono mt-0.5 opacity-60">EXTERNAL_MICROSERVICE</p>
-        </div>
-      </div>
-      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-primary !border-none" />
-    </div>
-  );
-};
-
-const nodeTypes = {
-  ivrNode: IvrNode,
-  serviceNode: ServiceNode,
-};
+import { nodeTypes, SimulatorHud, EventsLogPanel } from '../components';
 
 const initialNodes: Node[] = [
   // User Flow
@@ -512,94 +420,15 @@ export const IvrFlow: React.FC = () => {
           </div>
 
           {/* Floating Call Simulator HUD Widget */}
-          <div className="absolute bottom-6 right-6 z-10 glass-dark p-5 rounded-2xl border border-white/10 shadow-2xl backdrop-blur-xl max-w-[320px] w-full flex flex-col space-y-4">
-            <div className="flex items-center justify-between border-b border-white/5 pb-3">
-              <div className="flex items-center space-x-2">
-                <Sparkles size={16} className="text-primary animate-pulse" />
-                <h4 className="text-[11px] font-black text-white uppercase tracking-widest">IVR Local Simulator</h4>
-              </div>
-              <div className="flex items-center space-x-1.5">
-                <span className={cn(
-                  "w-1.5 h-1.5 rounded-full",
-                  isSimulating ? "bg-amber-500 animate-pulse" : "bg-white/20"
-                )} />
-                <span className="text-[9px] font-bold text-text-secondary uppercase tracking-wider">
-                  {isSimulating ? `Paso ${simStep}/6` : "Standby"}
-                </span>
-              </div>
-            </div>
-
-            {!isSimulating ? (
-              <div className="space-y-3">
-                <p className="text-[10px] text-text-secondary leading-relaxed font-medium">
-                  Simula flujos completos del árbol de decisiones IVR directamente en el frontend, sin dependencias del servidor.
-                </p>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <button
-                    onClick={() => startSimulation('payment')}
-                    className="flex items-center justify-center space-x-1.5 bg-primary/20 hover:bg-primary/30 border border-primary/30 hover:border-primary/50 text-white rounded-xl py-2 px-2.5 text-[10px] font-bold transition-all"
-                  >
-                    <Play size={12} className="text-primary" />
-                    <span>Pago Exitoso</span>
-                  </button>
-                  <button
-                    onClick={() => startSimulation('agent')}
-                    className="flex items-center justify-center space-x-1.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/25 text-white rounded-xl py-2 px-2.5 text-[10px] font-bold transition-all"
-                  >
-                    <Play size={12} className="text-white animate-pulse" />
-                    <span>Transf. Agente</span>
-                  </button>
-                </div>
-                {cachedCall && (
-                  <button
-                    onClick={resetToPending}
-                    className="w-full flex items-center justify-center space-x-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/35 text-red-400 rounded-xl py-2 text-[10px] font-bold transition-all"
-                  >
-                    <RefreshCw size={12} />
-                    <span>Limpiar Caché Local</span>
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {/* Step Description */}
-                <div className="bg-black/30 p-3 rounded-xl border border-white/5 flex flex-col space-y-1">
-                  <span className="text-[8px] uppercase font-black tracking-widest text-primary">Simulando paso actual</span>
-                  <span className="text-[11px] font-bold text-white leading-tight">
-                    {simStep === 1 && "📞 Recibiendo llamada entrante..."}
-                    {simStep === 2 && "🔒 Autenticando usuario mediante CallerID..."}
-                    {simStep === 3 && "💳 Consultando deuda pendiente en BD..."}
-                    {simStep === 4 && "🔊 Emitiendo menú de opciones IVR..."}
-                    {simStep === 5 && `⌨️ Selección ingresada [Opción ${simPath === 'payment' ? '1' : '2'}]`}
-                    {simStep === 6 && (simPath === 'payment' ? "✅ Transacción procesada con éxito!" : "🎧 Conectando con agente directo...")}
-                  </span>
-                </div>
-
-                {/* Progress bar */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[8px] font-black uppercase text-text-secondary font-mono tracking-wider">
-                    <span>Avance</span>
-                    <span>{Math.round((simStep / 6) * 100)}%</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-primary to-green-500 transition-all duration-500" 
-                      style={{ width: `${(simStep / 6) * 100}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Stop Button */}
-                <button
-                  onClick={stopSimulation}
-                  className="w-full flex items-center justify-center space-x-1.5 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 hover:border-red-500/50 text-white rounded-xl py-2 text-[10px] font-bold transition-all animate-pulse"
-                >
-                  <Square size={12} className="fill-white" />
-                  <span>Detener Simulación</span>
-                </button>
-              </div>
-            )}
-          </div>
+          <SimulatorHud
+            isSimulating={isSimulating}
+            simStep={simStep}
+            simPath={simPath}
+            startSimulation={startSimulation}
+            stopSimulation={stopSimulation}
+            resetToPending={resetToPending}
+            cachedCall={cachedCall}
+          />
 
           <div className="h-full w-full">
             <ReactFlow
@@ -621,71 +450,11 @@ export const IvrFlow: React.FC = () => {
         </Card>
 
         {/* Side Panel: System Logs */}
-        <Card className="flex-1 glass-dark border-white/5 p-6 flex flex-col overflow-hidden shadow-2xl">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-primary/20 rounded-lg text-primary">
-                <Zap size={18} />
-              </div>
-              <h3 className="font-black text-white uppercase tracking-[0.15em] text-xs">Events Log</h3>
-            </div>
-            <span className="text-[9px] font-mono text-text-secondary opacity-50 uppercase">Secured v2.4</span>
-          </div>
-
-          <div className="flex-1 overflow-y-auto space-y-4 pr-3 scrollbar-hide custom-scrollbar">
-            {activeCall?.callEvents && activeCall.callEvents.length > 0 ? (
-              activeCall.callEvents.map((event, idx) => (
-                <div key={idx} className="flex space-x-4 group animate-slide-in-right" style={{ animationDelay: `${idx * 80}ms` }}>
-                  <div className="flex flex-col items-center pt-1">
-                    <div className="w-2 h-2 rounded-full bg-primary group-last:bg-primary group-last:animate-ping shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
-                    <div className="w-[1px] flex-1 bg-white/5 mt-2 group-last:hidden" />
-                  </div>
-                  <div className="flex-1 pb-4">
-                    <p className="text-[11px] leading-relaxed text-text-secondary group-last:text-white group-last:font-bold transition-all">
-                      {event}
-                    </p>
-                    <span className="text-[9px] font-mono text-white/20 mt-1 block">T+{idx * 2}s</span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center py-10">
-                <div className="w-16 h-16 rounded-full bg-secondary/30 flex items-center justify-center mb-4 border border-white/5">
-                  <Globe size={32} className="text-border animate-spin-slow opacity-30" />
-                </div>
-                <p className="text-xs text-text-secondary font-medium italic px-6 opacity-60">
-                  Awaiting encrypted signals from the voice node matrix...
-                </p>
-              </div>
-            )}
-          </div>
-
-          {activeCall && (
-            <div className="mt-6 pt-6 border-t border-white/5">
-              <div className="p-4 bg-primary/5 rounded-2xl border border-primary/20 backdrop-blur-xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-30 transition-opacity">
-                  <ShieldCheck size={40} />
-                </div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-[10px] uppercase font-black text-primary tracking-widest">
-                    {isSimulating ? "SIMULATION SESSION" : "Active session"}
-                  </span>
-                  <div className="flex items-center space-x-1">
-                    <div className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
-                    <span className="text-[9px] font-black font-mono text-green-500">
-                      {isSimulating ? "SIMULATED" : "ENCRYPTED"}
-                    </span>
-                  </div>
-                </div>
-                <div className="text-[10px] font-mono text-text-secondary truncate bg-black/20 p-2 rounded-lg border border-white/5">
-                  {activeCall.id}
-                </div>
-              </div>
-            </div>
-          )}
-        </Card>
+        <EventsLogPanel
+          activeCall={activeCall}
+          isSimulating={isSimulating}
+        />
       </div>
     </div>
   );
 };
-
