@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { 
-  Phone, CheckCircle, XCircle, 
+  CheckCircle, XCircle, 
   Wifi, WifiOff, Bell
 } from 'lucide-react';
 import { Card } from '../../../components/Card';
@@ -12,7 +12,8 @@ import { Loader } from '../../../components/Loader';
 import { cn } from '../../../utils/cn';
 
 // Subcomponents
-import { DashboardHeader, TimeRange, DashboardTab } from '../components/DashboardHeader';
+import { DashboardHeader } from '../components/DashboardHeader';
+import type { TimeRange, DashboardTab } from '../components/DashboardHeader';
 import { StatsGrid } from '../components/StatsGrid';
 import { AnalyticsCharts } from '../components/AnalyticsCharts';
 
