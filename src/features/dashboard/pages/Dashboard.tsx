@@ -1,17 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { 
-  AreaChart, Area, 
-  XAxis, YAxis, 
-  CartesianGrid, Tooltip, 
-  ResponsiveContainer, PieChart, Pie, Cell, Legend,
-  BarChart, Bar, 
-  LineChart, Line
-} from 'recharts';
-import { 
   Phone, CheckCircle, XCircle, 
-  TrendingUp, TrendingDown, DollarSign, 
-  Wifi, WifiOff, Bell, Clock, 
-  BarChart2, Percent, ShieldCheck
+  Wifi, WifiOff, Bell
 } from 'lucide-react';
 import { Card } from '../../../components/Card';
 import { Table, TableRow, TableCell } from '../../../components/Table';
@@ -21,14 +11,16 @@ import type { PaymentStats, Call } from '../../../types';
 import { Loader } from '../../../components/Loader';
 import { cn } from '../../../utils/cn';
 
+// Subcomponents
+import { DashboardHeader, TimeRange, DashboardTab } from '../components/DashboardHeader';
+import { StatsGrid } from '../components/StatsGrid';
+import { AnalyticsCharts } from '../components/AnalyticsCharts';
+
 interface Toast {
   id: string;
   message: string;
   type: 'success' | 'info' | 'error';
 }
-
-type TimeRange = 'today' | 'week' | 'month' | 'year';
-type DashboardTab = 'realtime' | 'analytics';
 
 export const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<DashboardTab>('realtime');
@@ -231,7 +223,7 @@ export const Dashboard: React.FC = () => {
           { name: 'Jul', completed: 4700, failed: 1380 },
           { name: 'Aug', completed: 4800, failed: 1390 },
           { name: 'Sep', completed: 4300, failed: 1250 },
-          { name: 'Oct', completed: 4600, failed: 1300 },
+          { name: 'Oct', completed: 4600, text: '', failed: 1300 },
           { name: 'Nov', completed: 4500, text: '', failed: 1290 },
           { name: 'Dec', completed: 4120, failed: 1620 }
         ],
@@ -259,133 +251,7 @@ export const Dashboard: React.FC = () => {
     }
   }, [timeRange]);
 
-  // Formateador de Tooltip Recharts para mantener la estética glassmorphic
-  const CustomTooltip = useCallback(({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="glass border border-white/10 rounded-2xl p-4 shadow-2xl backdrop-blur-md bg-secondary/85 animate-fade-in">
-          <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-2">{label}</p>
-          {payload.map((item: any, index: number) => (
-            <div key={index} className="flex items-center justify-between gap-6 my-1.5">
-              <span className="text-xs font-semibold flex items-center gap-2" style={{ color: item.color || item.stroke }}>
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color || item.stroke }}></span>
-                {item.name}
-              </span>
-              <span className="text-sm font-bold text-white">
-                {item.dataKey === 'amount' ? `$${item.value.toLocaleString()}` : item.value.toLocaleString()}
-              </span>
-            </div>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  }, []);
-
   if (loading || !stats) return <Loader />;
-
-  // Métricas de tiempo real
-  const realtimeMetrics = [
-    { 
-      label: 'Total Calls', 
-      value: stats.totalCalls ?? 0, 
-      icon: Phone, 
-      color: 'text-indigo-400', 
-      bg: 'bg-indigo-500/10', 
-      glow: 'shadow-indigo-500/10 hover:shadow-indigo-500/20 border-indigo-500/20',
-      trend: '+12.5%', 
-      isPositive: true 
-    },
-    { 
-      label: 'Successful Payments', 
-      value: stats.successfulPayments ?? 0, 
-      icon: CheckCircle, 
-      color: 'text-emerald-400', 
-      bg: 'bg-emerald-500/10', 
-      glow: 'shadow-emerald-500/10 hover:shadow-emerald-500/20 border-emerald-500/20',
-      trend: '+15.2%', 
-      isPositive: true 
-    },
-    { 
-      label: 'Failed Payments', 
-      value: stats.failedPayments ?? 0, 
-      icon: XCircle, 
-      color: 'text-rose-400', 
-      bg: 'bg-rose-500/10', 
-      glow: 'shadow-rose-500/10 hover:shadow-rose-500/20 border-rose-500/20',
-      trend: '-2.4%', 
-      isPositive: true 
-    },
-    { 
-      label: 'Total Revenue', 
-      value: `$${(stats.totalRevenue ?? 0).toLocaleString()}`, 
-      icon: DollarSign, 
-      color: 'text-amber-400', 
-      bg: 'bg-amber-500/10', 
-      glow: 'shadow-amber-500/10 hover:shadow-amber-500/20 border-amber-500/20',
-      trend: '+18.7%', 
-      isPositive: true 
-    },
-  ];
-
-  // Métricas avanzadas para la vista analítica
-  const analyticsMetrics = [
-    { 
-      label: 'Volume Volume (Revenue)', 
-      value: `$${analyticsData.totalRevenue.toLocaleString()}`, 
-      icon: DollarSign, 
-      color: 'text-violet-400', 
-      bg: 'bg-violet-500/10', 
-      glow: 'shadow-violet-500/10 hover:shadow-violet-500/20 border-violet-500/20',
-      trend: analyticsData.revenueTrend, 
-      isPositive: analyticsData.isRevenuePositive,
-      subtitle: 'Total invoice volume'
-    },
-    { 
-      label: 'Average Ticket Value', 
-      value: `$${analyticsData.avgTicket.toFixed(2)}`, 
-      icon: ShieldCheck, 
-      color: 'text-emerald-400', 
-      bg: 'bg-emerald-500/10', 
-      glow: 'shadow-emerald-500/10 hover:shadow-emerald-500/20 border-emerald-500/20',
-      trend: '+3.1%', 
-      isPositive: true,
-      subtitle: 'Value per successful call'
-    },
-    { 
-      label: 'Total Active Calls', 
-      value: analyticsData.totalCalls.toLocaleString(), 
-      icon: Phone, 
-      color: 'text-blue-400', 
-      bg: 'bg-blue-500/10', 
-      glow: 'shadow-blue-500/10 hover:shadow-blue-500/20 border-blue-500/20',
-      trend: analyticsData.callsTrend, 
-      isPositive: analyticsData.isCallsPositive,
-      subtitle: 'IVR Stream iterations'
-    },
-    { 
-      label: 'Conversion Rate', 
-      value: `${analyticsData.conversionRate}%`, 
-      icon: Percent, 
-      color: 'text-pink-400', 
-      bg: 'bg-pink-500/10', 
-      glow: 'shadow-pink-500/10 hover:shadow-pink-500/20 border-pink-500/20',
-      trend: analyticsData.conversionTrend, 
-      isPositive: analyticsData.isConversionPositive,
-      subtitle: 'Successful payment ratio'
-    },
-    { 
-      label: 'Avg. Call Duration', 
-      value: `${analyticsData.avgDuration}s`, 
-      icon: Clock, 
-      color: 'text-amber-400', 
-      bg: 'bg-amber-500/10', 
-      glow: 'shadow-amber-500/10 hover:shadow-amber-500/20 border-amber-500/20',
-      trend: analyticsData.durationTrend, 
-      isPositive: analyticsData.isDurationPositive,
-      subtitle: 'Average time in system'
-    },
-  ];
 
   return (
     <div className="space-y-8 animate-slide-up relative">
@@ -408,420 +274,27 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-4xl font-extrabold text-gradient tracking-tight">Dashboard Pro</h2>
-          <p className="text-text-secondary mt-2 flex items-center gap-2">
-            <span className={cn(
-              "flex h-2.5 w-2.5 rounded-full",
-              connected ? "bg-emerald-500 animate-pulse" : "bg-rose-500 animate-pulse"
-            )}></span>
-            {connected ? "Secure active gateway connected" : "Gateway offline, secure metrics active"}
-          </p>
-        </div>
-        
-        {/* Navigation Selector Mode */}
-        <div className="flex items-center space-x-2 bg-secondary/40 p-1.5 rounded-2xl border border-border/40 backdrop-blur-sm shadow-inner">
-          <button 
-            onClick={() => setActiveTab('realtime')}
-            className={cn(
-              "px-5 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300",
-              activeTab === 'realtime' 
-                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 scale-102" 
-                : "text-text-secondary hover:text-text-primary"
-            )}
-          >
-            Real-time
-          </button>
-          <button 
-            onClick={() => setActiveTab('analytics')}
-            className={cn(
-              "px-5 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300",
-              activeTab === 'analytics' 
-                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 scale-102" 
-                : "text-text-secondary hover:text-text-primary"
-            )}
-          >
-            Pro Analytics
-          </button>
-        </div>
-      </div>
-
-      {/* Time filters for Analytics View */}
-      {activeTab === 'analytics' && (
-        <div className="flex flex-wrap items-center justify-between gap-4 p-4 glass rounded-2xl border-white/5 bg-secondary/10">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-text-secondary px-2">Temporal Filter:</span>
-            <div className="flex items-center space-x-1.5 bg-black/20 p-1 rounded-xl border border-white/5">
-              {(['today', 'week', 'month', 'year'] as TimeRange[]).map((range) => (
-                <button
-                  key={range}
-                  onClick={() => setTimeRange(range)}
-                  className={cn(
-                    "px-4 py-1.5 text-xs font-bold capitalize rounded-lg transition-all",
-                    timeRange === range 
-                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20" 
-                      : "text-text-secondary hover:text-text-primary hover:bg-white/5"
-                  )}
-                >
-                  {range === 'week' ? '7 Days' : range === 'month' ? '30 Days' : range === 'year' ? '12 Months' : 'Today'}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-xs font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 rounded-xl">
-            <ShieldCheck size={14} />
-            <span>Audited Period</span>
-          </div>
-        </div>
-      )}
+      <DashboardHeader 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        timeRange={timeRange}
+        setTimeRange={setTimeRange}
+        connected={connected}
+      />
 
       {/* Metrics Grid */}
-      <div className={cn(
-        "grid gap-6 transition-all duration-500",
-        activeTab === 'realtime' ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-5"
-      )}>
-        {activeTab === 'realtime' ? (
-          realtimeMetrics.map((metric, idx) => (
-            <Card key={idx} className={cn("relative overflow-hidden group border bg-secondary/10 hover:bg-secondary/20 transition-all duration-300 shadow-xl", metric.glow)}>
-              <div className="absolute -right-4 -top-4 w-24 h-24 bg-gradient-to-br from-white/5 to-transparent rounded-full blur-2xl group-hover:w-32 group-hover:h-32 transition-all"></div>
-              <div className="flex items-center justify-between relative z-10">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-text-secondary opacity-70">{metric.label}</p>
-                  <h3 className="text-3xl font-black mt-2 tracking-tight">{metric.value}</h3>
-                </div>
-                <div className={cn('p-4 rounded-2xl transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 shadow-inner', metric.bg)}>
-                  <metric.icon className={metric.color} size={26} />
-                </div>
-              </div>
-              <div className="mt-6 flex items-center text-xs font-bold">
-                <div className={cn(
-                  "flex items-center px-2 py-1 rounded-lg",
-                  metric.isPositive ? "text-emerald-500 bg-emerald-500/10" : "text-rose-500 bg-rose-500/10"
-                )}>
-                  {metric.isPositive ? <TrendingUp size={12} className="mr-1" /> : <TrendingDown size={12} className="mr-1" />}
-                  <span>{metric.trend}</span>
-                </div>
-                <span className="ml-2 text-text-secondary opacity-60">vs last month</span>
-              </div>
-            </Card>
-          ))
-        ) : (
-          analyticsMetrics.map((metric, idx) => (
-            <Card key={idx} className={cn("relative overflow-hidden group border bg-secondary/10 hover:bg-secondary/20 transition-all duration-300 shadow-xl", metric.glow)}>
-              <div className="absolute -right-4 -top-4 w-24 h-24 bg-gradient-to-br from-white/5 to-transparent rounded-full blur-2xl group-hover:w-32 group-hover:h-32 transition-all"></div>
-              <div className="flex flex-col justify-between h-full relative z-10">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-text-secondary opacity-70">{metric.label}</p>
-                    <h3 className="text-2xl font-black mt-2 tracking-tight text-white">{metric.value}</h3>
-                  </div>
-                  <div className={cn('p-3 rounded-xl transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 shadow-inner', metric.bg)}>
-                    <metric.icon className={metric.color} size={20} />
-                  </div>
-                </div>
-                <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs font-bold">
-                  <span className="text-[10px] text-text-secondary font-medium truncate max-w-[90px]">{metric.subtitle}</span>
-                  <div className={cn(
-                    "flex items-center px-1.5 py-0.5 rounded-lg shrink-0",
-                    metric.isPositive ? "text-emerald-400 bg-emerald-500/10" : "text-rose-400 bg-rose-500/10"
-                  )}>
-                    {metric.isPositive ? <TrendingUp size={10} className="mr-0.5" /> : <TrendingDown size={10} className="mr-0.5" />}
-                    <span>{metric.trend}</span>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ))
-        )}
-      </div>
+      <StatsGrid 
+        activeTab={activeTab}
+        stats={stats}
+        analyticsData={analyticsData}
+      />
 
       {/* Main Analytical / Real-time Panels */}
-      {activeTab === 'realtime' ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Trend Chart (Area) */}
-          <Card title="Live Call Flow Status" description="Monitoring transaction stream attempts" className="lg:col-span-2 bg-secondary/5 border-border/30 backdrop-blur-md">
-            <div className="h-[350px] w-full mt-6">
-              <ResponsiveContainer width="100%" height={350}>
-                <AreaChart data={stats.chartData || []}>
-                  <defs>
-                    <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorFailed" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
-                  <XAxis 
-                    dataKey="name" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: '#71717a', fontSize: 11, fontWeight: 600 }} 
-                    dy={10}
-                  />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fill: '#71717a', fontSize: 11, fontWeight: 600 }} 
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Area 
-                    type="monotone" 
-                    dataKey="completed" 
-                    name="Successful"
-                    stroke="#6366f1" 
-                    strokeWidth={3}
-                    fillOpacity={1} 
-                    fill="url(#colorCompleted)" 
-                    animationDuration={1500}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="failed" 
-                    name="Failed"
-                    stroke="#ef4444" 
-                    strokeWidth={3}
-                    fillOpacity={1} 
-                    fill="url(#colorFailed)" 
-                    animationDuration={1800}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
-
-          {/* Success Rate Chart (Pie) */}
-          <Card title="Conversion Share" description="Ratio of secure checkouts" className="bg-secondary/5 border-border/30">
-            <div className="h-[350px] w-full mt-4 flex flex-col items-center justify-between">
-              <ResponsiveContainer width="100%" height={260}>
-                <PieChart>
-                  <Pie
-                    data={[
-                      { name: 'Successful Payments', value: stats.successfulPayments ?? 0 },
-                      { name: 'Failed Payments', value: stats.failedPayments ?? 0 },
-                    ]}
-                    innerRadius={70}
-                    outerRadius={92}
-                    paddingAngle={6}
-                    dataKey="value"
-                    animationBegin={200}
-                    animationDuration={1200}
-                  >
-                    <Cell fill="#6366f1" stroke="none" />
-                    <Cell fill="#ef4444" stroke="none" />
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '11px', fontWeight: 600 }} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="w-full flex justify-between items-center px-6 py-4 bg-indigo-500/5 rounded-2xl border border-indigo-500/10">
-                <div className="text-center">
-                  <p className="text-[10px] uppercase font-black tracking-widest text-text-secondary mb-1">Success Rate</p>
-                  <p className="text-2xl font-black text-emerald-400">{stats.conversionRate}%</p>
-                </div>
-                <div className="w-[1.5px] h-10 bg-border/40" />
-                <div className="text-center">
-                  <p className="text-[10px] uppercase font-black tracking-widest text-text-secondary mb-1">Avg. Ticket</p>
-                  <p className="text-2xl font-black text-white">$43.20</p>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-      ) : (
-        /* Analytics Tab Panels */
-        <div className="space-y-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            {/* Business Volume - Revenue Flow (BarChart) */}
-            <Card 
-              title="Revenue Flow Trend" 
-              description={`Volume of checkout invoices in selected timeframe.`}
-              className="lg:col-span-2 bg-secondary/5 border-border/30"
-            >
-              <div className="h-[350px] w-full mt-6">
-                <ResponsiveContainer width="100%" height={350}>
-                  <BarChart data={analyticsData.revenueChartData}>
-                    <defs>
-                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#818cf8" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#312e81" stopOpacity={0.2}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
-                    <XAxis 
-                      dataKey="name" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: '#71717a', fontSize: 11, fontWeight: 600 }} 
-                      dy={10}
-                    />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: '#71717a', fontSize: 11, fontWeight: 600 }} 
-                      tickFormatter={(value) => `$${value.toLocaleString()}`}
-                    />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Bar 
-                      dataKey="amount" 
-                      name="Revenue Volume" 
-                      fill="url(#colorRevenue)" 
-                      radius={[8, 8, 0, 0]}
-                      maxBarSize={45}
-                      animationDuration={1500}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
-
-            {/* IVR Selections Breakdown */}
-            <Card 
-              title="IVR Navigation Choices" 
-              description="User distribution inside Voice Node menus."
-              className="bg-secondary/5 border-border/30"
-            >
-              <div className="h-[350px] w-full mt-4 flex flex-col items-center justify-between">
-                <ResponsiveContainer width="100%" height={230}>
-                  <PieChart>
-                    <Pie
-                      data={analyticsData.ivrBreakdown}
-                      innerRadius={65}
-                      outerRadius={88}
-                      paddingAngle={5}
-                      dataKey="value"
-                      animationDuration={1200}
-                    >
-                      {analyticsData.ivrBreakdown.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                      ))}
-                    </Pie>
-                    <Tooltip content={<CustomTooltip />} />
-                  </PieChart>
-                </ResponsiveContainer>
-                
-                {/* Custom list description */}
-                <div className="w-full space-y-2 mt-2">
-                  {analyticsData.ivrBreakdown.map((entry, index) => (
-                    <div key={index} className="flex items-center justify-between text-xs px-2">
-                      <div className="flex items-center space-x-2">
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }}></span>
-                        <span className="font-bold text-text-primary">{entry.name}</span>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <span className="font-semibold text-text-secondary">{entry.value} iterations</span>
-                        <span className="font-black text-indigo-400 bg-indigo-500/5 px-2 py-0.5 rounded-md text-[10px]">
-                          {Math.round((entry.value / analyticsData.ivrBreakdown.reduce((sum, item) => sum + item.value, 0)) * 100)}%
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* Additional Operational Efficiency Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            {/* Conversion Speed & Volume Chart */}
-            <Card 
-              title="Operational Success vs Failure" 
-              description="Comparison of daily completion vs rejection counts"
-              className="lg:col-span-2 bg-secondary/5 border-border/30"
-            >
-              <div className="h-[300px] w-full mt-4">
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={analyticsData.chartData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
-                    <XAxis 
-                      dataKey="name" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: '#71717a', fontSize: 11, fontWeight: 600 }} 
-                      dy={10}
-                    />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{ fill: '#71717a', fontSize: 11, fontWeight: 600 }} 
-                    />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="completed" 
-                      name="Completed Payments"
-                      stroke="#10b981" 
-                      strokeWidth={3} 
-                      dot={{ r: 4, strokeWidth: 2 }}
-                      activeDot={{ r: 6 }}
-                      animationDuration={1500}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="failed" 
-                      name="Failed Payments"
-                      stroke="#ef4444" 
-                      strokeWidth={3} 
-                      dot={{ r: 4, strokeWidth: 2 }}
-                      activeDot={{ r: 6 }}
-                      animationDuration={1800}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
-
-            {/* Performance Indicators */}
-            <Card title="KPI Health Summary" description="Security metrics and audits" className="bg-secondary/5 border-border/30">
-              <div className="mt-4 space-y-4">
-                <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-                      <ShieldCheck size={20} />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-black uppercase text-text-secondary">Security Compliance</h4>
-                      <p className="text-sm font-bold text-white mt-0.5">AES-256 Enabled</p>
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Active</span>
-                </div>
-
-                <div className="p-4 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400">
-                      <BarChart2 size={20} />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-black uppercase text-text-secondary">Average Conversion</h4>
-                      <p className="text-sm font-bold text-white mt-0.5">80.4% Success Rate</p>
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">Optimal</span>
-                </div>
-
-                <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400">
-                      <Clock size={20} />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-black uppercase text-text-secondary">Latency Check</h4>
-                      <p className="text-sm font-bold text-white mt-0.5">IVR response 82ms</p>
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-400 border border-amber-500/20">Excellent</span>
-                </div>
-              </div>
-            </Card>
-          </div>
-        </div>
-      )}
+      <AnalyticsCharts 
+        activeTab={activeTab}
+        stats={stats}
+        analyticsData={analyticsData}
+      />
 
       {/* Live Calls Table - Always present in Real-time view */}
       {activeTab === 'realtime' && (
