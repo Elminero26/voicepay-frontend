@@ -10,6 +10,7 @@ import {
 import { useLiveCalls } from '../hooks/useLiveCalls';
 import type { Call } from '../../../types';
 import { nodeTypes, SimulatorHud, EventsLogPanel } from '../components';
+import { useCallStore } from '../../../stores/useCallStore';
 
 const initialNodes: Node[] = [
   // User Flow
@@ -50,55 +51,35 @@ export const IvrFlow: React.FC = () => {
   const { liveCalls, connected } = useLiveCalls();
   const [nodes, setNodes] = useState<Node[]>(initialNodes);
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
-  const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<string>('');
 
-  // 1. Persistencia: Hydrate cached active call from localStorage if it exists
-  const [cachedCall, setCachedCall] = useState<Call | null>(() => {
-    try {
-      const saved = localStorage.getItem('voicepay_last_active_call');
-      return saved ? JSON.parse(saved) : null;
-    } catch (e) {
-      return null;
-    }
-  });
+  const {
+    selectedCallId,
+    setSelectedCallId,
+    cachedCall,
+    setCachedCall,
+    isSimulating,
+    simStep,
+    setSimStep,
+    simPath,
+    simulatedCall,
+    setSimulatedCall,
+    startSimulation,
+    stopSimulation,
+    resetToPending,
+  } = useCallStore();
 
-  // 2. Simulador: states for local simulation
-  const [isSimulating, setIsSimulating] = useState(false);
-  const [simStep, setSimStep] = useState(0);
-  const [simPath, setSimPath] = useState<'payment' | 'agent'>('payment');
-  const [simulatedCall, setSimulatedCall] = useState<Call | null>(null);
   const simTimerRef = useRef<any>(null);
-
-  // Stop/Reset simulation
-  const stopSimulation = useCallback(() => {
-    setIsSimulating(false);
-    setSimStep(0);
-    setSimulatedCall(null);
-    if (simTimerRef.current) {
-      clearInterval(simTimerRef.current);
-      simTimerRef.current = null;
-    }
-  }, []);
-
-  // Start simulation
-  const startSimulation = useCallback((path: 'payment' | 'agent') => {
-    stopSimulation();
-    setIsSimulating(true);
-    setSimPath(path);
-    setSimStep(1);
-  }, [stopSimulation]);
 
   // Handle simulation timer steps
   useEffect(() => {
     if (!isSimulating) return;
 
     const runStep = () => {
-      setSimStep(prevStep => {
+      setSimStep((prevStep: number) => {
         const nextStep = prevStep + 1;
         if (nextStep > 6) {
-          setIsSimulating(false);
-          if (simTimerRef.current) clearInterval(simTimerRef.current);
+          stopSimulation();
           return prevStep;
         }
         return nextStep;
@@ -110,7 +91,7 @@ export const IvrFlow: React.FC = () => {
     return () => {
       if (simTimerRef.current) clearInterval(simTimerRef.current);
     };
-  }, [isSimulating]);
+  }, [isSimulating, stopSimulation, setSimStep]);
 
   // Construct simulated Call object depending on step and path
   useEffect(() => {
@@ -194,14 +175,11 @@ export const IvrFlow: React.FC = () => {
     };
 
     setSimulatedCall(currentCall);
-  }, [isSimulating, simStep, simPath]);
+  }, [isSimulating, simStep, simPath, setSimulatedCall]);
 
   // Clean simulation and cache in localStorage
-  const resetToPending = () => {
-    stopSimulation();
-    localStorage.removeItem('voicepay_last_active_call');
-    setCachedCall(null);
-    setSelectedCallId(null);
+  const handleResetToPending = () => {
+    resetToPending();
     setNodes(initialNodes);
     setEdges(initialEdges);
   };
@@ -213,17 +191,18 @@ export const IvrFlow: React.FC = () => {
     }
     const current = liveCalls.find(c => c.id === selectedCallId) || liveCalls[0] || null;
     if (current) {
-      localStorage.setItem('voicepay_last_active_call', JSON.stringify(current));
+      setCachedCall(current);
       return current;
     }
     return cachedCall;
-  }, [isSimulating, simulatedCall, liveCalls, selectedCallId, cachedCall]);
+  }, [isSimulating, simulatedCall, liveCalls, selectedCallId, cachedCall, setCachedCall]);
 
   useEffect(() => {
     if (activeCall && !selectedCallId) {
       setSelectedCallId(activeCall.id);
     }
-  }, [activeCall, selectedCallId]);
+  }, [activeCall, selectedCallId, setSelectedCallId]);
+
 
   const updateFlowFromCall = useCallback((call: Call) => {
     const status = call.status;
@@ -426,7 +405,7 @@ export const IvrFlow: React.FC = () => {
             simPath={simPath}
             startSimulation={startSimulation}
             stopSimulation={stopSimulation}
-            resetToPending={resetToPending}
+            resetToPending={handleResetToPending}
             cachedCall={cachedCall}
           />
 

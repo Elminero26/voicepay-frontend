@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { 
   CheckCircle, XCircle, 
-  Wifi, WifiOff, Bell
+  Wifi, WifiOff
 } from 'lucide-react';
 import { Card } from '../../../components/Card';
 import { Table, TableRow, TableCell } from '../../../components/Table';
@@ -17,12 +17,6 @@ import type { TimeRange, DashboardTab } from '../components/DashboardHeader';
 import { StatsGrid } from '../components/StatsGrid';
 import { AnalyticsCharts } from '../components/AnalyticsCharts';
 
-interface Toast {
-  id: string;
-  message: string;
-  type: 'success' | 'info' | 'error';
-}
-
 export const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<DashboardTab>('realtime');
   const [timeRange, setTimeRange] = useState<TimeRange>('week');
@@ -30,28 +24,9 @@ export const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<PaymentStats | null>(null);
   const [recentPayments, setRecentPayments] = useState<Call[]>([]);
   const [loading, setLoading] = useState(true);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const [lastCallCount, setLastCallCount] = useState(0);
 
   // WebSocket en tiempo real para llamadas activas
   const { liveCalls, connected } = useLiveCalls();
-
-  const addToast = useCallback((message: string, type: 'success' | 'info' | 'error' = 'info') => {
-    const id = Math.random().toString(36).substring(7);
-    setToasts(prev => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, 5000);
-  }, []);
-
-  // Detectar nuevas llamadas para mostrar Toast
-  useEffect(() => {
-    if (liveCalls.length > lastCallCount) {
-      const newCall = liveCalls[liveCalls.length - 1];
-      addToast(`Nueva llamada entrante: ${newCall.customerName || 'Desconocido'}`, 'info');
-    }
-    setLastCallCount(liveCalls.length);
-  }, [liveCalls, lastCallCount, addToast]);
 
   // Obtener estadísticas reales del backend en intervalos
   useEffect(() => {
@@ -256,24 +231,6 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-slide-up relative">
-      {/* Toast Notification System */}
-      <div className="fixed top-24 right-8 z-50 flex flex-col gap-3">
-        {toasts.map(toast => (
-          <div 
-            key={toast.id}
-            className={cn(
-              "flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md animate-slide-in-right",
-              toast.type === 'success' ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-400" :
-              toast.type === 'error' ? "bg-rose-500/20 border-rose-500/30 text-rose-400" :
-              "bg-indigo-500/20 border-indigo-500/30 text-indigo-200"
-            )}
-          >
-            <Bell size={18} className="animate-bounce" />
-            <span className="font-semibold text-sm">{toast.message}</span>
-          </div>
-        ))}
-      </div>
-
       {/* Header Section */}
       <DashboardHeader 
         activeTab={activeTab}
