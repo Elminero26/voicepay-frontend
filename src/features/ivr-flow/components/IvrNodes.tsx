@@ -1,6 +1,25 @@
 import { Handle, Position } from '@xyflow/react';
-import { HelpCircle, CheckCircle2, Globe } from 'lucide-react';
+import { 
+  HelpCircle, CheckCircle2, Globe, PhoneCall, ShieldCheck, 
+  CreditCard, User, Headset, Activity, MessageSquare, Zap, AlertTriangle 
+} from 'lucide-react';
 import { cn } from '../../../utils/cn';
+
+// Icon mapping dictionary to support serializable node data (strings instead of components)
+export const iconMap: { [key: string]: any } = {
+  PhoneCall,
+  Globe,
+  ShieldCheck,
+  CreditCard,
+  CheckCircle2,
+  User,
+  Headset,
+  Activity,
+  HelpCircle,
+  MessageSquare,
+  Zap,
+  AlertTriangle
+};
 
 // Custom IVR Node
 export const IvrNode = ({ data, isConnectable }: any) => {
@@ -8,7 +27,10 @@ export const IvrNode = ({ data, isConnectable }: any) => {
   const isInProgress = data.status === 'in-progress';
   const isFailed = data.status === 'failed';
 
-  const Icon = data.icon || HelpCircle;
+  // Support both component imports and string keys for serializability
+  const Icon = typeof data.icon === 'string' 
+    ? (iconMap[data.icon] || HelpCircle) 
+    : (data.icon || HelpCircle);
 
   return (
     <div className={cn(
@@ -68,7 +90,10 @@ export const IvrNode = ({ data, isConnectable }: any) => {
 
 // Custom Service Node
 export const ServiceNode = ({ data }: any) => {
-  const Icon = data.icon || Globe;
+  const Icon = typeof data.icon === 'string'
+    ? (iconMap[data.icon] || Globe)
+    : (data.icon || Globe);
+
   return (
     <div className={cn(
       "px-5 py-4 rounded-2xl border border-white/10 shadow-2xl w-[200px] transition-all duration-300",

@@ -1,33 +1,34 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { ReactFlow, Background, Controls, applyNodeChanges, applyEdgeChanges, MarkerType } from '@xyflow/react';
+import { ReactFlow, Background, Controls, applyNodeChanges, applyEdgeChanges, MarkerType, addEdge } from '@xyflow/react';
 import type { NodeChange, EdgeChange, Edge, Node } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Card } from '../../../components/Card';
 import { 
   PhoneCall, Globe, ShieldCheck, CreditCard, CheckCircle2, 
-  User, Headset, Activity
+  User, Headset, Activity, Sparkles
 } from 'lucide-react';
 import { useLiveCalls } from '../hooks/useLiveCalls';
 import type { Call } from '../../../types';
-import { nodeTypes, SimulatorHud, EventsLogPanel } from '../components';
+import { nodeTypes, SimulatorHud, EventsLogPanel, DesignerPanel } from '../components';
 import { useCallStore } from '../../../stores/useCallStore';
+import { cn } from '../../../utils/cn';
 
 const initialNodes: Node[] = [
   // User Flow
-  { id: '1', type: 'ivrNode', position: { x: 250, y: 50 }, data: { label: 'Incoming Call', description: 'User dials the IVR system', status: 'pending', icon: PhoneCall } },
-  { id: '2', type: 'ivrNode', position: { x: 250, y: 180 }, data: { label: 'Authentication', description: 'Identifying user by phone', status: 'pending', icon: ShieldCheck } },
-  { id: '3', type: 'ivrNode', position: { x: 250, y: 310 }, data: { label: 'Payment Inquiry', description: 'Checking pending amount', status: 'pending', icon: CreditCard } },
-  { id: '4', type: 'ivrNode', position: { x: 250, y: 440 }, data: { label: 'User Selection', description: 'Waiting for DTMF (1 or 2)', status: 'pending', icon: User } },
+  { id: '1', type: 'ivrNode', position: { x: 250, y: 50 }, data: { label: 'Incoming Call', description: 'User dials the IVR system', status: 'pending', icon: 'PhoneCall' } },
+  { id: '2', type: 'ivrNode', position: { x: 250, y: 180 }, data: { label: 'Authentication', description: 'Identifying user by phone', status: 'pending', icon: 'ShieldCheck' } },
+  { id: '3', type: 'ivrNode', position: { x: 250, y: 310 }, data: { label: 'Payment Inquiry', description: 'Checking pending amount', status: 'pending', icon: 'CreditCard' } },
+  { id: '4', type: 'ivrNode', position: { x: 250, y: 440 }, data: { label: 'User Selection', description: 'Waiting for DTMF (1 or 2)', status: 'pending', icon: 'User' } },
   
   // Branches
-  { id: '5', type: 'ivrNode', position: { x: 50, y: 580 }, data: { label: 'Payment Status', description: 'Final transaction result', status: 'pending', icon: CheckCircle2 } },
-  { id: '6', type: 'ivrNode', position: { x: 450, y: 580 }, data: { label: 'Agent Transfer', description: 'Connecting to human agent', status: 'pending', icon: Headset } },
+  { id: '5', type: 'ivrNode', position: { x: 50, y: 580 }, data: { label: 'Payment Status', description: 'Final transaction result', status: 'pending', icon: 'CheckCircle2' } },
+  { id: '6', type: 'ivrNode', position: { x: 450, y: 580 }, data: { label: 'Agent Transfer', description: 'Connecting to human agent', status: 'pending', icon: 'Headset' } },
 
   // External Services
-  { id: 'user-service', type: 'serviceNode', position: { x: 650, y: 180 }, data: { label: 'User Service', icon: User } },
-  { id: 'payment-service', type: 'serviceNode', position: { x: 650, y: 310 }, data: { label: 'Payment Service', icon: CreditCard } },
-  { id: 'notification-service', type: 'serviceNode', position: { x: 650, y: 580 }, data: { label: 'Notif. Service', icon: Globe } },
-  { id: 'agent-service', type: 'serviceNode', position: { x: 650, y: 700 }, data: { label: 'Human Agent', icon: Headset } }
+  { id: 'user-service', type: 'serviceNode', position: { x: 650, y: 180 }, data: { label: 'User Service', icon: 'User' } },
+  { id: 'payment-service', type: 'serviceNode', position: { x: 650, y: 310 }, data: { label: 'Payment Service', icon: 'CreditCard' } },
+  { id: 'notification-service', type: 'serviceNode', position: { x: 650, y: 580 }, data: { label: 'Notif. Service', icon: 'Globe' } },
+  { id: 'agent-service', type: 'serviceNode', position: { x: 650, y: 700 }, data: { label: 'Human Agent', icon: 'Headset' } }
 ];
 
 const initialEdges: Edge[] = [
@@ -49,8 +50,37 @@ const initialEdges: Edge[] = [
 
 export const IvrFlow: React.FC = () => {
   const { liveCalls, connected } = useLiveCalls();
-  const [nodes, setNodes] = useState<Node[]>(initialNodes);
-  const [edges, setEdges] = useState<Edge[]>(initialEdges);
+  
+  // State for Switch Mode
+  const [mode, setMode] = useState<'live' | 'designer'>('live');
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  // Initialize nodes and edges from localStorage if present
+  const [nodes, setNodes] = useState<Node[]>(() => {
+    try {
+      const savedNodes = localStorage.getItem('voicepay_ivr_nodes');
+      if (savedNodes) {
+        return JSON.parse(savedNodes);
+      }
+    } catch (e) {
+      console.error('Error loading custom IVR nodes:', e);
+    }
+    return initialNodes;
+  });
+
+  const [edges, setEdges] = useState<Edge[]>(() => {
+    try {
+      const savedEdges = localStorage.getItem('voicepay_ivr_edges');
+      if (savedEdges) {
+        return JSON.parse(savedEdges);
+      }
+    } catch (e) {
+      console.error('Error loading custom IVR edges:', e);
+    }
+    return initialEdges;
+  });
+
   const [lastUpdate, setLastUpdate] = useState<string>('');
 
   const {
@@ -67,6 +97,7 @@ export const IvrFlow: React.FC = () => {
     startSimulation,
     stopSimulation,
     resetToPending,
+    toastFn,
   } = useCallStore();
 
   const simTimerRef = useRef<any>(null);
@@ -182,6 +213,9 @@ export const IvrFlow: React.FC = () => {
     resetToPending();
     setNodes(initialNodes);
     setEdges(initialEdges);
+    localStorage.removeItem('voicepay_ivr_nodes');
+    localStorage.removeItem('voicepay_ivr_edges');
+    setHasChanges(false);
   };
 
   // Determine the active call from WebSocket stream, simulation or cache
@@ -202,7 +236,6 @@ export const IvrFlow: React.FC = () => {
       setSelectedCallId(activeCall.id);
     }
   }, [activeCall, selectedCallId, setSelectedCallId]);
-
 
   const updateFlowFromCall = useCallback((call: Call) => {
     const status = call.status;
@@ -249,7 +282,7 @@ export const IvrFlow: React.FC = () => {
       // Branch 6: Agent (Option 2)
       if (node.id === '6') {
         if (option === '2') {
-          newNodeStatus = 'completed'; // For demo, let's say it's completed once transferred
+          newNodeStatus = 'completed';
         }
       }
 
@@ -293,22 +326,192 @@ export const IvrFlow: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (activeCall) {
-      updateFlowFromCall(activeCall);
-    } else {
-      setNodes(initialNodes);
-      setEdges(initialEdges);
+    // Only synchronize flow updates from active call when in Live Status mode
+    if (mode === 'live') {
+      if (activeCall) {
+        updateFlowFromCall(activeCall);
+      } else {
+        // Fallback to local storage if loaded, otherwise initials
+        const savedNodes = localStorage.getItem('voicepay_ivr_nodes');
+        if (savedNodes) {
+          setNodes(JSON.parse(savedNodes));
+        } else {
+          setNodes(initialNodes);
+        }
+        
+        const savedEdges = localStorage.getItem('voicepay_ivr_edges');
+        if (savedEdges) {
+          setEdges(JSON.parse(savedEdges));
+        } else {
+          setEdges(initialEdges);
+        }
+      }
     }
-  }, [activeCall, updateFlowFromCall]);
+  }, [activeCall, updateFlowFromCall, mode]);
 
+  // React Flow Handlers
   const onNodesChange = useCallback(
-    (changes: NodeChange<Node>[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    (changes: NodeChange<Node>[]) => {
+      setNodes((nds) => applyNodeChanges(changes, nds));
+      const hasRealChange = changes.some(c => c.type === 'position' || c.type === 'dimensions' || c.type === 'remove');
+      if (hasRealChange) {
+        setHasChanges(true);
+      }
+    },
     []
   );
+
   const onEdgesChange = useCallback(
-    (changes: EdgeChange<Edge>[]) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    (changes: EdgeChange<Edge>[]) => {
+      setEdges((eds) => applyEdgeChanges(changes, eds));
+      const hasRealChange = changes.some(c => c.type === 'remove');
+      if (hasRealChange) {
+        setHasChanges(true);
+      }
+    },
     []
   );
+
+  const onConnect = useCallback(
+    (params: any) => {
+      setEdges((eds) => addEdge({
+        ...params,
+        animated: false,
+        style: { stroke: '#3b82f6', strokeWidth: 2 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#3b82f6' }
+      }, eds));
+      setHasChanges(true);
+    },
+    []
+  );
+
+  // Designer Action Callbacks
+  const handleUpdateNode = useCallback((id: string, updatedData: any) => {
+    setNodes(nds => nds.map(node => {
+      if (node.id === id) {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            ...updatedData
+          }
+        };
+      }
+      return node;
+    }));
+    setHasChanges(true);
+  }, []);
+
+  const handleDeleteNode = useCallback((id: string) => {
+    setNodes(nds => nds.filter(node => node.id !== id));
+    setEdges(eds => eds.filter(edge => edge.source !== id && edge.target !== id));
+    setSelectedNodeId(null);
+    setHasChanges(true);
+  }, []);
+
+  const handleAddNode = useCallback((type: 'ivrNode' | 'serviceNode') => {
+    const newId = `node-${Date.now()}`;
+    const newNode: Node = {
+      id: newId,
+      type,
+      position: { 
+        x: 150 + Math.random() * 150, 
+        y: 150 + Math.random() * 150 
+      },
+      data: {
+        label: type === 'ivrNode' ? 'New IVR Step' : 'New Service',
+        description: type === 'ivrNode' ? 'Configure step description' : 'External microservice integration',
+        status: 'pending',
+        icon: type === 'ivrNode' ? 'HelpCircle' : 'Globe',
+      }
+    };
+    setNodes(nds => [...nds, newNode]);
+    setSelectedNodeId(newId);
+    setHasChanges(true);
+  }, []);
+
+  const handleSaveFlow = useCallback(() => {
+    const serializedNodes = nodes.map(node => {
+      let iconName = 'HelpCircle';
+      if (typeof node.data.icon === 'string') {
+        iconName = node.data.icon;
+      } else if (node.data.icon && node.data.icon.name) {
+        iconName = node.data.icon.name;
+      } else {
+        // Fallback map based on default nodes
+        if (node.id === '1') iconName = 'PhoneCall';
+        else if (node.id === '2') iconName = 'ShieldCheck';
+        else if (node.id === '3') iconName = 'CreditCard';
+        else if (node.id === '4') iconName = 'User';
+        else if (node.id === '5') iconName = 'CheckCircle2';
+        else if (node.id === '6') iconName = 'Headset';
+        else if (node.id === 'user-service') iconName = 'User';
+        else if (node.id === 'payment-service') iconName = 'CreditCard';
+        else if (node.id === 'notification-service') iconName = 'Globe';
+        else if (node.id === 'agent-service') iconName = 'Headset';
+      }
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          icon: iconName
+        }
+      };
+    });
+
+    localStorage.setItem('voicepay_ivr_nodes', JSON.stringify(serializedNodes));
+    localStorage.setItem('voicepay_ivr_edges', JSON.stringify(edges));
+    setHasChanges(false);
+    
+    if (toastFn) {
+      toastFn('IVR Flow Saved', 'The custom Interactive Designer flow layout was successfully saved.', 'success');
+    }
+  }, [nodes, edges, toastFn]);
+
+  const handleResetFlow = useCallback(() => {
+    localStorage.removeItem('voicepay_ivr_nodes');
+    localStorage.removeItem('voicepay_ivr_edges');
+    setNodes(initialNodes);
+    setEdges(initialEdges);
+    setHasChanges(false);
+    setSelectedNodeId(null);
+    if (toastFn) {
+      toastFn('Flow Restored', 'The IVR flow has been reset to the default template.', 'info');
+    }
+  }, [toastFn]);
+
+  // Memoize properties for designer selector
+  const selectedNode = useMemo(() => {
+    return nodes.find(n => n.id === selectedNodeId) || null;
+  }, [nodes, selectedNodeId]);
+
+  // Clean canvas values when toggling between editing and viewing
+  const processedNodes = useMemo(() => {
+    if (mode === 'designer') {
+      return nodes.map(node => ({
+        ...node,
+        data: {
+          ...node.data,
+          status: 'idle',
+        }
+      }));
+    }
+    return nodes;
+  }, [nodes, mode]);
+
+  const processedEdges = useMemo(() => {
+    if (mode === 'designer') {
+      return edges.map(edge => ({
+        ...edge,
+        animated: false,
+        style: {
+          ...edge.style,
+          stroke: '#4b5563',
+        }
+      }));
+    }
+    return edges;
+  }, [edges, mode]);
 
   return (
     <div className="space-y-6 flex-1 flex flex-col animate-fade-in pb-4">
@@ -317,7 +520,7 @@ export const IvrFlow: React.FC = () => {
         <div>
           <div className="flex items-center space-x-3 mb-1">
             <h2 className="text-4xl font-black text-gradient tracking-tighter">IVR Flow Visualizer</h2>
-            {connected && !isSimulating && (
+            {mode === 'live' && connected && !isSimulating && (
               <div className="flex items-center space-x-2 bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -326,7 +529,7 @@ export const IvrFlow: React.FC = () => {
                 <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest">Live Stream</span>
               </div>
             )}
-            {isSimulating && (
+            {mode === 'live' && isSimulating && (
               <div className="flex items-center space-x-2 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -335,12 +538,59 @@ export const IvrFlow: React.FC = () => {
                 <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Local Simulation</span>
               </div>
             )}
+            {mode === 'designer' && (
+              <div className="flex items-center space-x-2 bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/45 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                </span>
+                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Designer Mode</span>
+              </div>
+            )}
           </div>
-          <p className="text-text-secondary font-medium opacity-70">Real-time decision tree and microservices communication matrix.</p>
+          <p className="text-text-secondary font-medium opacity-70">
+            {mode === 'designer' 
+              ? "Interactive visual canvas to model, route and structure VoicePay IVR audio menus." 
+              : "Real-time decision tree and microservices communication matrix."}
+          </p>
         </div>
         
         <div className="flex items-center space-x-6">
-          {liveCalls.length > 0 && !isSimulating && (
+          {/* Segmented Mode Switch */}
+          <div className="flex bg-secondary/40 p-1.5 rounded-2xl border border-white/5 shadow-inner backdrop-blur-md">
+            <button
+              onClick={() => {
+                setMode('live');
+                setSelectedNodeId(null);
+              }}
+              className={cn(
+                "flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300",
+                mode === 'live' 
+                  ? "bg-primary text-white shadow-lg shadow-primary/30" 
+                  : "text-text-secondary hover:text-white"
+              )}
+            >
+              <Activity size={14} className={mode === 'live' ? 'animate-pulse' : ''} />
+              <span>Live Status</span>
+            </button>
+            <button
+              onClick={() => {
+                setMode('designer');
+                if (isSimulating) stopSimulation();
+              }}
+              className={cn(
+                "flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300",
+                mode === 'designer' 
+                  ? "bg-primary text-white shadow-lg shadow-primary/30" 
+                  : "text-text-secondary hover:text-white"
+              )}
+            >
+              <Sparkles size={14} />
+              <span>Interactive Designer</span>
+            </button>
+          </div>
+
+          {mode === 'live' && liveCalls.length > 0 && !isSimulating && (
             <div className="flex flex-col">
               <span className="text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] mb-1.5 ml-1">Active Streams</span>
               <div className="flex items-center space-x-2 glass-dark px-4 py-2 rounded-2xl border border-white/5 shadow-xl">
@@ -360,10 +610,12 @@ export const IvrFlow: React.FC = () => {
             </div>
           )}
           
-          <div className="text-right hidden sm:block">
-            <p className="text-[10px] text-text-secondary uppercase tracking-widest font-black opacity-50">Heartbeat</p>
-            <p className="text-sm font-mono text-primary font-bold">{lastUpdate || '--:--:--'}</p>
-          </div>
+          {mode === 'live' && (
+            <div className="text-right hidden sm:block">
+              <p className="text-[10px] text-text-secondary uppercase tracking-widest font-black opacity-50">Heartbeat</p>
+              <p className="text-sm font-mono text-primary font-bold">{lastUpdate || '--:--:--'}</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -375,52 +627,74 @@ export const IvrFlow: React.FC = () => {
         >
           <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-transparent pointer-events-none opacity-50" />
           
-          {/* Status Legend */}
-          <div className="absolute top-6 left-6 z-10 glass-dark px-5 py-4 rounded-2xl border border-white/10 shadow-2xl backdrop-blur-xl">
-            <h4 className="text-[11px] font-black text-white uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Status Matrix</h4>
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3">
-                <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]"></div>
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-tight">Node: Completed</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_12px_rgba(59,130,246,0.6)] animate-pulse"></div>
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-tight">Node: Processing</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]"></div>
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-tight">Node: Error</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2.5 h-2.5 rounded-full bg-secondary border border-white/10"></div>
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-tight">Node: Idle</span>
+          {/* Status Legend - only in live mode */}
+          {mode === 'live' && (
+            <div className="absolute top-6 left-6 z-10 glass-dark px-5 py-4 rounded-2xl border border-white/10 shadow-2xl backdrop-blur-xl animate-fade-in">
+              <h4 className="text-[11px] font-black text-white uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Status Matrix</h4>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]"></div>
+                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-tight">Node: Completed</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_12px_rgba(59,130,246,0.6)] animate-pulse"></div>
+                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-tight">Node: Processing</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]"></div>
+                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-tight">Node: Error</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-2.5 h-2.5 rounded-full bg-secondary border border-white/10"></div>
+                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-tight">Node: Idle</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Floating Call Simulator HUD Widget */}
-          <SimulatorHud
-            isSimulating={isSimulating}
-            simStep={simStep}
-            simPath={simPath}
-            startSimulation={startSimulation}
-            stopSimulation={stopSimulation}
-            resetToPending={handleResetToPending}
-            cachedCall={cachedCall}
-          />
+          {/* Designer Mode Indicator Badge */}
+          {mode === 'designer' && (
+            <div className="absolute top-6 left-6 z-10 glass-dark px-4 py-2.5 rounded-2xl border border-primary/20 shadow-2xl backdrop-blur-xl flex items-center space-x-2 animate-fade-in">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+              <span className="text-[10px] font-black text-white uppercase tracking-widest">Designer Canvas</span>
+            </div>
+          )}
+
+          {/* Floating Call Simulator HUD Widget - hide in designer mode */}
+          {mode === 'live' && (
+            <SimulatorHud
+              isSimulating={isSimulating}
+              simStep={simStep}
+              simPath={simPath}
+              startSimulation={startSimulation}
+              stopSimulation={stopSimulation}
+              resetToPending={handleResetToPending}
+              cachedCall={cachedCall}
+            />
+          )}
 
           <div className="h-full w-full">
             <ReactFlow
-              nodes={nodes}
-              edges={edges}
+              nodes={processedNodes}
+              edges={processedEdges}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              onNodeClick={(_, node) => {
+                if (mode === 'designer') {
+                  setSelectedNodeId(node.id);
+                }
+              }}
+              onPaneClick={() => setSelectedNodeId(null)}
               nodeTypes={nodeTypes}
               fitView
               className="bg-background/20"
               defaultViewport={{ x: 0, y: 0, zoom: 1.2 }}
               minZoom={0.2}
               maxZoom={2.5}
+              nodesConnectable={mode === 'designer'}
+              nodesDraggable={mode === 'designer'}
+              elementsSelectable={mode === 'designer'}
             >
               <Background color="#ffffff22" gap={20} size={1} />
               <Controls className="!bg-secondary/80 !border-white/10 !fill-white !rounded-xl !shadow-2xl overflow-hidden backdrop-blur-md" />
@@ -428,11 +702,23 @@ export const IvrFlow: React.FC = () => {
           </div>
         </Card>
 
-        {/* Side Panel: System Logs */}
-        <EventsLogPanel
-          activeCall={activeCall}
-          isSimulating={isSimulating}
-        />
+        {/* Side Panel: System Logs or Designer Toolbox */}
+        {mode === 'designer' ? (
+          <DesignerPanel
+            selectedNode={selectedNode}
+            onUpdateNode={handleUpdateNode}
+            onDeleteNode={handleDeleteNode}
+            onAddNode={handleAddNode}
+            onSave={handleSaveFlow}
+            onReset={handleResetFlow}
+            hasChanges={hasChanges}
+          />
+        ) : (
+          <EventsLogPanel
+            activeCall={activeCall}
+            isSimulating={isSimulating}
+          />
+        )}
       </div>
     </div>
   );

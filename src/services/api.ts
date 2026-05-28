@@ -272,6 +272,38 @@ export const paymentService = {
       ];
     }
   },
+  downloadPdfReport: async (userId?: number, status?: string, startDate?: string, endDate?: string): Promise<void> => {
+    try {
+      const response = await api.get('/payments/reports/export/pdf', {
+        params: { userId, status, startDate, endDate },
+        responseType: 'blob'
+      });
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = `reporte-voicepay-${new Date().toISOString().slice(0, 19).replace(/[-T:]/g, "")}.pdf`;
+      link.click();
+    } catch (error) {
+      console.error('Error downloading PDF report:', error);
+      throw error;
+    }
+  },
+  downloadExcelReport: async (userId?: number, status?: string, startDate?: string, endDate?: string): Promise<void> => {
+    try {
+      const response = await api.get('/payments/reports/export/excel', {
+        params: { userId, status, startDate, endDate },
+        responseType: 'blob'
+      });
+      const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      link.download = `reporte-voicepay-${new Date().toISOString().slice(0, 19).replace(/[-T:]/g, "")}.xlsx`;
+      link.click();
+    } catch (error) {
+      console.error('Error downloading Excel report:', error);
+      throw error;
+    }
+  },
 };
 
 // Helper: transforma LiveCall del backend → Call del frontend
