@@ -4,10 +4,13 @@ import { LayoutDashboard, Users, PhoneCall, Settings, LogOut, Menu, X, Bell, Net
 import { cn } from '../utils/cn';
 import { Button } from '../components/Button';
 import { useAuth } from '../contexts/AuthContext';
+import { useCallStore } from '../stores/useCallStore';
+import { WebSocketBanner } from '../components/WebSocketBanner';
 
 export const Layout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
   const { logout, user } = useAuth();
+  const { connectionState } = useCallStore();
 
   const handleLogout = () => {
     logout();
@@ -88,7 +91,26 @@ export const Layout: React.FC = () => {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
         <header className="h-20 flex items-center justify-between px-8 bg-background/50 backdrop-blur-md border-b border-border z-30">
-          <h1 className="text-lg font-semibold lg:block hidden">System Overview</h1>
+          <div className="flex items-center space-x-4">
+            <h1 className="text-lg font-semibold lg:block hidden">System Overview</h1>
+            
+            {/* Glowing Live Connection Badge */}
+            <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[11px] font-medium tracking-wide">
+              <span className={cn(
+                "w-2 h-2 rounded-full transition-all duration-300",
+                connectionState === 'connected' ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.7)] animate-pulse" :
+                connectionState === 'connecting' ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.7)] animate-pulse" :
+                connectionState === 'reconnecting' ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.7)] animate-pulse" :
+                "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.7)]"
+              )} />
+              <span className="text-text-secondary select-none">
+                {connectionState === 'connected' ? 'Live Feed' :
+                 connectionState === 'connecting' ? 'Connecting...' :
+                 connectionState === 'reconnecting' ? 'Reconnecting' : 'Offline'}
+              </span>
+            </div>
+          </div>
+          
           <div className="flex items-center space-x-4 ml-auto">
             <div className="flex flex-col items-end mr-2">
               <span className="text-sm font-medium">{user?.name || 'User'}</span>
@@ -102,7 +124,8 @@ export const Layout: React.FC = () => {
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-8 animate-fade-in custom-scrollbar flex flex-col">
-          <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col">
+          <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col gap-2">
+            <WebSocketBanner />
             <Outlet />
           </div>
         </div>
