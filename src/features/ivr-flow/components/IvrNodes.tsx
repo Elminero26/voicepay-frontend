@@ -1,4 +1,3 @@
-import React from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { HelpCircle, CheckCircle2, Globe } from 'lucide-react';
 import { cn } from '../../../utils/cn';
