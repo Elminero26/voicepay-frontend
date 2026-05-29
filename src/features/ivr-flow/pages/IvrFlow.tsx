@@ -1,11 +1,10 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { ReactFlow, Background, Controls, applyNodeChanges, applyEdgeChanges, MarkerType, addEdge } from '@xyflow/react';
+import { ReactFlow, Background, Controls, applyNodeChanges, applyEdgeChanges, MarkerType, addEdge, ReactFlowProvider, useReactFlow } from '@xyflow/react';
 import type { NodeChange, EdgeChange, Edge, Node } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Card } from '../../../components/Card';
 import { 
-  PhoneCall, Globe, ShieldCheck, CreditCard, CheckCircle2, 
-  User, Headset, Activity, Sparkles
+  Activity, Sparkles
 } from 'lucide-react';
 import { useLiveCalls } from '../hooks/useLiveCalls';
 import type { Call } from '../../../types';
@@ -48,13 +47,67 @@ const initialEdges: Edge[] = [
   { id: 'comm-agent', source: '6', target: 'agent-service', animated: false, style: { stroke: '#3b82f6', strokeWidth: 1, strokeDasharray: '5,5', opacity: 0.3 } }
 ];
 
-export const IvrFlow: React.FC = () => {
+export const IvrFlowContent: React.FC = () => {
   const { liveCalls, connected } = useLiveCalls();
+  const { screenToFlowPosition } = useReactFlow();
   
   // State for Switch Mode
   const [mode, setMode] = useState<'live' | 'designer'>('live');
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
+
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+  }, []);
+
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+
+      if (mode !== 'designer') return;
+
+      const type = event.dataTransfer?.getData('application/reactflow');
+      const customDataStr = event.dataTransfer?.getData('application/reactflow-data');
+
+      if (!type) return;
+
+      let customData = {};
+      if (customDataStr) {
+        try {
+          customData = JSON.parse(customDataStr);
+        } catch (e) {
+          console.error('Error parsing drop data:', e);
+        }
+      }
+
+      const position = screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+
+      const newId = `node-${Date.now()}`;
+      const newNode: Node = {
+        id: newId,
+        type,
+        position,
+        data: {
+          label: type === 'ivrNode' ? 'Nuevo Nodo' : 'Nuevo Servicio',
+          description: type === 'ivrNode' ? 'Configurar descripción' : 'Servicio externo',
+          status: 'pending',
+          icon: type === 'ivrNode' ? 'HelpCircle' : 'Globe',
+          ...customData,
+        },
+      };
+
+      setNodes((nds) => [...nds, newNode]);
+      setSelectedNodeId(newId);
+      setHasChanges(true);
+    },
+    [screenToFlowPosition, mode]
+  );
 
   // Initialize nodes and edges from localStorage if present
   const [nodes, setNodes] = useState<Node[]>(() => {
@@ -409,7 +462,7 @@ export const IvrFlow: React.FC = () => {
     setHasChanges(true);
   }, []);
 
-  const handleAddNode = useCallback((type: 'ivrNode' | 'serviceNode') => {
+  const handleAddNode = useCallback((type: 'ivrNode' | 'serviceNode', customData?: any) => {
     const newId = `node-${Date.now()}`;
     const newNode: Node = {
       id: newId,
@@ -423,6 +476,7 @@ export const IvrFlow: React.FC = () => {
         description: type === 'ivrNode' ? 'Configure step description' : 'External microservice integration',
         status: 'pending',
         icon: type === 'ivrNode' ? 'HelpCircle' : 'Globe',
+        ...customData
       }
     };
     setNodes(nds => [...nds, newNode]);
@@ -435,8 +489,8 @@ export const IvrFlow: React.FC = () => {
       let iconName = 'HelpCircle';
       if (typeof node.data.icon === 'string') {
         iconName = node.data.icon;
-      } else if (node.data.icon && node.data.icon.name) {
-        iconName = node.data.icon.name;
+      } else if (node.data.icon && (node.data.icon as any).name) {
+        iconName = (node.data.icon as any).name;
       } else {
         // Fallback map based on default nodes
         if (node.id === '1') iconName = 'PhoneCall';
@@ -686,6 +740,8 @@ export const IvrFlow: React.FC = () => {
                 }
               }}
               onPaneClick={() => setSelectedNodeId(null)}
+              onDragOver={onDragOver}
+              onDrop={onDrop}
               nodeTypes={nodeTypes}
               fitView
               className="bg-background/20"
@@ -721,5 +777,13 @@ export const IvrFlow: React.FC = () => {
         )}
       </div>
     </div>
+  );
+};
+
+export const IvrFlow: React.FC = () => {
+  return (
+    <ReactFlowProvider>
+      <IvrFlowContent />
+    </ReactFlowProvider>
   );
 };

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '../../../components/Card';
 import { 
-  Sliders, Plus, Trash2, Save, RotateCcw, HelpCircle, Info,
+  Sliders, Trash2, Save, RotateCcw, Info,
   PhoneCall, Globe, ShieldCheck, CreditCard, CheckCircle2, 
-  User, Headset, Activity, MessageSquare, Zap, AlertTriangle
+  User, Headset, MessageSquare, Zap, AlertTriangle, GripVertical
 } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 
@@ -11,7 +11,7 @@ interface DesignerPanelProps {
   selectedNode: any | null;
   onUpdateNode: (id: string, updatedData: any) => void;
   onDeleteNode: (id: string) => void;
-  onAddNode: (type: 'ivrNode' | 'serviceNode') => void;
+  onAddNode: (type: 'ivrNode' | 'serviceNode', customData?: any) => void;
   onSave: () => void;
   onReset: () => void;
   hasChanges: boolean;
@@ -30,6 +30,53 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
   const [description, setDescription] = useState('');
   const [icon, setIcon] = useState('HelpCircle');
   const [action, setAction] = useState('');
+
+  const availableBlocks = [
+    {
+      type: 'ivrNode' as const,
+      label: 'Bienvenida',
+      description: 'Saludo inicial e introducción al flujo de voz.',
+      icon: 'PhoneCall',
+      lucideIcon: PhoneCall,
+      accentClass: 'border-indigo-500/20 bg-indigo-500/5 text-indigo-400 group-hover:border-indigo-500/40 group-hover:bg-indigo-500/10 shadow-indigo-500/5 hover:shadow-indigo-500/10',
+      iconBgClass: 'bg-indigo-500/15 text-indigo-400',
+    },
+    {
+      type: 'ivrNode' as const,
+      label: 'Pasarela de Pago',
+      description: 'Módulo de procesamiento seguro de pagos.',
+      icon: 'CreditCard',
+      lucideIcon: CreditCard,
+      accentClass: 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400 group-hover:border-emerald-500/40 group-hover:bg-emerald-500/10 shadow-emerald-500/5 hover:shadow-emerald-500/10',
+      iconBgClass: 'bg-emerald-500/15 text-emerald-400',
+    },
+    {
+      type: 'ivrNode' as const,
+      label: 'Desvío',
+      description: 'Transferir la llamada a un agente humano.',
+      icon: 'Headset',
+      lucideIcon: Headset,
+      accentClass: 'border-amber-500/20 bg-amber-500/5 text-amber-400 group-hover:border-amber-500/40 group-hover:bg-amber-500/10 shadow-amber-500/5 hover:shadow-amber-500/10',
+      iconBgClass: 'bg-amber-500/15 text-amber-400',
+    },
+    {
+      type: 'serviceNode' as const,
+      label: 'Servicio Externo',
+      description: 'Consulta o integración con API o microservicio.',
+      icon: 'Globe',
+      lucideIcon: Globe,
+      accentClass: 'border-teal-500/20 bg-teal-500/5 text-teal-400 group-hover:border-teal-500/40 group-hover:bg-teal-500/10 shadow-teal-500/5 hover:shadow-teal-500/10',
+      iconBgClass: 'bg-teal-500/15 text-teal-400',
+    }
+  ];
+
+  const onDragStart = (event: React.DragEvent, nodeType: string, blockData: any) => {
+    if (event.dataTransfer) {
+      event.dataTransfer.setData('application/reactflow', nodeType);
+      event.dataTransfer.setData('application/reactflow-data', JSON.stringify(blockData));
+      event.dataTransfer.effectAllowed = 'move';
+    }
+  };
 
   // Sync state with selected node
   useEffect(() => {
@@ -204,39 +251,68 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
               </div>
             </div>
 
-            {/* Add Node Section */}
-            <div className="space-y-3">
-              <span className="text-[10px] uppercase font-black text-primary tracking-widest block">
-                Add Canvas Elements
-              </span>
-              <div className="grid grid-cols-1 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => onAddNode('ivrNode')}
-                  className="flex items-center space-x-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white rounded-xl py-3 px-4 text-xs font-bold transition-all text-left group"
-                >
-                  <div className="p-2 bg-primary/20 text-primary rounded-lg group-hover:scale-110 transition-transform">
-                    <Plus size={16} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white">IVR Flow Node</p>
-                    <p className="text-[10px] text-text-secondary opacity-65 font-medium">User choice, router or automated speech step.</p>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => onAddNode('serviceNode')}
-                  className="flex items-center space-x-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white rounded-xl py-3 px-4 text-xs font-bold transition-all text-left group"
-                >
-                  <div className="p-2 bg-teal-500/20 text-teal-400 rounded-lg group-hover:scale-110 transition-transform">
-                    <Plus size={16} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-white">External Service Node</p>
-                    <p className="text-[10px] text-text-secondary opacity-65 font-medium">Backend system, API gateway or web hook matrix.</p>
-                  </div>
-                </button>
+            {/* Bloques Disponibles (Drag & Drop) */}
+            <div className="space-y-4">
+              <div>
+                <span className="text-[10px] uppercase font-black text-primary tracking-widest block">
+                  Bloques Disponibles (Arrastrar al Lienzo)
+                </span>
+                <span className="text-[9px] text-text-secondary opacity-60 leading-tight block mt-1">
+                  Arrastra un bloque al lienzo o haz clic para añadirlo directamente.
+                </span>
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                {availableBlocks.map((block, idx) => {
+                  const IconComp = block.lucideIcon;
+                  return (
+                    <div
+                      key={idx}
+                      draggable
+                      onDragStart={(e) => onDragStart(e, block.type, {
+                        label: block.label,
+                        description: block.description,
+                        icon: block.icon,
+                        status: 'pending'
+                      })}
+                      onClick={() => onAddNode(block.type, {
+                        label: block.label,
+                        description: block.description,
+                        icon: block.icon,
+                        status: 'pending'
+                      })}
+                      className={cn(
+                        "flex items-center space-x-3 border rounded-2xl p-3.5 transition-all duration-300 cursor-grab active:cursor-grabbing group hover:-translate-y-0.5",
+                        block.accentClass
+                      )}
+                    >
+                      {/* Left: Drag Handle & Icon */}
+                      <div className="flex items-center space-x-2 shrink-0">
+                        <GripVertical size={14} className="text-white/20 group-hover:text-white/40 transition-colors" />
+                        <div className={cn(
+                          "p-2.5 rounded-xl transition-transform duration-500 group-hover:scale-110 shadow-inner",
+                          block.iconBgClass
+                        )}>
+                          <IconComp size={18} />
+                        </div>
+                      </div>
+                      
+                      {/* Center/Right: Details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-black text-white group-hover:text-primary transition-colors tracking-tight">
+                            {block.label}
+                          </p>
+                          <span className="text-[8px] font-mono opacity-50 uppercase tracking-widest">
+                            {block.type === 'ivrNode' ? 'IVR' : 'Servicio'}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-text-secondary opacity-75 font-medium leading-tight mt-1 truncate">
+                          {block.description}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
             
