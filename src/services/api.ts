@@ -334,6 +334,30 @@ export const ivrService = {
       console.warn('Backend not available, using mock data for live calls');
       return MOCK_CALLS;
     }
+  },
+  getFlow: async (): Promise<{ nodes: any[], edges: any[] } | null> => {
+    try {
+      const response = await api.get('/ivr/flow');
+      if (response.data && response.data.flowJson) {
+        return JSON.parse(response.data.flowJson);
+      }
+      return null;
+    } catch (error) {
+      console.warn('Backend IVR flow not available or error occurred', error);
+      return null;
+    }
+  },
+  saveFlow: async (flowData: { nodes: any[], edges: any[] }): Promise<any> => {
+    try {
+      const payload = {
+        flowJson: JSON.stringify(flowData)
+      };
+      const response = await api.post('/ivr/flow', payload);
+      return response.data;
+    } catch (error) {
+      console.error('Error saving IVR flow to backend:', error);
+      throw error;
+    }
   }
 };
 

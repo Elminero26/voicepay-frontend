@@ -12,6 +12,7 @@ import type { Call } from '../../../types';
 import { nodeTypes, SimulatorHud, EventsLogPanel, DesignerPanel } from '../components';
 import { useCallStore } from '../../../stores/useCallStore';
 import { cn } from '../../../utils/cn';
+import { ivrService } from '../../../services/api';
 
 const initialNodes: Node[] = [
   // User Flow
@@ -409,6 +410,30 @@ export const IvrFlowContent: React.FC = () => {
     }
   }, [activeCall, updateFlowFromCall, mode]);
 
+  // Load custom IVR Flow configuration from PostgreSQL backend on mount
+  useEffect(() => {
+    const fetchBackendFlow = async () => {
+      try {
+        const backendFlow = await ivrService.getFlow();
+        if (backendFlow && backendFlow.nodes && backendFlow.nodes.length > 0) {
+          setNodes(backendFlow.nodes);
+          setEdges(backendFlow.edges || []);
+          
+          localStorage.setItem('voicepay_ivr_nodes', JSON.stringify(backendFlow.nodes));
+          localStorage.setItem('voicepay_ivr_edges', JSON.stringify(backendFlow.edges || []));
+          
+          if (toastFn) {
+            toastFn('Flujo Sincronizado', 'El árbol de decisiones interactivo se ha cargado con éxito desde el servidor.', 'info');
+          }
+        }
+      } catch (error) {
+        console.warn('Backend IVR flow unavailable. Operating with local storage fallback.', error);
+      }
+    };
+
+    fetchBackendFlow();
+  }, [toastFn]);
+
   // React Flow Handlers
   const onNodesChange = useCallback(
     (changes: NodeChange<Node>[]) => {
@@ -514,7 +539,7 @@ export const IvrFlowContent: React.FC = () => {
     setHasChanges(true);
   }, []);
 
-  const handleSaveFlow = useCallback(() => {
+  const handleSaveFlow = useCallback(async () => {
     const serializedNodes = nodes.map(node => {
       let iconName = 'HelpCircle';
       if (typeof node.data.icon === 'string') {
@@ -543,12 +568,22 @@ export const IvrFlowContent: React.FC = () => {
       };
     });
 
-    localStorage.setItem('voicepay_ivr_nodes', JSON.stringify(serializedNodes));
-    localStorage.setItem('voicepay_ivr_edges', JSON.stringify(edges));
-    setHasChanges(false);
-    
-    if (toastFn) {
-      toastFn('IVR Flow Saved', 'The custom Interactive Designer flow layout was successfully saved.', 'success');
+    try {
+      localStorage.setItem('voicepay_ivr_nodes', JSON.stringify(serializedNodes));
+      localStorage.setItem('voicepay_ivr_edges', JSON.stringify(edges));
+      
+      await ivrService.saveFlow({ nodes: serializedNodes, edges });
+      setHasChanges(false);
+      
+      if (toastFn) {
+        toastFn('IVR Flow Saved', 'The custom Interactive Designer flow layout was successfully saved to PostgreSQL database.', 'success');
+      }
+    } catch (error) {
+      console.warn('Backend save failed, saved locally only:', error);
+      setHasChanges(false);
+      if (toastFn) {
+        toastFn('IVR Flow Saved Locally', 'The custom Interactive Designer flow was saved in local storage (Backend unavailable).', 'info');
+      }
     }
   }, [nodes, edges, toastFn]);
 
