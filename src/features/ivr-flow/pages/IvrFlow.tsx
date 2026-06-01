@@ -3,6 +3,7 @@ import { ReactFlow, Background, Controls, applyNodeChanges, applyEdgeChanges, Ma
 import type { NodeChange, EdgeChange, Edge, Node } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Card } from '../../../components/Card';
+import { Modal } from '../../../components/Modal';
 import { 
   Activity, Sparkles
 } from 'lucide-react';
@@ -14,20 +15,20 @@ import { cn } from '../../../utils/cn';
 
 const initialNodes: Node[] = [
   // User Flow
-  { id: '1', type: 'ivrNode', position: { x: 250, y: 50 }, data: { label: 'Incoming Call', description: 'User dials the IVR system', status: 'pending', icon: 'PhoneCall' } },
-  { id: '2', type: 'ivrNode', position: { x: 250, y: 180 }, data: { label: 'Authentication', description: 'Identifying user by phone', status: 'pending', icon: 'ShieldCheck' } },
-  { id: '3', type: 'ivrNode', position: { x: 250, y: 310 }, data: { label: 'Payment Inquiry', description: 'Checking pending amount', status: 'pending', icon: 'CreditCard' } },
-  { id: '4', type: 'ivrNode', position: { x: 250, y: 440 }, data: { label: 'User Selection', description: 'Waiting for DTMF (1 or 2)', status: 'pending', icon: 'User' } },
+  { id: '1', type: 'ivrNode', position: { x: 250, y: 50 }, data: { label: 'Incoming Call', description: 'User dials the IVR system', status: 'pending', icon: 'PhoneCall', voicePrompt: 'Bienvenido al sistema de pagos automáticos VoicePay. Por favor, espere mientras le identificamos.', apiEndpoint: 'https://api.voicepay.com/v1/ivr/welcome' } },
+  { id: '2', type: 'ivrNode', position: { x: 250, y: 180 }, data: { label: 'Authentication', description: 'Identifying user by phone', status: 'pending', icon: 'ShieldCheck', voicePrompt: 'Para garantizar su seguridad, estamos verificando el número de teléfono desde el que nos llama.', apiEndpoint: 'https://api.voicepay.com/v1/users/verify' } },
+  { id: '3', type: 'ivrNode', position: { x: 250, y: 310 }, data: { label: 'Payment Inquiry', description: 'Checking pending amount', status: 'pending', icon: 'CreditCard', voicePrompt: 'Hemos detectado una factura pendiente de ciento cincuenta euros. Pulse uno para proceder con el pago seguro con tarjeta, o pulse dos si prefiere ser atendido por un agente.', apiEndpoint: 'https://api.voicepay.com/v1/payments/inquiry' } },
+  { id: '4', type: 'ivrNode', position: { x: 250, y: 440 }, data: { label: 'User Selection', description: 'Waiting for DTMF (1 or 2)', status: 'pending', icon: 'User', voicePrompt: 'Esperando su selección. Marque uno para pagar, o dos para soporte.', apiEndpoint: 'https://api.voicepay.com/v1/ivr/selection' } },
   
   // Branches
-  { id: '5', type: 'ivrNode', position: { x: 50, y: 580 }, data: { label: 'Payment Status', description: 'Final transaction result', status: 'pending', icon: 'CheckCircle2' } },
-  { id: '6', type: 'ivrNode', position: { x: 450, y: 580 }, data: { label: 'Agent Transfer', description: 'Connecting to human agent', status: 'pending', icon: 'Headset' } },
+  { id: '5', type: 'ivrNode', position: { x: 50, y: 580 }, data: { label: 'Payment Status', description: 'Final transaction result', status: 'pending', icon: 'CheckCircle2', voicePrompt: 'Su pago de ciento cincuenta euros ha sido procesado y aprobado correctamente. Muchas gracias por utilizar VoicePay. Hasta pronto.', apiEndpoint: 'https://api.voicepay.com/v1/payments/checkout' } },
+  { id: '6', type: 'ivrNode', position: { x: 450, y: 580 }, data: { label: 'Agent Transfer', description: 'Connecting to human agent', status: 'pending', icon: 'Headset', voicePrompt: 'Estamos transfiriendo su llamada con el siguiente agente disponible. Por favor, no cuelgue.', apiEndpoint: 'https://api.voicepay.com/v1/agents/transfer' } },
 
   // External Services
-  { id: 'user-service', type: 'serviceNode', position: { x: 650, y: 180 }, data: { label: 'User Service', icon: 'User' } },
-  { id: 'payment-service', type: 'serviceNode', position: { x: 650, y: 310 }, data: { label: 'Payment Service', icon: 'CreditCard' } },
-  { id: 'notification-service', type: 'serviceNode', position: { x: 650, y: 580 }, data: { label: 'Notif. Service', icon: 'Globe' } },
-  { id: 'agent-service', type: 'serviceNode', position: { x: 650, y: 700 }, data: { label: 'Human Agent', icon: 'Headset' } }
+  { id: 'user-service', type: 'serviceNode', position: { x: 650, y: 180 }, data: { label: 'User Service', icon: 'User', apiEndpoint: 'https://api.voicepay.com/v1/users' } },
+  { id: 'payment-service', type: 'serviceNode', position: { x: 650, y: 310 }, data: { label: 'Payment Service', icon: 'CreditCard', apiEndpoint: 'https://api.voicepay.com/v1/payments' } },
+  { id: 'notification-service', type: 'serviceNode', position: { x: 650, y: 580 }, data: { label: 'Notif. Service', icon: 'Globe', apiEndpoint: 'https://api.voicepay.com/v1/notifications' } },
+  { id: 'agent-service', type: 'serviceNode', position: { x: 650, y: 700 }, data: { label: 'Human Agent', icon: 'Headset', apiEndpoint: 'https://api.voicepay.com/v1/agents' } }
 ];
 
 const initialEdges: Edge[] = [
@@ -55,6 +56,12 @@ export const IvrFlowContent: React.FC = () => {
   const [mode, setMode] = useState<'live' | 'designer'>('live');
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
+
+  // Configuration Modal state
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [configNode, setConfigNode] = useState<Node | null>(null);
+  const [tempVoicePrompt, setTempVoicePrompt] = useState('');
+  const [tempApiEndpoint, setTempApiEndpoint] = useState('');
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -455,6 +462,29 @@ export const IvrFlowContent: React.FC = () => {
     setHasChanges(true);
   }, []);
 
+  const onNodeDoubleClick = useCallback((_: React.MouseEvent, node: Node) => {
+    setConfigNode(node);
+    setTempVoicePrompt(node.data?.voicePrompt || '');
+    setTempApiEndpoint(node.data?.apiEndpoint || '');
+    setIsConfigModalOpen(true);
+  }, []);
+
+  const handleSaveNodeConfig = useCallback(() => {
+    if (!configNode) return;
+    handleUpdateNode(configNode.id, {
+      voicePrompt: tempVoicePrompt,
+      apiEndpoint: tempApiEndpoint,
+    });
+    setIsConfigModalOpen(false);
+    if (toastFn) {
+      toastFn(
+        'Nodo Configurado',
+        `Se actualizó la configuración para "${configNode.data?.label || 'Nodo'}".`,
+        'success'
+      );
+    }
+  }, [configNode, tempVoicePrompt, tempApiEndpoint, handleUpdateNode, toastFn]);
+
   const handleDeleteNode = useCallback((id: string) => {
     setNodes(nds => nds.filter(node => node.id !== id));
     setEdges(eds => eds.filter(edge => edge.source !== id && edge.target !== id));
@@ -739,6 +769,7 @@ export const IvrFlowContent: React.FC = () => {
                   setSelectedNodeId(node.id);
                 }
               }}
+              onNodeDoubleClick={onNodeDoubleClick}
               onPaneClick={() => setSelectedNodeId(null)}
               onDragOver={onDragOver}
               onDrop={onDrop}
@@ -776,6 +807,85 @@ export const IvrFlowContent: React.FC = () => {
           />
         )}
       </div>
+
+      {/* Modal de Configuración de Nodo */}
+      <Modal
+        isOpen={isConfigModalOpen}
+        onClose={() => setIsConfigModalOpen(false)}
+        title={`Configurar Nodo: ${configNode?.data?.label || ''}`}
+        className="max-w-lg bg-[#0d0e12]/95 border border-white/10 backdrop-blur-xl"
+      >
+        <div className="space-y-6">
+          <div className="flex items-center space-x-3 bg-primary/5 p-3 rounded-2xl border border-primary/20">
+            <div className="p-2 bg-primary/20 rounded-xl text-primary shrink-0">
+              <Sparkles size={16} className="animate-pulse" />
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-[10px] font-black uppercase text-primary tracking-wider">Configuración Avanzada IVR</p>
+              <p className="text-[10px] text-text-secondary leading-tight opacity-80">
+                Define el mensaje de audio sintetizado y la integración con el microservicio correspondiente.
+              </p>
+            </div>
+          </div>
+
+          {/* Voice Prompt Textarea */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
+              Prompt de Voz (Texto a Voz)
+            </label>
+            <textarea
+              value={tempVoicePrompt}
+              onChange={(e) => setTempVoicePrompt(e.target.value)}
+              rows={4}
+              className="w-full bg-black/40 border border-white/10 rounded-2xl px-4 py-3 text-xs font-medium text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all resize-none custom-scrollbar"
+              placeholder="Escribe el mensaje de voz que el usuario escuchará al llegar a este nodo..."
+            />
+            <span className="text-[9px] text-text-secondary opacity-60 leading-tight block">
+              Este texto será leído por el motor de síntesis de voz (TTS) de VoicePay durante la llamada.
+            </span>
+          </div>
+
+          {/* API Endpoint Input */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
+              Endpoint de la API
+            </label>
+            <div className="relative flex items-center">
+              <span className="absolute left-4 text-[9px] font-mono font-black text-primary uppercase tracking-widest bg-primary/15 px-1.5 py-0.5 rounded pointer-events-none">
+                URL
+              </span>
+              <input
+                type="text"
+                value={tempApiEndpoint}
+                onChange={(e) => setTempApiEndpoint(e.target.value)}
+                className="w-full bg-black/40 border border-white/10 rounded-2xl pl-16 pr-4 py-3 text-xs font-mono font-medium text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
+                placeholder="https://api.voicepay.com/v1/services/auth"
+              />
+            </div>
+            <span className="text-[9px] text-text-secondary opacity-60 leading-tight block">
+              URL del microservicio al que se consultará la lógica de negocio al activar este paso.
+            </span>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center space-x-3 pt-4 border-t border-white/5">
+            <button
+              type="button"
+              onClick={() => setIsConfigModalOpen(false)}
+              className="flex-1 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 text-text-secondary hover:text-white rounded-xl py-3 text-xs font-bold transition-all"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveNodeConfig}
+              className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl py-3 text-xs font-bold shadow-lg shadow-primary/30 transition-all cursor-pointer"
+            >
+              Guardar Configuración
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

@@ -30,6 +30,8 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
   const [description, setDescription] = useState('');
   const [icon, setIcon] = useState('HelpCircle');
   const [action, setAction] = useState('');
+  const [voicePrompt, setVoicePrompt] = useState('');
+  const [apiEndpoint, setApiEndpoint] = useState('');
 
   const availableBlocks = [
     {
@@ -89,6 +91,8 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
         : (selectedNode.data.icon?.name || 'HelpCircle');
       setIcon(iconKey);
       setAction(selectedNode.data.action || '');
+      setVoicePrompt(selectedNode.data.voicePrompt || '');
+      setApiEndpoint(selectedNode.data.apiEndpoint || '');
     }
   }, [selectedNode]);
 
@@ -100,6 +104,8 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
     if (field === 'description') setDescription(value);
     if (field === 'icon') setIcon(value);
     if (field === 'action') setAction(value);
+    if (field === 'voicePrompt') setVoicePrompt(value);
+    if (field === 'apiEndpoint') setApiEndpoint(value);
 
     onUpdateNode(selectedNode.id, {
       ...selectedNode.data,
@@ -196,6 +202,36 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
                 </span>
               </div>
             )}
+
+            {/* Voice Prompt Textarea (Only for IVR Nodes) */}
+            {selectedNode.type === 'ivrNode' && (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
+                  Voice Prompt (TTS)
+                </label>
+                <textarea
+                  value={voicePrompt}
+                  onChange={(e) => handleFieldChange('voicePrompt', e.target.value)}
+                  rows={3}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-medium text-text-secondary focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all resize-none"
+                  placeholder="Escribe el prompt de voz..."
+                />
+              </div>
+            )}
+
+            {/* API Endpoint Input (For both Node types) */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
+                API Endpoint / Integración
+              </label>
+              <input
+                type="text"
+                value={apiEndpoint}
+                onChange={(e) => handleFieldChange('apiEndpoint', e.target.value)}
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono font-medium text-white focus:outline-none focus:border-primary/50 transition-all"
+                placeholder="https://api.voicepay.com/v1/..."
+              />
+            </div>
 
             {/* Visual Icon Grid Selector */}
             <div className="space-y-2">

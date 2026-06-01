@@ -1,7 +1,8 @@
 import { Handle, Position } from '@xyflow/react';
 import { 
   HelpCircle, CheckCircle2, Globe, PhoneCall, ShieldCheck, 
-  CreditCard, User, Headset, Activity, MessageSquare, Zap, AlertTriangle 
+  CreditCard, User, Headset, Activity, MessageSquare, Zap, AlertTriangle,
+  Mic, Server
 } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 
@@ -77,6 +78,29 @@ export const IvrNode = ({ data, isConnectable }: any) => {
         </div>
       )}
 
+      {(data.voicePrompt || data.apiEndpoint) && (
+        <div className="mt-2 pt-2 border-t border-white/5 flex flex-wrap items-center gap-1.5 relative z-10">
+          {data.voicePrompt && (
+            <div 
+              className="flex items-center space-x-1 bg-primary/10 border border-primary/20 text-primary rounded-full px-2 py-0.5 text-[8px] font-black uppercase tracking-wider animate-in fade-in zoom-in duration-300 hover:scale-105 transition-transform"
+              title={data.voicePrompt}
+            >
+              <Mic size={10} className="shrink-0" />
+              <span>Prompt</span>
+            </div>
+          )}
+          {data.apiEndpoint && (
+            <div 
+              className="flex items-center space-x-1 bg-green-500/10 border border-green-500/20 text-green-400 rounded-full px-2 py-0.5 text-[8px] font-black uppercase tracking-wider animate-in fade-in zoom-in duration-300 hover:scale-105 transition-transform truncate max-w-[120px]"
+              title={data.apiEndpoint}
+            >
+              <Server size={10} className="shrink-0" />
+              <span className="truncate">API</span>
+            </div>
+          )}
+        </div>
+      )}
+
       {isCompleted && (
         <div className="absolute top-2 right-2 text-green-500 animate-in zoom-in duration-300">
           <CheckCircle2 size={16} />
@@ -109,6 +133,14 @@ export const ServiceNode = ({ data }: any) => {
           <p className="text-[9px] text-text-secondary font-mono mt-0.5 opacity-60">EXTERNAL_MICROSERVICE</p>
         </div>
       </div>
+      
+      {data.apiEndpoint && (
+        <div className="mt-3 pt-2 text-[8px] text-green-400 font-mono bg-green-500/5 border border-green-500/10 rounded-lg px-2 py-1 truncate relative z-10 flex items-center justify-between">
+          <span>ENDPOINT:</span>
+          <span className="truncate max-w-[100px] ml-1 opacity-80" title={data.apiEndpoint}>{data.apiEndpoint}</span>
+        </div>
+      )}
+
       <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-primary !border-none" />
     </div>
   );
