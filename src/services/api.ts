@@ -122,9 +122,9 @@ const MOCK_USERS: User[] = [
 ];
 
 const MOCK_CALLS: Call[] = [
-  { id: 'c1', customerName: 'Alice Brown', phoneNumber: '+1 234 567 890', status: 'completed', amount: 50.0, duration: '2:15', timestamp: '10:45 AM' },
-  { id: 'c2', customerName: 'Michael Scott', phoneNumber: '+1 987 654 321', status: 'failed', amount: 25.0, duration: '0:45', timestamp: '11:12 AM' },
-  { id: 'c3', customerName: 'Dwight Schrute', phoneNumber: '+1 555 123 456', status: 'completed', amount: 120.0, duration: '5:30', timestamp: '11:45 AM' },
+  { id: 'c1', customerName: 'Alice Brown', phoneNumber: '+1 234 567 890', status: 'completed', amount: 50.0, duration: '2:15', timestamp: '10:45 AM', audioUrl: '/call_recording.mp3' },
+  { id: 'c2', customerName: 'Michael Scott', phoneNumber: '+1 987 654 321', status: 'failed', amount: 25.0, duration: '0:45', timestamp: '11:12 AM', audioUrl: '/call_recording.mp3' },
+  { id: 'c3', customerName: 'Dwight Schrute', phoneNumber: '+1 555 123 456', status: 'completed', amount: 120.0, duration: '5:30', timestamp: '11:45 AM', audioUrl: '/call_recording.mp3' },
   { id: 'c4', customerName: 'Jim Halpert', phoneNumber: '+1 444 888 999', status: 'in-progress', amount: 0, duration: '1:10', timestamp: '12:05 PM' },
 ];
 
@@ -222,6 +222,7 @@ const mapPaymentToCall = (p: any): Call => ({
   amount: parseFloat(p.amount) || 0,
   duration: '-',
   timestamp: p.createdAt ? new Date(p.createdAt).toLocaleTimeString() : '-',
+  audioUrl: p.audioUrl || (p.status === 'COMPLETED' || p.status === 'FAILED' ? '/call_recording.mp3' : undefined),
 });
 
 export const paymentService = {
@@ -257,19 +258,22 @@ export const paymentService = {
     }
   },
   getCalls: async (): Promise<Call[]> => {
+    const mockExtensions: Call[] = [
+      ...MOCK_CALLS,
+      { id: 'c5', customerName: 'Pam Beesly', phoneNumber: '+1 555 222 333', status: 'completed', amount: 45.5, duration: '3:20', timestamp: '01:15 PM', audioUrl: '/call_recording.mp3' },
+      { id: 'c6', customerName: 'Andy Bernard', phoneNumber: '+1 555 444 555', status: 'failed', amount: 15.0, duration: '1:10', timestamp: '02:30 PM', audioUrl: '/call_recording.mp3' },
+      { id: 'c7', customerName: 'Angela Martin', phoneNumber: '+1 555 666 777', status: 'completed', amount: 80.0, duration: '4:45', timestamp: '03:45 PM', audioUrl: '/call_recording.mp3' },
+      { id: 'c8', customerName: 'Stanley Hudson', phoneNumber: '+1 555 888 999', status: 'completed', amount: 200.0, duration: '10:00', timestamp: '04:20 PM', audioUrl: '/call_recording.mp3' },
+    ];
     try {
       const response = await api.get('/payments');
-      return response.data.map(mapPaymentToCall);
+      const backendCalls = response.data.map(mapPaymentToCall);
+      // Combinamos las llamadas reales del backend con las mockeadas
+      // para asegurar que siempre haya llamadas finalizadas con las que probar el reproductor.
+      return [...backendCalls, ...mockExtensions];
     } catch (error) {
       console.warn('Backend not available, using mock data for all calls');
-      // Extend mock calls for the history page
-      return [
-        ...MOCK_CALLS,
-        { id: 'c5', customerName: 'Pam Beesly', phoneNumber: '+1 555 222 333', status: 'completed', amount: 45.5, duration: '3:20', timestamp: '01:15 PM' },
-        { id: 'c6', customerName: 'Andy Bernard', phoneNumber: '+1 555 444 555', status: 'failed', amount: 15.0, duration: '1:10', timestamp: '02:30 PM' },
-        { id: 'c7', customerName: 'Angela Martin', phoneNumber: '+1 555 666 777', status: 'completed', amount: 80.0, duration: '4:45', timestamp: '03:45 PM' },
-        { id: 'c8', customerName: 'Stanley Hudson', phoneNumber: '+1 555 888 999', status: 'completed', amount: 200.0, duration: '10:00', timestamp: '04:20 PM' },
-      ];
+      return mockExtensions;
     }
   },
   downloadPdfReport: async (userId?: number, status?: string, startDate?: string, endDate?: string): Promise<void> => {

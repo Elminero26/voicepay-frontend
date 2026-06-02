@@ -489,8 +489,8 @@ export const IvrFlowContent: React.FC = () => {
 
   const onNodeDoubleClick = useCallback((_: React.MouseEvent, node: Node) => {
     setConfigNode(node);
-    setTempVoicePrompt(node.data?.voicePrompt || '');
-    setTempApiEndpoint(node.data?.apiEndpoint || '');
+    setTempVoicePrompt((node.data?.voicePrompt as string) || '');
+    setTempApiEndpoint((node.data?.apiEndpoint as string) || '');
     setIsConfigModalOpen(true);
   }, []);
 

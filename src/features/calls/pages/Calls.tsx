@@ -10,6 +10,7 @@ import { paymentService } from '../../../services/api';
 import type { Call } from '../../../types';
 import { Loader } from '../../../components/Loader';
 import { cn } from '../../../utils/cn';
+import { AudioPlayer } from '../../../components/AudioPlayer';
 
 export const CallsPage: React.FC = () => {
   const [calls, setCalls] = useState<Call[]>([]);
@@ -245,6 +246,24 @@ export const CallsPage: React.FC = () => {
                   <p className="font-semibold text-white mt-1">{selectedCall.timestamp}</p>
                 </div>
               </div>
+
+              {/* Reproductor de Audio Grabado o Indicador de Llamada en Vivo */}
+              {selectedCall.audioUrl ? (
+                <AudioPlayer 
+                  audioUrl={selectedCall.audioUrl} 
+                  id={selectedCall.id} 
+                  duration={selectedCall.duration}
+                  clientName={selectedCall.customerName}
+                />
+              ) : (
+                <div className="p-4 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 flex items-center space-x-3 text-text-secondary text-xs">
+                  <Phone className="shrink-0 text-amber-500 animate-pulse" size={18} />
+                  <div className="text-[11px] leading-relaxed">
+                    <p className="font-bold text-white">📞 Llamada Activa / En Proceso</p>
+                    <p className="opacity-70 mt-0.5">Esta sesión de audio se está transmitiendo en vivo. La grabación final e interactiva estará disponible para auditoría al completarse.</p>
+                  </div>
+                </div>
+              )}
 
               {/* Event Timeline (Voice flow events) */}
               <div className="space-y-4">

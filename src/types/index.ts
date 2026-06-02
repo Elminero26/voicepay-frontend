@@ -20,6 +20,7 @@ export interface Call {
   direction?: string;
   option?: string; // Adding this as I saw it used in Dashboard.tsx
   callEvents?: string[];
+  audioUrl?: string;
 }
 
 export interface PaymentStats {
