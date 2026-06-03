@@ -1,8 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 import { 
   Play, Pause, Volume2, VolumeX, Download, 
-  RotateCcw, Loader2, AlertCircle, Sparkles 
+  RotateCcw, Loader2, AlertCircle, Sparkles,
+  Network, Hash, ShieldCheck, PhoneForwarded, AlertTriangle
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 
@@ -11,13 +12,17 @@ interface AudioPlayerProps {
   id: string;
   duration?: string;
   clientName?: string;
+  status?: string;
+  amount?: number;
 }
 
 export const AudioPlayer: React.FC<AudioPlayerProps> = ({ 
   audioUrl, 
   id, 
   duration, 
-  clientName 
+  clientName,
+  status,
+  amount
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
@@ -30,6 +35,94 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+
+  // Helper to map color to explicit Tailwind classes for markers
+  const getMarkerClasses = (color: string, isActive: boolean) => {
+    if (isActive) {
+      switch (color) {
+        case 'indigo':
+          return 'bg-indigo-950/90 border-indigo-500 text-indigo-400 shadow-indigo-500/20';
+        case 'amber':
+          return 'bg-amber-950/90 border-amber-500 text-amber-400 shadow-amber-500/20';
+        case 'emerald':
+          return 'bg-emerald-950/90 border-emerald-500 text-emerald-400 shadow-emerald-500/20';
+        case 'rose':
+          return 'bg-rose-950/90 border-rose-500 text-rose-400 shadow-rose-500/20';
+        case 'teal':
+          return 'bg-teal-950/90 border-teal-500 text-teal-400 shadow-teal-500/20';
+        default:
+          return 'bg-indigo-950/90 border-indigo-500 text-indigo-400 shadow-indigo-500/20';
+      }
+    } else {
+      return 'bg-neutral-900/90 border-white/10 text-neutral-400 hover:border-white/30 hover:text-white';
+    }
+  };
+
+  // Helper to map color to text color class
+  const getTextColorClass = (color: string) => {
+    switch (color) {
+      case 'indigo': return 'text-indigo-400';
+      case 'amber': return 'text-amber-400';
+      case 'emerald': return 'text-emerald-400';
+      case 'rose': return 'text-rose-400';
+      case 'teal': return 'text-teal-400';
+      default: return 'text-indigo-400';
+    }
+  };
+
+  // Dynamic audio events generation based on status and amount
+  const events = useMemo(() => {
+    const isFailed = status?.toLowerCase() === 'failed' || status === 'FAILED';
+    const amountVal = amount !== undefined ? amount : 0;
+    
+    return [
+      {
+        id: 'handshake',
+        percentage: 15,
+        title: 'Handshake SSL',
+        description: 'Conexión segura SSL/TLS establecida con el nodo telefónico.',
+        icon: <Network size={13} />,
+        color: 'indigo'
+      },
+      {
+        id: 'dtmf',
+        percentage: 45,
+        title: 'Captura DTMF',
+        description: 'Ingreso cifrado de credenciales de facturación vía tonos DTMF.',
+        icon: <Hash size={13} />,
+        color: 'amber'
+      },
+      {
+        id: 'payment',
+        percentage: 75,
+        title: isFailed ? 'Pago Fallido' : 'Pago Exitoso (AES-256)',
+        description: isFailed 
+          ? 'Error de autenticación de seguridad en la pasarela de pagos. Fondos insuficientes o tarjeta declinada.' 
+          : `Transacción aprobada de $${amountVal.toFixed(2)} USD. Criptograma seguro persistido en base de datos.`,
+        icon: isFailed ? <AlertTriangle size={13} /> : <ShieldCheck size={13} />,
+        color: isFailed ? 'rose' : 'emerald'
+      },
+      {
+        id: 'transfer',
+        percentage: 90,
+        title: 'Desvío / Cierre',
+        description: isFailed
+          ? 'Llamada transferida a soporte para validación manual.'
+          : 'Desvío automático a agente para finalizar la atención.',
+        icon: <PhoneForwarded size={13} />,
+        color: 'teal'
+      }
+    ];
+  }, [status, amount]);
+
+  // Click-to-seek milestone handler
+  const handleMarkerClick = (time: number) => {
+    if (!wavesurferRef.current || isLoading || hasError) return;
+    wavesurferRef.current.setTime(time);
+    if (!isPlaying) {
+      wavesurferRef.current.play();
+    }
+  };
 
   // Formatear segundos a MM:SS
   const formatTime = (time: number) => {
@@ -175,10 +268,10 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       </div>
 
       {/* Waveform Area with states */}
-      <div className="relative bg-black/25 border border-white/5 rounded-xl px-4 py-3 flex flex-col justify-center min-h-[80px]">
+      <div className="relative bg-black/25 border border-white/5 rounded-xl px-4 pt-3 pb-5 flex flex-col justify-center min-h-[96px]">
         {/* Loading skeleton */}
         {isLoading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 bg-black/40 backdrop-blur-[1px] rounded-xl">
+          <div className="absolute inset-0 flex flex-col items-center justify-center space-y-2 bg-black/40 backdrop-blur-[1px] rounded-xl z-20">
             <Loader2 size={24} className="text-indigo-500 animate-spin" />
             <span className="text-[10px] text-text-secondary tracking-widest font-black uppercase">Decodificando señal...</span>
           </div>
@@ -186,21 +279,88 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
         {/* Error State */}
         {hasError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center space-y-1 bg-black/40 backdrop-blur-[1px] rounded-xl text-rose-400 p-4 text-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center space-y-1 bg-black/40 backdrop-blur-[1px] rounded-xl text-rose-400 p-4 text-center z-20">
             <AlertCircle size={20} />
             <span className="text-[10px] font-black uppercase tracking-wider">Error de audio</span>
             <p className="text-[9px] opacity-80 max-w-xs">No se pudo recuperar la grabación. Valida la conexión de red o permisos CORS del servidor.</p>
           </div>
         )}
 
-        {/* Waveform DOM Node */}
-        <div 
-          ref={containerRef} 
-          className={cn(
-            "w-full transition-opacity duration-300", 
-            isLoading || hasError ? "opacity-10 cursor-not-allowed pointer-events-none" : "opacity-100"
+        {/* Waveform DOM Node Wrapper with relative context for timeline events */}
+        <div className="relative w-full py-1">
+          <div 
+            ref={containerRef} 
+            className={cn(
+              "w-full transition-opacity duration-300", 
+              isLoading || hasError ? "opacity-10 cursor-not-allowed pointer-events-none" : "opacity-100"
+            )}
+          />
+          
+          {/* Overlay for Timeline Milestones */}
+          {!isLoading && !hasError && totalDuration > 0 && (
+            <div className="absolute inset-0 pointer-events-none z-10 select-none">
+              {events.map((event) => {
+                const percentage = event.percentage;
+                const eventTime = (percentage * totalDuration) / 100;
+                const isActive = currentTime >= eventTime;
+                
+                return (
+                  <div
+                    key={event.id}
+                    className="absolute top-0 bottom-0 pointer-events-none"
+                    style={{ left: `${percentage}%` }}
+                  >
+                    {/* Vertical line indicator */}
+                    <div className={cn(
+                      "absolute top-0 bottom-0 w-[1px] border-l border-dashed transition-all duration-300 pointer-events-none",
+                      isActive ? "border-indigo-500/50" : "border-white/10"
+                    )} />
+                    
+                    {/* Marker Badge Interactive Div (acting as button + hover group) */}
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMarkerClick(eventTime);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleMarkerClick(eventTime);
+                        }
+                      }}
+                      className={cn(
+                        "absolute left-1/2 -translate-x-1/2 bottom-[-16px] w-6 h-6 rounded-lg flex items-center justify-center border shadow-lg transition-all duration-200 hover:scale-110 active:scale-95 pointer-events-auto cursor-pointer group/marker focus:outline-none focus:ring-1 focus:ring-indigo-500",
+                        getMarkerClasses(event.color, isActive)
+                      )}
+                    >
+                      {event.icon}
+                      
+                      {/* Tooltip Card (Premium popover) */}
+                      <div className="absolute bottom-[24px] left-1/2 -translate-x-1/2 mb-3 w-52 p-3 rounded-xl bg-neutral-950/95 backdrop-blur-md border border-white/10 shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover/marker:opacity-100 group-hover/marker:translate-y-0 transition-all duration-200 z-30">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className={cn("text-[9px] font-black uppercase tracking-wider", getTextColorClass(event.color))}>
+                            {event.title}
+                          </span>
+                          <span className="text-[9px] font-mono text-white/45">
+                            {formatTime(eventTime)}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-white/70 leading-relaxed font-medium text-left">
+                          {event.description}
+                        </p>
+                        <div className="text-[8px] text-indigo-400 mt-1.5 font-bold uppercase tracking-widest flex items-center gap-1">
+                          <span>⚡ Click para saltar</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
-        />
+        </div>
       </div>
 
       {/* Control bar */}

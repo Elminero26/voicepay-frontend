@@ -254,6 +254,8 @@ export const CallsPage: React.FC = () => {
                   id={selectedCall.id} 
                   duration={selectedCall.duration}
                   clientName={selectedCall.customerName}
+                  status={selectedCall.status}
+                  amount={selectedCall.amount}
                 />
               ) : (
                 <div className="p-4 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 flex items-center space-x-3 text-text-secondary text-xs">
