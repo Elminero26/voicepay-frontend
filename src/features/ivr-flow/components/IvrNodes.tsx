@@ -5,6 +5,7 @@ import {
   Mic, Server
 } from 'lucide-react';
 import { cn } from '../../../utils/cn';
+import { FloatingSpeechBubbles } from './FloatingSpeechBubbles';
 
 // Icon mapping dictionary to support serializable node data (strings instead of components)
 export const iconMap: { [key: string]: any } = {
@@ -23,7 +24,7 @@ export const iconMap: { [key: string]: any } = {
 };
 
 // Custom IVR Node
-export const IvrNode = ({ data, isConnectable }: any) => {
+export const IvrNode = ({ id, data, isConnectable }: any) => {
   const isCompleted = data.status === 'completed';
   const isInProgress = data.status === 'in-progress';
   const isFailed = data.status === 'failed';
@@ -36,12 +37,21 @@ export const IvrNode = ({ data, isConnectable }: any) => {
   return (
     <div className={cn(
       "px-4 py-3 rounded-2xl border-2 shadow-2xl w-[240px] transition-all duration-500",
-      "glass backdrop-blur-xl relative overflow-hidden group",
+      "glass backdrop-blur-xl relative group",
+      !isInProgress && "overflow-hidden",
       isCompleted ? "border-green-500/40 bg-green-500/5 shadow-green-500/10" :
       isInProgress ? "border-primary/50 bg-primary/10 shadow-primary/30 animate-pulse-slow" :
       isFailed ? "border-red-500/40 bg-red-500/5 shadow-red-500/10" :
       "border-border/40 bg-secondary/20 opacity-60 grayscale-[0.5]"
     )}>
+      {isInProgress && (
+        <FloatingSpeechBubbles
+          nodeId={id}
+          nodeLabel={data.label}
+          voicePrompt={data.voicePrompt}
+        />
+      )}
+
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-background !border-2 !border-primary !shadow-glow" isConnectable={isConnectable} />
       
       {/* Decorative background glow for active nodes */}
