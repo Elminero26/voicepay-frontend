@@ -4,6 +4,7 @@ import {
   ShieldCheck, Filter, DollarSign, X, 
   ChevronLeft, ChevronRight, Info, Lock
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '../../../components/Card';
 import { Table, TableRow, TableCell } from '../../../components/Table';
 import { paymentService } from '../../../services/api';
@@ -184,129 +185,140 @@ export const CallsPage: React.FC = () => {
     }
   };
 
-  if (loading) return <Loader />;
+  if (loading) return <Loader variant="table" />;
 
   return (
     <div className="space-y-8 animate-slide-up relative">
       
       {/* Cajón de Detalle de Auditoría (Side Drawer Overlay) */}
-      {selectedCall && (
-        <div className="fixed inset-0 z-50 flex justify-end animate-fade-in">
-          {/* Backdrop */}
-          <div 
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
-            onClick={() => setSelectedCall(null)}
-          />
-          
-          {/* Drawer Container */}
-          <div className="relative w-full max-w-lg h-full glass border-l border-white/10 bg-background/95 p-8 flex flex-col justify-between shadow-2xl overflow-y-auto animate-slide-in-right z-10">
-            <div className="space-y-6">
-              {/* Drawer Header */}
-              <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Detalle de Auditoría</span>
-                  <h3 className="text-xl font-black text-white mt-1">AUD-{selectedCall.id}</h3>
+      <AnimatePresence>
+        {selectedCall && (
+          <div className="fixed inset-0 z-50 flex justify-end">
+            {/* Backdrop */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setSelectedCall(null)}
+            />
+            
+            {/* Drawer Container */}
+            <motion.div 
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+              className="relative w-full max-w-lg h-full glass border-l border-white/10 bg-background/95 p-8 flex flex-col justify-between shadow-2xl overflow-y-auto z-10"
+            >
+              <div className="space-y-6">
+                {/* Drawer Header */}
+                <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Detalle de Auditoría</span>
+                    <h3 className="text-xl font-black text-white mt-1">AUD-{selectedCall.id}</h3>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedCall(null)}
+                    className="p-2 bg-secondary/50 hover:bg-white/5 rounded-xl transition-all text-text-secondary hover:text-white"
+                  >
+                    <X size={18} />
+                  </button>
                 </div>
+
+                {/* Security Audit Badge - AES-256 Notification */}
+                <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center space-x-3 text-indigo-200">
+                  <Lock size={20} className="shrink-0 text-indigo-400 animate-pulse" />
+                  <div className="text-xs">
+                    <p className="font-bold">🔒 Registro Protegido con Cifrado AES-256</p>
+                    <p className="opacity-70 mt-0.5">Los campos sensibles están encriptados a nivel de campo en la base de datos de VoicePay.</p>
+                  </div>
+                </div>
+
+                {/* Call Details Grid */}
+                <div className="grid grid-cols-2 gap-4 text-sm bg-black/20 p-5 rounded-2xl border border-white/5">
+                  <div>
+                    <span className="text-xs text-text-secondary">Cliente Auditado</span>
+                    <p className="font-bold text-white mt-1">{selectedCall.customerName}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-text-secondary">Número Telefónico</span>
+                    <p className="font-mono font-semibold text-white mt-1">{selectedCall.phoneNumber}</p>
+                  </div>
+                  <div className="mt-2">
+                    <span className="text-xs text-text-secondary">Monto Transaccionado</span>
+                    <p className="font-black text-white mt-1">${(selectedCall.amount ?? 0).toFixed(2)} USD</p>
+                  </div>
+                  <div className="mt-2">
+                    <span className="text-xs text-text-secondary">Duración de Sesión</span>
+                    <p className="font-semibold text-white mt-1">{selectedCall.duration || '-'} s</p>
+                  </div>
+                  <div className="mt-2 col-span-2">
+                    <span className="text-xs text-text-secondary">Marca de Tiempo</span>
+                    <p className="font-semibold text-white mt-1">{selectedCall.timestamp}</p>
+                  </div>
+                </div>
+
+                {/* Reproductor de Audio Grabado o Indicador de Llamada en Vivo */}
+                {selectedCall.audioUrl ? (
+                  <AudioPlayer 
+                    audioUrl={selectedCall.audioUrl} 
+                    id={selectedCall.id} 
+                    duration={selectedCall.duration}
+                    clientName={selectedCall.customerName}
+                    status={selectedCall.status}
+                    amount={selectedCall.amount}
+                  />
+                ) : (
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 flex items-center space-x-3 text-text-secondary text-xs">
+                      <Phone className="shrink-0 text-amber-500 animate-pulse" size={18} />
+                      <div className="text-[11px] leading-relaxed">
+                        <p className="font-bold text-white">📞 Llamada Activa / En Proceso</p>
+                        <p className="opacity-70 mt-0.5">Esta sesión de audio se está transmitiendo en vivo. La grabación final e interactiva estará disponible para auditoría al completarse.</p>
+                      </div>
+                    </div>
+                    <WaveformCanvas />
+                  </div>
+                )}
+
+                {/* Event Timeline (Voice flow events) */}
+                <div className="space-y-4">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+                    <Network size={14} className="text-indigo-400" />
+                    Ruta del Flujo de Voz (IVR Flow Log)
+                  </h4>
+                  
+                  <div className="relative border-l border-white/10 ml-2.5 pl-5 space-y-5 py-2">
+                    {getCallEventsTimeline(selectedCall).map((event, idx) => (
+                      <div key={idx} className="relative">
+                        {/* Timeline Dot */}
+                        <span className={cn(
+                          "absolute -left-[26px] top-1.5 w-3 h-3 rounded-full border border-background",
+                          selectedCall.status === 'completed' ? "bg-emerald-500 shadow-lg shadow-emerald-500/30" :
+                          selectedCall.status === 'failed' && idx === getCallEventsTimeline(selectedCall).length - 1 ? "bg-rose-500 shadow-lg shadow-rose-500/30" :
+                          "bg-indigo-500 shadow-lg shadow-indigo-500/30"
+                        )}></span>
+                        <p className="text-xs text-text-primary leading-relaxed">{event}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Close Button at bottom */}
+              <div className="mt-6 pt-4 border-t border-white/5">
                 <button 
                   onClick={() => setSelectedCall(null)}
-                  className="p-2 bg-secondary/50 hover:bg-white/5 rounded-xl transition-all text-text-secondary hover:text-white"
+                  className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 transition-colors font-bold text-sm text-white rounded-xl"
                 >
-                  <X size={18} />
+                  Cerrar Auditoría
                 </button>
               </div>
-
-              {/* Security Audit Badge - AES-256 Notification */}
-              <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center space-x-3 text-indigo-200">
-                <Lock size={20} className="shrink-0 text-indigo-400 animate-pulse" />
-                <div className="text-xs">
-                  <p className="font-bold">🔒 Registro Protegido con Cifrado AES-256</p>
-                  <p className="opacity-70 mt-0.5">Los campos sensibles están encriptados a nivel de campo en la base de datos de VoicePay.</p>
-                </div>
-              </div>
-
-              {/* Call Details Grid */}
-              <div className="grid grid-cols-2 gap-4 text-sm bg-black/20 p-5 rounded-2xl border border-white/5">
-                <div>
-                  <span className="text-xs text-text-secondary">Cliente Auditado</span>
-                  <p className="font-bold text-white mt-1">{selectedCall.customerName}</p>
-                </div>
-                <div>
-                  <span className="text-xs text-text-secondary">Número Telefónico</span>
-                  <p className="font-mono font-semibold text-white mt-1">{selectedCall.phoneNumber}</p>
-                </div>
-                <div className="mt-2">
-                  <span className="text-xs text-text-secondary">Monto Transaccionado</span>
-                  <p className="font-black text-white mt-1">${(selectedCall.amount ?? 0).toFixed(2)} USD</p>
-                </div>
-                <div className="mt-2">
-                  <span className="text-xs text-text-secondary">Duración de Sesión</span>
-                  <p className="font-semibold text-white mt-1">{selectedCall.duration || '-'} s</p>
-                </div>
-                <div className="mt-2 col-span-2">
-                  <span className="text-xs text-text-secondary">Marca de Tiempo</span>
-                  <p className="font-semibold text-white mt-1">{selectedCall.timestamp}</p>
-                </div>
-              </div>
-
-              {/* Reproductor de Audio Grabado o Indicador de Llamada en Vivo */}
-              {selectedCall.audioUrl ? (
-                <AudioPlayer 
-                  audioUrl={selectedCall.audioUrl} 
-                  id={selectedCall.id} 
-                  duration={selectedCall.duration}
-                  clientName={selectedCall.customerName}
-                  status={selectedCall.status}
-                  amount={selectedCall.amount}
-                />
-              ) : (
-                <div className="space-y-4">
-                  <div className="p-4 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 flex items-center space-x-3 text-text-secondary text-xs">
-                    <Phone className="shrink-0 text-amber-500 animate-pulse" size={18} />
-                    <div className="text-[11px] leading-relaxed">
-                      <p className="font-bold text-white">📞 Llamada Activa / En Proceso</p>
-                      <p className="opacity-70 mt-0.5">Esta sesión de audio se está transmitiendo en vivo. La grabación final e interactiva estará disponible para auditoría al completarse.</p>
-                    </div>
-                  </div>
-                  <WaveformCanvas />
-                </div>
-              )}
-
-              {/* Event Timeline (Voice flow events) */}
-              <div className="space-y-4">
-                <h4 className="text-xs font-black uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
-                  <Network size={14} className="text-indigo-400" />
-                  Ruta del Flujo de Voz (IVR Flow Log)
-                </h4>
-                
-                <div className="relative border-l border-white/10 ml-2.5 pl-5 space-y-5 py-2">
-                  {getCallEventsTimeline(selectedCall).map((event, idx) => (
-                    <div key={idx} className="relative">
-                      {/* Timeline Dot */}
-                      <span className={cn(
-                        "absolute -left-[26px] top-1.5 w-3 h-3 rounded-full border border-background",
-                        selectedCall.status === 'completed' ? "bg-emerald-500 shadow-lg shadow-emerald-500/30" :
-                        selectedCall.status === 'failed' && idx === getCallEventsTimeline(selectedCall).length - 1 ? "bg-rose-500 shadow-lg shadow-rose-500/30" :
-                        "bg-indigo-500 shadow-lg shadow-indigo-500/30"
-                      )}></span>
-                      <p className="text-xs text-text-primary leading-relaxed">{event}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Close Button at bottom */}
-            <div className="mt-6 pt-4 border-t border-white/5">
-              <button 
-                onClick={() => setSelectedCall(null)}
-                className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 transition-colors font-bold text-sm text-white rounded-xl"
-              >
-                Cerrar Auditoría
-              </button>
-            </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

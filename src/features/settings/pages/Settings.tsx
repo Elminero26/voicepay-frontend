@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Card } from '../../../components/Card';
 import { Button } from '../../../components/Button';
 import { Shield, MessageSquare, Key, Save, Eye, EyeOff, Smartphone } from 'lucide-react';
@@ -38,22 +39,40 @@ export const Settings: React.FC = () => {
         <button
           onClick={() => setActiveTab('security')}
           className={cn(
-            'flex items-center space-x-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all',
-            activeTab === 'security' ? 'bg-primary text-white shadow-lg' : 'text-text-secondary hover:text-text-primary'
+            'relative px-6 py-2.5 rounded-lg text-sm font-medium transition-all',
+            activeTab === 'security' ? 'text-white' : 'text-text-secondary hover:text-text-primary'
           )}
         >
-          <Shield size={18} />
-          <span>Security & API</span>
+          {activeTab === 'security' && (
+            <motion.div
+              layoutId="settingsActiveTab"
+              className="absolute inset-0 bg-primary rounded-lg shadow-lg"
+              transition={{ type: "spring", stiffness: 380, damping: 30 }}
+            />
+          )}
+          <span className="relative z-10 flex items-center space-x-2">
+            <Shield size={18} />
+            <span>Security & API</span>
+          </span>
         </button>
         <button
           onClick={() => setActiveTab('twilio')}
           className={cn(
-            'flex items-center space-x-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-all',
-            activeTab === 'twilio' ? 'bg-primary text-white shadow-lg' : 'text-text-secondary hover:text-text-primary'
+            'relative px-6 py-2.5 rounded-lg text-sm font-medium transition-all',
+            activeTab === 'twilio' ? 'text-white' : 'text-text-secondary hover:text-text-primary'
           )}
         >
-          <MessageSquare size={18} />
-          <span>Twilio Config</span>
+          {activeTab === 'twilio' && (
+            <motion.div
+              layoutId="settingsActiveTab"
+              className="absolute inset-0 bg-primary rounded-lg shadow-lg"
+              transition={{ type: "spring", stiffness: 380, damping: 30 }}
+            />
+          )}
+          <span className="relative z-10 flex items-center space-x-2">
+            <MessageSquare size={18} />
+            <span>Twilio Config</span>
+          </span>
         </button>
       </div>
 

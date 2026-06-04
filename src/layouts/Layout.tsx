@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { LayoutDashboard, Users, PhoneCall, Settings, LogOut, Menu, X, Bell, Network } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
 import { Button } from '../components/Button';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,6 +12,13 @@ export const Layout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
   const { logout, user } = useAuth();
   const { connectionState } = useCallStore();
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 1024);
+
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -31,7 +39,20 @@ export const Layout: React.FC = () => {
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
 
-      {/* Mobile Sidebar Toggle */}
+      {/* Mobile Sidebar Toggle Backdrop */}
+      <AnimatePresence>
+        {isMobile && isSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 z-35 bg-black/60 backdrop-blur-sm lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Sidebar Toggle Button */}
       <div className="lg:hidden fixed top-4 right-4 z-50">
         <Button
           variant="secondary"
@@ -43,11 +64,13 @@ export const Layout: React.FC = () => {
       </div>
 
       {/* Sidebar */}
-      <aside
+      <motion.aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 w-64 glass border-r border-border transform transition-transform duration-300 lg:translate-x-0 lg:static lg:inset-0',
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          'fixed inset-y-0 left-0 z-40 w-64 glass border-r border-border lg:static lg:inset-0 lg:translate-x-0'
         )}
+        initial={isMobile ? { x: '-100%' } : { x: 0 }}
+        animate={{ x: isMobile ? (isSidebarOpen ? 0 : '-100%') : 0 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 28 }}
       >
         <div className="flex flex-col h-full p-6">
           <div className="flex items-center space-x-3 mb-10 px-2">
@@ -64,16 +87,27 @@ export const Layout: React.FC = () => {
                 to={item.path}
                 className={({ isActive }) =>
                   cn(
-                    'flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group',
-                    isActive
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
+                    'relative flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group overflow-hidden',
+                    isActive ? 'text-primary' : 'text-text-secondary hover:text-text-primary'
                   )
                 }
                 onClick={() => setIsSidebarOpen(false)}
               >
-                <item.icon size={20} className="transition-transform group-hover:scale-110" />
-                <span className="font-medium">{item.label}</span>
+                {({ isActive }) => (
+                  <>
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeSidebarItem"
+                        className="absolute inset-0 bg-primary/10 border-l-2 border-primary"
+                        transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+                      />
+                    )}
+                    <span className="relative z-10 flex items-center space-x-3">
+                      <item.icon size={20} className="transition-transform group-hover:scale-110" />
+                      <span className="font-medium">{item.label}</span>
+                    </span>
+                  </>
+                )}
               </NavLink>
             ))}
           </nav>
@@ -85,7 +119,7 @@ export const Layout: React.FC = () => {
             </Button>
           </div>
         </div>
-      </aside>
+      </motion.aside>
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">

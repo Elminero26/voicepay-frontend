@@ -85,7 +85,7 @@ export const UsersPage: React.FC = () => {
     }
   };
 
-  if (loading) return <Loader />;
+  if (loading) return <Loader variant="table" />;
 
   return (
     <div className="space-y-8 animate-slide-up">

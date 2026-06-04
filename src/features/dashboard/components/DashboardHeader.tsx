@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ShieldCheck, Bell, Trash2, Download, FileText, FileSpreadsheet, KeyRound, X, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { cn } from '../../../utils/cn';
 import { useCallStore } from '../../../stores/useCallStore';
 import { paymentService } from '../../../services/api';
@@ -107,24 +108,34 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             <button 
               onClick={() => setActiveTab('realtime')}
               className={cn(
-                "px-5 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300",
-                activeTab === 'realtime' 
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 scale-102" 
-                  : "text-text-secondary hover:text-text-primary"
+                "relative px-5 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300",
+                activeTab === 'realtime' ? "text-white" : "text-text-secondary hover:text-text-primary"
               )}
             >
-              Real-time
+              {activeTab === 'realtime' && (
+                <motion.div
+                  layoutId="dashboardActiveTab"
+                  className="absolute inset-0 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/30"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+              )}
+              <span className="relative z-10">Real-time</span>
             </button>
             <button 
               onClick={() => setActiveTab('analytics')}
               className={cn(
-                "px-5 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300",
-                activeTab === 'analytics' 
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 scale-102" 
-                  : "text-text-secondary hover:text-text-primary"
+                "relative px-5 py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300",
+                activeTab === 'analytics' ? "text-white" : "text-text-secondary hover:text-text-primary"
               )}
             >
-              Pro Analytics
+              {activeTab === 'analytics' && (
+                <motion.div
+                  layoutId="dashboardActiveTab"
+                  className="absolute inset-0 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-600/30"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+              )}
+              <span className="relative z-10">Pro Analytics</span>
             </button>
           </div>
 

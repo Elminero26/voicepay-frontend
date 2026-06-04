@@ -227,7 +227,7 @@ export const Dashboard: React.FC = () => {
     }
   }, [timeRange]);
 
-  if (loading || !stats) return <Loader />;
+  if (loading || !stats) return <Loader variant="dashboard" />;
 
   return (
     <div className="space-y-8 animate-slide-up relative">
