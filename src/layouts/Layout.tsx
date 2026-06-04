@@ -7,6 +7,7 @@ import { Button } from '../components/Button';
 import { useAuth } from '../contexts/AuthContext';
 import { useCallStore } from '../stores/useCallStore';
 import { WebSocketBanner } from '../components/WebSocketBanner';
+import { LanguageSwitcher } from '../components/LanguageSwitcher';
 
 export const Layout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
@@ -146,6 +147,8 @@ export const Layout: React.FC = () => {
           </div>
           
           <div className="flex items-center space-x-4 ml-auto">
+            {/* VP-17: Language switcher */}
+            <LanguageSwitcher />
             <div className="flex flex-col items-end mr-2">
               <span className="text-sm font-medium">{user?.name || 'User'}</span>
               <span className="text-xs text-text-secondary capitalize">{user?.role || 'System Manager'}</span>

@@ -1,0 +1,202 @@
+{
+  "common": {
+    "appName": "VoicePay",
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "export": "Exportar",
+    "search": "Buscar",
+    "reset": "Restablecer",
+    "close": "Cerrar",
+    "all": "Todos",
+    "actions": "Acciones",
+    "status": "Estado",
+    "role": "Rol",
+    "na": "N/A",
+    "confirm_delete": "¿Estás seguro de que deseas eliminar este usuario?"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "users": "Usuarios",
+    "calls": "Llamadas",
+    "ivr_flow": "IVR Flow",
+    "notifications": "Notificaciones",
+    "settings": "Configuración",
+    "logout": "Cerrar sesión",
+    "system_overview": "Vista General del Sistema"
+  },
+  "connection": {
+    "live": "Señal en Vivo",
+    "connecting": "Conectando...",
+    "reconnecting": "Reconectando",
+    "offline": "Sin Conexión"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Resumen del sistema de pagos por voz en tiempo real.",
+    "total_calls": "Llamadas Totales",
+    "success_rate": "Tasa de Éxito",
+    "revenue": "Ingresos",
+    "active_calls": "Llamadas Activas",
+    "recent_activity": "Actividad Reciente",
+    "system_health": "Estado del Sistema"
+  },
+  "users": {
+    "title": "Gestión de Usuarios",
+    "subtitle": "Gestiona clientes, administradores y operadores.",
+    "create_user": "Crear Usuario",
+    "edit_user": "Editar Usuario",
+    "create_new_user": "Crear Nuevo Usuario",
+    "search_placeholder": "Buscar por nombre, email o teléfono...",
+    "no_users_found": "No se encontraron usuarios",
+    "reset_filters": "Restablecer Filtros",
+    "showing_count": "Mostrando <strong>{{count}}</strong> usuarios en total. Usa el scroll para navegar.",
+    "export_csv": "Exportar CSV",
+    "roles": {
+      "all": "Todos",
+      "admin": "Admin",
+      "user": "Cliente"
+    },
+    "table": {
+      "user": "Usuario",
+      "phone": "Teléfono",
+      "role": "Rol",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "status": {
+      "active": "Activo",
+      "inactive": "Inactivo"
+    },
+    "form": {
+      "full_name": "Nombre Completo",
+      "phone_number": "Número de Teléfono (con +)",
+      "email_address": "Dirección de Email",
+      "system_role": "Rol en el Sistema",
+      "roles": {
+        "user": "Cliente / Operador",
+        "admin": "Administrador"
+      },
+      "save_changes": "Guardar Cambios",
+      "create_account": "Crear Cuenta"
+    }
+  },
+  "calls": {
+    "title": "Panel de Auditoría",
+    "subtitle": "Consulta el historial completo de llamadas, transacciones financieras y auditorías de seguridad del sistema.",
+    "export_csv": "Exportar reporte CSV",
+    "search_placeholder": "Buscar por cliente o teléfono...",
+    "advanced_search": "Búsqueda Avanzada",
+    "stats": {
+      "total_processed": "Procesado Total",
+      "total_processed_desc": "Auditorías de llamadas totales",
+      "success_rate": "Tasa de Éxito",
+      "success_rate_desc": "Tasa de éxito comercial en cobro",
+      "billed_amount": "Facturación Auditada",
+      "billed_amount_desc": "Monto total auditado en USD",
+      "db_security": "Seguridad DB",
+      "db_security_desc": "Cifrado de campos de datos activo"
+    },
+    "filters": {
+      "status_label": "Estado:",
+      "duration_label": "Duración de llamada",
+      "min_amount": "Monto Mínimo (USD)",
+      "max_amount": "Monto Máximo (USD)",
+      "date_range": "Rango de fechas",
+      "all": "Todos",
+      "completed": "Completado",
+      "failed": "Fallido",
+      "in_progress": "Activo",
+      "duration_all": "Todas las duraciones",
+      "duration_short": "Corta (Menos de 1m)",
+      "duration_medium": "Media (1m a 5m)",
+      "duration_long": "Larga (Más de 5m)"
+    },
+    "table": {
+      "audit_id": "ID de Auditoría",
+      "client": "Cliente",
+      "phone": "Número de Teléfono",
+      "amount": "Monto (USD)",
+      "duration": "Duración",
+      "status": "Estado",
+      "timestamp": "Hora del Registro",
+      "actions": "Acciones"
+    },
+    "status": {
+      "completed": "Completado",
+      "failed": "Fallido",
+      "in_progress": "Activo"
+    },
+    "no_records": "No se encontraron registros de auditoría",
+    "reset_filters": "Restablecer todos los filtros",
+    "showing_count": "Mostrando <strong>{{count}}</strong> registros de auditoría en total. Use el scroll para navegar.",
+    "drawer": {
+      "audit_detail": "Detalle de Auditoría",
+      "encryption_title": "🔒 Registro Protegido con Cifrado AES-256",
+      "encryption_desc": "Los campos sensibles están encriptados a nivel de campo en la base de datos de VoicePay.",
+      "audited_client": "Cliente Auditado",
+      "phone_number": "Número Telefónico",
+      "amount_transacted": "Monto Transaccionado",
+      "session_duration": "Duración de Sesión",
+      "timestamp": "Marca de Tiempo",
+      "ivr_flow_log": "Ruta del Flujo de Voz (IVR Flow Log)",
+      "active_call_title": "📞 Llamada Activa / En Proceso",
+      "active_call_desc": "Esta sesión de audio se está transmitiendo en vivo. La grabación final e interactiva estará disponible para auditoría al completarse.",
+      "close_audit": "Cerrar Auditoría"
+    },
+    "view_audit": "Ver Auditoría Completa",
+    "view_ivr": "Ver Árbol IVR"
+  },
+  "settings": {
+    "title": "Configuración del Sistema",
+    "subtitle": "Configura tu autenticación API y servicios de comunicación.",
+    "save_changes": "Guardar Cambios",
+    "saved_toast": "Configuración Guardada",
+    "saved_toast_desc": "La configuración del sistema se actualizó correctamente.",
+    "tabs": {
+      "security": "Seguridad & API",
+      "twilio": "Config. Twilio"
+    },
+    "security": {
+      "card_title": "Autenticación API",
+      "card_desc": "Gestiona tus claves secretas de aplicación y métodos de autenticación.",
+      "master_key": "Clave API Maestra",
+      "key_hint": "Esta clave permite a sistemas externos interactuar con la API de VoicePay.",
+      "warning_title": "Advertencia de Seguridad",
+      "warning_desc": "Mantén tus claves API en secreto. Nunca las compartas ni las subas a control de versiones. Si se comprometen, regéneralas de inmediato."
+    },
+    "twilio": {
+      "card_title": "Integración Twilio",
+      "card_desc": "Configura tus credenciales de SMS y Voz para habilitar notificaciones en tiempo real.",
+      "account_sid": "Account SID",
+      "auth_token": "Auth Token",
+      "phone_number": "Número de Teléfono Twilio"
+    },
+    "helper": {
+      "card_title": "Ayuda",
+      "where_to_get": "¿Dónde obtenerlas?",
+      "where_to_get_desc": "Puedes encontrar tus credenciales de Twilio en el Dashboard de la Consola Twilio en \"Account Info\"."
+    }
+  },
+  "auth": {
+    "login": "Iniciar Sesión",
+    "logout": "Cerrar Sesión",
+    "email": "Email",
+    "password": "Contraseña",
+    "sign_in": "Entrar",
+    "sign_in_with_google": "Continuar con Google",
+    "access_denied": "Acceso Denegado",
+    "redirecting": "Redirigiendo..."
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "subtitle": "Historial de alertas y eventos del sistema."
+  },
+  "ivr": {
+    "title": "Flujo IVR",
+    "subtitle": "Editor visual del árbol de respuesta interactiva de voz."
+  }
+}
