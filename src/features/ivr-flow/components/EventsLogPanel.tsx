@@ -2,6 +2,7 @@ import React from 'react';
 import { Card } from '../../../components/Card';
 import { Zap, Globe, ShieldCheck } from 'lucide-react';
 import type { Call } from '../../../types';
+import { WaveformCanvas } from '../../../components/WaveformCanvas';
 
 interface EventsLogPanelProps {
   activeCall: Call | null;
@@ -53,7 +54,9 @@ export const EventsLogPanel: React.FC<EventsLogPanelProps> = ({
       </div>
 
       {activeCall && (
-        <div className="mt-6 pt-6 border-t border-white/5">
+        <div className="mt-6 pt-6 border-t border-white/5 space-y-4">
+          <WaveformCanvas />
+          
           <div className="p-4 bg-primary/5 rounded-2xl border border-primary/20 backdrop-blur-xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-30 transition-opacity">
               <ShieldCheck size={40} />
