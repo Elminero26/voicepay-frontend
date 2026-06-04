@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { useDebounce } from '../../../hooks/useDebounce';
 import { 
   Phone, Search, Download, ArrowUpRight, Clock, Network, 
   ShieldCheck, Filter, DollarSign, X, 
@@ -19,7 +20,10 @@ export const CallsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   
   // States para filtros y búsqueda avanzada
-  const [searchTerm, setSearchTerm] = useState('');
+  // Raw input value — updates on every keystroke (bound to the <input>)
+  const [searchInput, setSearchInput] = useState('');
+  // Debounced value — updates only after 300ms of inactivity, used by the filter
+  const debouncedSearch = useDebounce(searchInput, 300);
   const [filterStatus, setFilterStatus] = useState<'all' | 'completed' | 'failed' | 'in-progress'>('all');
   const [filterDuration, setFilterDuration] = useState<'all' | 'short' | 'medium' | 'long'>('all');
   const [startDate, setStartDate] = useState('');
@@ -86,10 +90,10 @@ export const CallsPage: React.FC = () => {
   // Lógica de filtrado de auditoría avanzado
   const filteredCalls = useMemo(() => {
     return calls.filter(call => {
-      // 1. Búsqueda por Nombre de Cliente o Teléfono
+      // 1. Búsqueda por Nombre de Cliente o Teléfono (usa el valor debounced)
       const matchesSearch = 
-        call.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        call.phoneNumber.includes(searchTerm);
+        call.customerName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        call.phoneNumber.includes(debouncedSearch);
 
       // 2. Filtro por Estado
       const matchesStatus = filterStatus === 'all' || call.status === filterStatus;
@@ -122,7 +126,7 @@ export const CallsPage: React.FC = () => {
 
       return matchesSearch && matchesStatus && matchesDuration && matchesMinAmount && matchesMaxAmount && matchesDates;
     });
-  }, [calls, searchTerm, filterStatus, filterDuration, minAmount, maxAmount, startDate, endDate]);
+  }, [calls, debouncedSearch, filterStatus, filterDuration, minAmount, maxAmount, startDate, endDate]);
 
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -135,7 +139,7 @@ export const CallsPage: React.FC = () => {
 
   // Restablecer todos los filtros
   const handleClearFilters = () => {
-    setSearchTerm('');
+    setSearchInput('');
     setFilterStatus('all');
     setFilterDuration('all');
     setStartDate('');
@@ -432,8 +436,8 @@ export const CallsPage: React.FC = () => {
               <input 
                 type="text" 
                 placeholder="Buscar por cliente o teléfono..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 className="w-full bg-secondary/40 border border-white/5 rounded-xl py-2.5 pl-12 pr-4 text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
               />
             </div>

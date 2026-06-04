@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { useDebounce } from '../../../hooks/useDebounce';
 import { Plus, Search, Edit2, Trash2, Mail } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Card } from '../../../components/Card';
@@ -22,7 +23,10 @@ export const UsersPage: React.FC = () => {
     role: 'user'
   });
 
-  const [searchTerm, setSearchTerm] = useState('');
+  // Raw input value — updates on every keystroke (bound to the <input>)
+  const [searchInput, setSearchInput] = useState('');
+  // Debounced value — updates only after 300ms of inactivity, used by the filter
+  const debouncedSearch = useDebounce(searchInput, 300);
   const [filterRole, setFilterRole] = useState<'all' | 'admin' | 'user'>('all');
 
   const fetchUsers = async () => {
@@ -118,16 +122,17 @@ export const UsersPage: React.FC = () => {
 
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
-      const nameMatch = (user.name || '').toLowerCase().includes(searchTerm.toLowerCase());
-      const emailMatch = (user.email || '').toLowerCase().includes(searchTerm.toLowerCase());
-      const phoneMatch = (user.phoneNumber || '').includes(searchTerm);
+      // Uses debounced value to avoid re-filtering on every keystroke
+      const nameMatch = (user.name || '').toLowerCase().includes(debouncedSearch.toLowerCase());
+      const emailMatch = (user.email || '').toLowerCase().includes(debouncedSearch.toLowerCase());
+      const phoneMatch = (user.phoneNumber || '').includes(debouncedSearch);
       const matchesSearch = nameMatch || emailMatch || phoneMatch;
 
       const matchesRole = filterRole === 'all' || user.role === filterRole;
 
       return matchesSearch && matchesRole;
     });
-  }, [users, searchTerm, filterRole]);
+  }, [users, debouncedSearch, filterRole]);
 
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -185,8 +190,8 @@ export const UsersPage: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search by name, email or phone..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 className="w-full bg-secondary border border-border rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-white"
               />
             </div>
@@ -317,7 +322,7 @@ export const UsersPage: React.FC = () => {
                       <p className="text-sm font-bold tracking-widest uppercase">No users found</p>
                       <button 
                         type="button"
-                        onClick={() => { setSearchTerm(''); setFilterRole('all'); }}
+                        onClick={() => { setSearchInput(''); setFilterRole('all'); }}
                         className="text-primary text-xs font-bold uppercase mt-3 tracking-widest hover:underline"
                       >
                         Reset Filters
