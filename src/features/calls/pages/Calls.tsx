@@ -1,12 +1,12 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { 
   Phone, Search, Download, ArrowUpRight, Clock, Network, 
   ShieldCheck, Filter, DollarSign, X, 
-  ChevronLeft, ChevronRight, Info, Lock
+  Info, Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { Card } from '../../../components/Card';
-import { Table, TableRow, TableCell } from '../../../components/Table';
 import { paymentService } from '../../../services/api';
 import type { Call } from '../../../types';
 import { Loader } from '../../../components/Loader';
@@ -28,10 +28,6 @@ export const CallsPage: React.FC = () => {
   const [maxAmount, setMaxAmount] = useState('');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  // States para paginación
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(8);
-
   // State para la llamada seleccionada en el Cajón de Auditoría (Drawer)
   const [selectedCall, setSelectedCall] = useState<Call | null>(null);
 
@@ -39,7 +35,44 @@ export const CallsPage: React.FC = () => {
     const fetchCalls = async () => {
       try {
         const data = await paymentService.getCalls();
-        setCalls(data);
+        // Para demostrar la virtualización correctamente con un scroll fluido,
+        // expandimos los datos mockeados si es un entorno de desarrollo.
+        if (data.length < 50) {
+          const expandedCalls: Call[] = [...data];
+          const firstNames = ['Alice', 'Michael', 'Dwight', 'Jim', 'Pam', 'Andy', 'Angela', 'Stanley', 'Ryan', 'Kelly', 'Toby', 'Creed', 'Oscar', 'Kevin', 'Meredith'];
+          const lastNames = ['Brown', 'Scott', 'Schrute', 'Halpert', 'Beesly', 'Bernard', 'Martin', 'Hudson', 'Howard', 'Kapoor', 'Flenderson', 'Bratton', 'Martinez', 'Malone', 'Palmer'];
+          const statuses = ['completed', 'failed', 'in-progress'] as const;
+          
+          for (let i = 1; i <= 200; i++) {
+            const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+            const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+            const status = statuses[Math.floor(Math.random() * statuses.length)];
+            const amount = status === 'completed' ? Math.floor(Math.random() * 450) + 10 : (status === 'failed' ? Math.floor(Math.random() * 100) + 5 : 0);
+            const durationSecs = Math.floor(Math.random() * 500) + 20;
+            const minutes = Math.floor(durationSecs / 60);
+            const seconds = durationSecs % 60;
+            const duration = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            
+            const hours = Math.floor(Math.random() * 12) + 1;
+            const mins = Math.floor(Math.random() * 60);
+            const ampm = Math.random() > 0.5 ? 'AM' : 'PM';
+            const timestamp = `${hours}:${mins < 10 ? '0' : ''}${mins} ${ampm}`;
+            
+            expandedCalls.push({
+              id: `v${i}`,
+              customerName: `${firstName} ${lastName}`,
+              phoneNumber: `+1 555 ${Math.floor(100 + Math.random() * 900)} ${Math.floor(1000 + Math.random() * 9000)}`,
+              status,
+              amount,
+              duration,
+              timestamp,
+              audioUrl: status !== 'in-progress' ? '/call_recording.mp3' : undefined
+            });
+          }
+          setCalls(expandedCalls);
+        } else {
+          setCalls(data);
+        }
       } catch (error) {
         console.error('Error fetching calls:', error);
       } finally {
@@ -91,21 +124,14 @@ export const CallsPage: React.FC = () => {
     });
   }, [calls, searchTerm, filterStatus, filterDuration, minAmount, maxAmount, startDate, endDate]);
 
-  // Lógica de paginación
-  const totalPages = Math.ceil(filteredCalls.length / itemsPerPage);
-  
-  const paginatedCalls = useMemo(() => {
-    const activePage = currentPage > totalPages ? 1 : currentPage;
-    const startIndex = (activePage - 1) * itemsPerPage;
-    return filteredCalls.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredCalls, currentPage, itemsPerPage, totalPages]);
+  const parentRef = useRef<HTMLDivElement>(null);
 
-  // Cambiar de página
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
+  const rowVirtualizer = useVirtualizer({
+    count: filteredCalls.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 72,
+    overscan: 10,
+  });
 
   // Restablecer todos los filtros
   const handleClearFilters = () => {
@@ -116,7 +142,6 @@ export const CallsPage: React.FC = () => {
     setEndDate('');
     setMinAmount('');
     setMaxAmount('');
-    setCurrentPage(1);
   };
 
   // Exportar datos a formato CSV de forma funcional y descargable
@@ -408,7 +433,7 @@ export const CallsPage: React.FC = () => {
                 type="text" 
                 placeholder="Buscar por cliente o teléfono..." 
                 value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-secondary/40 border border-white/5 rounded-xl py-2.5 pl-12 pr-4 text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
               />
             </div>
@@ -435,7 +460,7 @@ export const CallsPage: React.FC = () => {
                 {(['all', 'completed', 'failed', 'in-progress'] as const).map((status) => (
                   <button 
                     key={status}
-                    onClick={() => { setFilterStatus(status); setCurrentPage(1); }}
+                    onClick={() => setFilterStatus(status)}
                     className={cn(
                       "px-3 py-1.5 rounded-lg text-xs font-bold transition-all capitalize",
                       filterStatus === status 
@@ -459,7 +484,7 @@ export const CallsPage: React.FC = () => {
                 <label className="text-[10px] font-black uppercase tracking-wider text-text-secondary">Duración de llamada</label>
                 <select 
                   value={filterDuration}
-                  onChange={(e) => { setFilterDuration(e.target.value as any); setCurrentPage(1); }}
+                  onChange={(e) => setFilterDuration(e.target.value as any)}
                   className="w-full bg-secondary/50 border border-white/5 rounded-xl px-3 py-2 text-xs text-white outline-none cursor-pointer focus:ring-1 focus:ring-indigo-500"
                 >
                   <option value="all">Todas las duraciones</option>
@@ -476,7 +501,7 @@ export const CallsPage: React.FC = () => {
                   type="number"
                   placeholder="Min $0"
                   value={minAmount}
-                  onChange={(e) => { setMinAmount(e.target.value); setCurrentPage(1); }}
+                  onChange={(e) => setMinAmount(e.target.value)}
                   className="w-full bg-secondary/50 border border-white/5 rounded-xl px-3 py-2 text-xs text-white outline-none focus:ring-1 focus:ring-indigo-500"
                 />
               </div>
@@ -488,7 +513,7 @@ export const CallsPage: React.FC = () => {
                   type="number"
                   placeholder="Max $500"
                   value={maxAmount}
-                  onChange={(e) => { setMaxAmount(e.target.value); setCurrentPage(1); }}
+                  onChange={(e) => setMaxAmount(e.target.value)}
                   className="w-full bg-secondary/50 border border-white/5 rounded-xl px-3 py-2 text-xs text-white outline-none focus:ring-1 focus:ring-indigo-500"
                 />
               </div>
@@ -516,150 +541,151 @@ export const CallsPage: React.FC = () => {
         </div>
 
         {/* Audit Table */}
-        <div className="relative">
-          <Table headers={['ID de Auditoría', 'Cliente', 'Número de Teléfono', 'Monto (USD)', 'Duración', 'Estado', 'Hora del Registro', 'Acciones']}>
-            {paginatedCalls.map((call) => (
-              <TableRow 
-                key={call.id} 
-                className="group hover:bg-indigo-500/5 transition-colors cursor-pointer"
-                onClick={() => setSelectedCall(call)}
+        <div className="w-full overflow-x-auto custom-scrollbar border border-white/5 rounded-2xl bg-black/10">
+          <div className="min-w-[1000px]">
+            {/* Table Header */}
+            <div className="grid grid-cols-[120px_2fr_1.5fr_1fr_1fr_1.2fr_1.5fr_100px] gap-4 py-4 px-4 border-b border-white/10 text-xs font-semibold uppercase tracking-wider text-text-secondary items-center">
+              <div>ID de Auditoría</div>
+              <div>Cliente</div>
+              <div>Número de Teléfono</div>
+              <div>Monto (USD)</div>
+              <div>Duración</div>
+              <div>Estado</div>
+              <div>Hora del Registro</div>
+              <div>Acciones</div>
+            </div>
+
+            {/* Virtualized Scroll Viewport */}
+            <div 
+              ref={parentRef}
+              className="overflow-y-auto max-h-[500px] relative custom-scrollbar"
+            >
+              <div
+                style={{
+                  height: `${rowVirtualizer.getTotalSize()}px`,
+                  width: '100%',
+                  position: 'relative',
+                }}
               >
-                <TableCell className="font-mono text-xs font-bold text-indigo-400">
-                  AUD-{call.id}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/20 to-secondary flex items-center justify-center text-indigo-400 font-black text-xs border border-indigo-500/10">
-                      {call.customerName.charAt(0)}
-                    </div>
-                    <span className="font-bold text-white group-hover:text-indigo-400 transition-colors">{call.customerName}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-text-secondary font-mono text-xs">{call.phoneNumber}</TableCell>
-                <TableCell>
-                  <span className={cn(
-                    "font-black text-white",
-                    call.status === 'completed' ? "text-white" : "text-text-secondary"
-                  )}>
-                    ${(call.amount ?? 0).toFixed(2)}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center text-text-secondary text-xs">
-                    <Clock size={12} className="mr-1.5 text-indigo-400" />
-                    {call.duration}s
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <span className={cn(
-                    'px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider border shadow-inner',
-                    call.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                    call.status === 'failed' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
-                    'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                  )}>
-                    {call.status === 'completed' ? 'completado' : call.status === 'failed' ? 'fallido' : 'activo'}
-                  </span>
-                </TableCell>
-                <TableCell className="text-text-secondary text-xs font-medium">{call.timestamp}</TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center gap-2">
-                    <button 
+                {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                  const call = filteredCalls[virtualRow.index];
+                  if (!call) return null;
+                  return (
+                    <div
+                      key={call.id}
+                      data-index={virtualRow.index}
+                      ref={rowVirtualizer.measureElement}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: `${virtualRow.size}px`,
+                        transform: `translateY(${virtualRow.start}px)`,
+                      }}
+                      className="grid grid-cols-[120px_2fr_1.5fr_1fr_1fr_1.2fr_1.5fr_100px] gap-4 px-4 items-center border-b border-white/5 hover:bg-indigo-500/5 transition-colors cursor-pointer group"
                       onClick={() => setSelectedCall(call)}
-                      className="p-2 bg-secondary/40 hover:bg-indigo-500/20 text-text-secondary hover:text-indigo-400 rounded-lg transition-colors"
-                      title="Ver Auditoría Completa"
                     >
-                      <Info size={14} />
-                    </button>
-                    <a 
-                      href="/ivr-flow" 
-                      className="p-2 bg-secondary/40 hover:bg-indigo-500/20 text-text-secondary hover:text-indigo-400 rounded-lg transition-colors inline-block" 
-                      title="Ver Árbol IVR"
-                    >
-                      <Network size={14} />
-                    </a>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            
-            {filteredCalls.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-20">
-                  <div className="flex flex-col items-center opacity-40">
-                    <div className="p-4 bg-secondary rounded-full mb-4">
-                      <Search size={32} className="text-text-secondary" />
+                      {/* Column 1: ID */}
+                      <div className="font-mono text-xs font-bold text-indigo-400">
+                        AUD-{call.id}
+                      </div>
+
+                      {/* Column 2: Cliente */}
+                      <div className="flex items-center space-x-3 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/20 to-secondary flex items-center justify-center text-indigo-400 font-black text-xs border border-indigo-500/10 shrink-0">
+                          {call.customerName.charAt(0)}
+                        </div>
+                        <span className="font-bold text-white group-hover:text-indigo-400 transition-colors truncate">
+                          {call.customerName}
+                        </span>
+                      </div>
+
+                      {/* Column 3: Teléfono */}
+                      <div className="text-text-secondary font-mono text-xs truncate">
+                        {call.phoneNumber}
+                      </div>
+
+                      {/* Column 4: Monto */}
+                      <div className={cn(
+                        "font-black text-sm",
+                        call.status === 'completed' ? "text-white" : "text-text-secondary"
+                      )}>
+                        ${(call.amount ?? 0).toFixed(2)}
+                      </div>
+
+                      {/* Column 5: Duración */}
+                      <div className="flex items-center text-text-secondary text-xs">
+                        <Clock size={12} className="mr-1.5 text-indigo-400 shrink-0" />
+                        {call.duration}s
+                      </div>
+
+                      {/* Column 6: Estado */}
+                      <div>
+                        <span className={cn(
+                          'px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider border shadow-inner inline-block',
+                          call.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                          call.status === 'failed' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
+                          'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                        )}>
+                          {call.status === 'completed' ? 'completado' : call.status === 'failed' ? 'fallido' : 'activo'}
+                        </span>
+                      </div>
+
+                      {/* Column 7: Hora */}
+                      <div className="text-text-secondary text-xs font-medium truncate">
+                        {call.timestamp}
+                      </div>
+
+                      {/* Column 8: Acciones */}
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <button 
+                          onClick={() => setSelectedCall(call)}
+                          className="p-2 bg-secondary/40 hover:bg-indigo-500/20 text-text-secondary hover:text-indigo-400 rounded-lg transition-colors"
+                          title="Ver Auditoría Completa"
+                        >
+                          <Info size={14} />
+                        </button>
+                        <a 
+                          href="/ivr-flow" 
+                          className="p-2 bg-secondary/40 hover:bg-indigo-500/20 text-text-secondary hover:text-indigo-400 rounded-lg transition-colors inline-block" 
+                          title="Ver Árbol IVR"
+                        >
+                          <Network size={14} />
+                        </a>
+                      </div>
                     </div>
-                    <p className="text-sm font-bold tracking-widest uppercase">No se encontraron registros de auditoría</p>
-                    <button 
-                      onClick={handleClearFilters}
-                      className="text-indigo-400 text-xs font-black uppercase mt-3 tracking-widest hover:underline"
-                    >
-                      Restablecer todos los filtros
-                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Empty state */}
+            {filteredCalls.length === 0 && (
+              <div className="text-center py-20 border-t border-white/5">
+                <div className="flex flex-col items-center opacity-40">
+                  <div className="p-4 bg-secondary rounded-full mb-4">
+                    <Search size={32} className="text-text-secondary" />
                   </div>
-                </TableCell>
-              </TableRow>
+                  <p className="text-sm font-bold tracking-widest uppercase">No se encontraron registros de auditoría</p>
+                  <button 
+                    onClick={handleClearFilters}
+                    className="text-indigo-400 text-xs font-black uppercase mt-3 tracking-widest hover:underline"
+                  >
+                    Restablecer todos los filtros
+                  </button>
+                </div>
+              </div>
             )}
-          </Table>
+          </div>
         </div>
 
-        {/* Paginator footer */}
+        {/* Footer simple showing stats */}
         {filteredCalls.length > 0 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border-t border-white/5 bg-black/10">
             <span className="text-xs text-text-secondary font-semibold">
-              Mostrando <span className="text-white">{(currentPage - 1) * itemsPerPage + 1}</span> a <span className="text-white">{Math.min(currentPage * itemsPerPage, filteredCalls.length)}</span> de <span className="text-white">{filteredCalls.length}</span> registros de auditoría.
+              Mostrando <span className="text-white">{filteredCalls.length}</span> registros de auditoría en total. Use el scroll para navegar.
             </span>
-            
-            <div className="flex items-center gap-4">
-              {/* Items Per Page Selector */}
-              <div className="flex items-center gap-1.5 text-xs text-text-secondary">
-                <span className="text-[10px] font-black uppercase">Filas por página:</span>
-                <select 
-                  value={itemsPerPage}
-                  onChange={(e) => { setItemsPerPage(parseInt(e.target.value)); setCurrentPage(1); }}
-                  className="bg-secondary/40 border border-white/5 text-xs text-white rounded-lg px-2.5 py-1 outline-none cursor-pointer"
-                >
-                  <option value={5}>5</option>
-                  <option value={8}>8</option>
-                  <option value={12}>12</option>
-                  <option value={20}>20</option>
-                </select>
-              </div>
-
-              {/* Navigation buttons */}
-              <div className="flex items-center space-x-1">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="p-2 rounded-lg bg-secondary/40 border border-white/5 text-text-secondary hover:text-white hover:bg-white/5 transition-all disabled:opacity-30 disabled:pointer-events-none"
-                >
-                  <ChevronLeft size={14} />
-                </button>
-                
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => handlePageChange(page)}
-                    className={cn(
-                      "w-8 h-8 rounded-lg text-xs font-bold transition-all border",
-                      currentPage === page 
-                        ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-600/10" 
-                        : "bg-secondary/40 border-white/5 text-text-secondary hover:text-white"
-                    )}
-                  >
-                    {page}
-                  </button>
-                ))}
-
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="p-2 rounded-lg bg-secondary/40 border border-white/5 text-text-secondary hover:text-white hover:bg-white/5 transition-all disabled:opacity-30 disabled:pointer-events-none"
-                >
-                  <ChevronRight size={14} />
-                </button>
-              </div>
-            </div>
           </div>
         )}
       </Card>
