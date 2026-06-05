@@ -8,12 +8,14 @@ import { useAuth } from '../contexts/AuthContext';
 import { useCallStore } from '../stores/useCallStore';
 import { WebSocketBanner } from '../components/WebSocketBanner';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { useLanguage } from '../hooks/useLanguage';
 
 export const Layout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
   const { logout, user } = useAuth();
   const { connectionState } = useCallStore();
   const [isMobile, setIsMobile] = React.useState(window.innerWidth < 1024);
+  const { t } = useLanguage();
 
   React.useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -26,13 +28,26 @@ export const Layout: React.FC = () => {
   };
 
   const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-    { icon: Users, label: 'Users', path: '/users' },
-    { icon: PhoneCall, label: 'Calls', path: '/calls' },
-    { icon: Network, label: 'IVR Flow', path: '/ivr-flow' },
-    { icon: Bell, label: 'Notifications', path: '/notifications' },
-    { icon: Settings, label: 'Settings', path: '/settings' },
+    { icon: LayoutDashboard, label: t('nav.dashboard'), path: '/' },
+    { icon: Users, label: t('nav.users'), path: '/users' },
+    { icon: PhoneCall, label: t('nav.calls'), path: '/calls' },
+    { icon: Network, label: t('nav.ivr_flow'), path: '/ivr-flow' },
+    { icon: Bell, label: t('nav.notifications'), path: '/notifications' },
+    { icon: Settings, label: t('nav.settings'), path: '/settings' },
   ];
+
+  const getConnectionLabel = () => {
+    switch (connectionState) {
+      case 'connected':
+        return t('connection.live');
+      case 'connecting':
+        return t('connection.connecting');
+      case 'reconnecting':
+        return t('connection.reconnecting');
+      default:
+        return t('connection.offline');
+    }
+  };
 
   return (
     <div className="flex h-screen bg-background overflow-hidden bg-grid relative">
@@ -116,7 +131,7 @@ export const Layout: React.FC = () => {
           <div className="pt-6 border-t border-border">
             <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/5">
               <LogOut size={20} className="mr-3" />
-              Logout
+              {t('nav.logout')}
             </Button>
           </div>
         </div>
@@ -127,7 +142,7 @@ export const Layout: React.FC = () => {
         {/* Header */}
         <header className="h-20 flex items-center justify-between px-8 bg-background/50 backdrop-blur-md border-b border-border z-30">
           <div className="flex items-center space-x-4">
-            <h1 className="text-lg font-semibold lg:block hidden">System Overview</h1>
+            <h1 className="text-lg font-semibold lg:block hidden">{t('nav.system_overview')}</h1>
             
             {/* Glowing Live Connection Badge */}
             <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[11px] font-medium tracking-wide">
@@ -139,9 +154,7 @@ export const Layout: React.FC = () => {
                 "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.7)]"
               )} />
               <span className="text-text-secondary select-none">
-                {connectionState === 'connected' ? 'Live Feed' :
-                 connectionState === 'connecting' ? 'Connecting...' :
-                 connectionState === 'reconnecting' ? 'Reconnecting' : 'Offline'}
+                {getConnectionLabel()}
               </span>
             </div>
           </div>
@@ -170,3 +183,4 @@ export const Layout: React.FC = () => {
     </div>
   );
 };
+
