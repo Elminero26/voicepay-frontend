@@ -42,7 +42,65 @@
     "revenue": "Revenue",
     "active_calls": "Active Calls",
     "recent_activity": "Recent Activity",
-    "system_health": "System Health"
+    "system_health": "System Health",
+    "live_voice_stream": "Live Voice Stream",
+    "live_voice_stream_desc": "Encrypted active connections and calls from secure nodes.",
+    "live_secure_stream": "Live Secure Stream",
+    "connecting_node": "Connecting Node...",
+    "scanning_nodes": "Scanning for active voice nodes...",
+    "transaction_ledger": "Transaction Ledger",
+    "immutable_records": "Immutable records of last 10 attempts.",
+    "average_ticket": "Average Ticket",
+    "volume_revenue": "Volume Volume (Revenue)",
+    "average_ticket_value": "Average Ticket Value",
+    "total_active_calls": "Total Active Calls",
+    "avg_call_duration": "Avg. Call Duration",
+    "avg_call_duration_label": "Avg. Call Duration",
+    "vs_last_month": "vs last month",
+    "total_invoice_volume": "Total invoice volume",
+    "value_per_successful_call": "Value per successful call",
+    "ivr_iterations": "IVR Stream iterations",
+    "successful_payment_ratio": "Successful payment ratio",
+    "avg_time_in_system": "Average time in system",
+    "table": {
+      "customer": "Customer",
+      "phone": "Phone",
+      "amount": "Amount",
+      "option": "Option",
+      "duration": "Duration",
+      "secure_status": "Secure Status",
+      "time": "Time",
+      "verification": "Verification",
+      "unknown": "Unknown"
+    },
+    "charts": {
+      "live_flow_status": "Live Call Flow Status",
+      "monitoring_attempts": "Monitoring transaction stream attempts",
+      "conversion_share": "Conversion Share",
+      "ratio_secure_checkouts": "Ratio of secure checkouts",
+      "revenue_flow_trend": "Revenue Flow Trend",
+      "volume_timeframe": "Volume of checkout invoices in selected timeframe.",
+      "ivr_choices": "IVR Navigation Choices",
+      "user_distribution_ivr": "User distribution inside Voice Node menus.",
+      "iterations": "iterations",
+      "operational_success_failure": "Operational Success vs Failure",
+      "comparison_counts": "Comparison of daily completion vs rejection counts",
+      "kpi_health": "KPI Health Summary",
+      "security_metrics_audits": "Security metrics and audits",
+      "security_compliance": "Security Compliance",
+      "aes_enabled": "AES-256 Enabled",
+      "active": "Active",
+      "average_conversion": "Average Conversion",
+      "latency_check": "Latency Check",
+      "latency_val": "IVR response 82ms",
+      "excellent": "Excellent",
+      "optimal": "Optimal",
+      "successful": "Successful",
+      "failed": "Failed",
+      "revenue_volume": "Revenue Volume",
+      "completed_payments": "Completed Payments",
+      "failed_payments": "Failed Payments"
+    }
   },
   "users": {
     "title": "User Management",
@@ -158,7 +216,8 @@
     "saved_toast_desc": "System configuration updated successfully.",
     "tabs": {
       "security": "Security & API",
-      "twilio": "Twilio Config"
+      "twilio": "Twilio Config",
+      "language": "Language"
     },
     "security": {
       "card_title": "API Authentication",
@@ -179,6 +238,11 @@
       "card_title": "Helper",
       "where_to_get": "Where to get them?",
       "where_to_get_desc": "You can find your Twilio credentials in the Twilio Console Dashboard under \"Account Info\"."
+    },
+    "language": {
+      "card_title": "Interface Language",
+      "card_desc": "Choose the default language for system visualization.",
+      "select_label": "System language"
     }
   },
   "auth": {
@@ -189,7 +253,16 @@
     "sign_in": "Sign In",
     "sign_in_with_google": "Continue with Google",
     "access_denied": "Access Denied",
-    "redirecting": "Redirecting..."
+    "redirecting": "Redirecting...",
+    "welcome_back": "Welcome Back",
+    "enter_credentials": "Enter your credentials to access VoicePay System",
+    "or_continue_with": "Or continue with",
+    "session_expired": "Your session has expired. Please log in again.",
+    "login_failed": "Failed to login. Please check your credentials.",
+    "access_denied_desc": "You don't have the necessary permissions to access this area of the system. If you think this is a mistake, please contact your system administrator.",
+    "go_back": "Go Back",
+    "dashboard_home": "Dashboard Home",
+    "error_code": "Error Code:"
   },
   "notifications": {
     "title": "Notifications",
@@ -197,6 +270,229 @@
   },
   "ivr": {
     "title": "IVR Flow",
-    "subtitle": "Visual editor for the interactive voice response tree."
+    "subtitle": "Visual editor for the interactive voice response tree.",
+    "flow_visualizer": "IVR Flow Visualizer",
+    "live_stream": "Live Stream",
+    "local_simulation": "Local Simulation",
+    "designer_mode": "Designer Mode",
+    "designer_desc": "Interactive visual canvas to model, route and structure VoicePay IVR audio menus.",
+    "live_desc": "Real-time decision tree and microservices communication matrix.",
+    "live_status": "Live Status",
+    "interactive_designer": "Interactive Designer",
+    "active_streams": "Active Streams",
+    "heartbeat": "Heartbeat",
+    "status_matrix": "Status Matrix",
+    "node_completed": "Node: Completed",
+    "node_processing": "Node: Processing",
+    "node_error": "Node: Error",
+    "node_idle": "Node: Idle",
+    "designer_canvas": "Designer Canvas",
+    "designer_toolbox": "Designer Toolbox",
+    "editing_mode": "Editing Mode",
+    "node_properties": "Node Properties",
+    "node_label": "Node Label",
+    "label_placeholder": "e.g. Process Payment",
+    "description": "Description",
+    "desc_placeholder": "Summarize the action at this step...",
+    "dtmf_trigger": "DTMF Trigger Key (Optional)",
+    "dtmf_placeholder": "e.g. 1, 2, #, *",
+    "dtmf_hint": "If set, this node will light up when the user enters this key during option selection.",
+    "voice_prompt": "Voice Prompt (TTS)",
+    "prompt_placeholder": "Enter voice prompt...",
+    "api_endpoint": "API Endpoint / Integration",
+    "visual_glyph": "Visual Glyph / Icon",
+    "delete_selected": "Delete Selected Node",
+    "designer_guide_title": "Interactive Flow Designer",
+    "designer_guide_desc": "Click on any node to view/edit its parameters. Drag connections from the bottom handle of a node to the top of another to form flow routes.",
+    "available_blocks": "Available Blocks (Drag to Canvas)",
+    "blocks": {
+      "welcome": {
+        "label": "Welcome Greeting",
+        "description": "Initial greeting and introduction to voice flow."
+      },
+      "payment": {
+        "label": "Payment Gateway",
+        "description": "Secure payment processing module."
+      },
+      "agent": {
+        "label": "Transfer / Divert",
+        "description": "Transfer the call to a human agent."
+      },
+      "service": {
+        "label": "External Service",
+        "description": "Query or integration with API or microservice."
+      }
+    },
+    "drag_hint": "Drag a block to canvas or click to add it directly.",
+    "tip_message": "💡 Tip: You can select and delete edges/connections by clicking on them and hitting the 'Backspace' or 'Delete' key on your keyboard.",
+    "save_configuration": "Save IVR Configuration",
+    "restore_default": "Restore Default Flow",
+    "config_modal_title": "Configure Node: {{label}}",
+    "advanced_config": "Advanced IVR Configuration",
+    "advanced_config_desc": "Define the synthesized voice message and integration with corresponding microservice.",
+    "tts_label": "Voice Prompt (Text to Speech)",
+    "tts_hint": "This text will be read by the VoicePay TTS engine during calls.",
+    "api_url_label": "API Endpoint",
+    "api_url_hint": "URL of the microservice consulted for business logic upon activating this step.",
+    "export_signed_pdf": "PDF Report (Signed)",
+    "export_signed_excel": "Excel Report (Signed)",
+    "validate_digital_signature": "Validate Digital Signature",
+    "validate_authenticity_report": "Validate Report Authenticity",
+    "validate_crypto_signature": "Verify cryptographic digital signature of downloaded reports",
+    "user_id_filter": "User ID (Filter)",
+    "status_filter": "Status (Filter)",
+    "start_date_filter": "Start Date (Filter)",
+    "end_date_filter": "End Date (Filter)",
+    "rsa_crypto_signature": "RSA Cryptographic Signature (Base64) *",
+    "rsa_signature_placeholder": "Paste Base64 digital signature here (found at the end of PDF or Excel)",
+    "checking_signature": "Checking Signature...",
+    "verify_legitimacy": "Verify Legitimacy",
+    "valid_signature_msg": "DOCUMENT LEGITIMATE AND AUTHENTIC!",
+    "invalid_signature_msg": "INVALID SIGNATURE / ALTERED REPORT",
+    "validation_authority": "Validation Authority: VoicePay Authority",
+    "date": "Date:",
+    "temporal_filter": "Temporal Filter:",
+    "audited_period": "Audited Period",
+    "verifying_signature_error": "Could not contact signature verification service.",
+    "days_7": "7 Days",
+    "days_30": "30 Days",
+    "months_12": "12 Months",
+    "today": "Today",
+    "nodes": {
+      "1": {
+        "label": "Incoming Call",
+        "description": "User dials the IVR system",
+        "voicePrompt": "Welcome to the VoicePay automated payment system. Please hold while we identify you."
+      },
+      "2": {
+        "label": "Authentication",
+        "description": "Identifying user by phone",
+        "voicePrompt": "To ensure your security, we are verifying the phone number you are calling from."
+      },
+      "3": {
+        "label": "Payment Inquiry",
+        "description": "Checking pending amount",
+        "voicePrompt": "We have detected a pending invoice of one hundred and fifty euros. Press one to proceed with secure card payment, or press two if you prefer to be assisted by an agent."
+      },
+      "4": {
+        "label": "User Selection",
+        "description": "Waiting for DTMF (1 or 2)",
+        "voicePrompt": "Waiting for your selection. Dial one to pay, or two for support."
+      },
+      "5": {
+        "label": "Payment Status",
+        "description": "Final transaction result",
+        "voicePrompt": "Your payment of one hundred and fifty euros has been successfully processed and approved. Thank you very much for using VoicePay. Goodbye."
+      },
+      "6": {
+        "label": "Agent Transfer",
+        "description": "Connecting to human agent",
+        "voicePrompt": "We are transferring your call to the next available agent. Please hold."
+      },
+      "user_service": {
+        "label": "User Service"
+      },
+      "payment_service": {
+        "label": "Payment Service"
+      },
+      "notif_service": {
+        "label": "Notif. Service"
+      },
+      "agent_service": {
+        "label": "Agent Service"
+      },
+      "human_agent": {
+        "label": "Human Agent"
+      },
+      "new_node": "New Node",
+      "new_service": "New Service",
+      "configure_desc": "Configure description",
+      "external_service": "External service",
+      "new_ivr_step": "New IVR Step",
+      "new_service_node": "New Service",
+      "configure_step_desc": "Configure step description",
+      "external_service_integration": "External microservice integration"
+    },
+    "simulator": {
+      "title": "IVR Local Simulator",
+      "standby": "Standby",
+      "success_payment": "Success Payment",
+      "agent_transfer": "Agent Transf.",
+      "clear_cache": "Clear Local Cache",
+      "simulating_step": "Simulating current step",
+      "step_1": "Receiving incoming call...",
+      "step_2": "Authenticating user via CallerID...",
+      "step_3": "Consulting pending balance in DB...",
+      "step_4": "Playing IVR options menu...",
+      "step_5": "Selection entered [Option {{opt}}]",
+      "step_6_pay": "Transaction processed successfully!",
+      "step_6_agent": "Connecting directly to agent...",
+      "progress": "Progress",
+      "stop_simulation": "Stop Simulation",
+      "description": "Simulate full IVR decision tree flows directly in frontend without backend dependencies."
+    },
+    "events_log": {
+      "title": "Events Log",
+      "awaiting_signals": "Awaiting encrypted signals from the voice node matrix...",
+      "session_simulation": "SIMULATION SESSION",
+      "session_active": "Active session",
+      "simulated": "SIMULATED",
+      "encrypted": "ENCRYPTED",
+      "timeline_logs": {
+        "completed": [
+          "Secure connection established with phone node.",
+          "IVR Navigation: Selected option \"{{option}}\".",
+          "Entered billing credentials via encrypted DTMF.",
+          "Biometric security audit passed with voice signature.",
+          "Transaction approved by acquirer for ${{amount}}.",
+          "Closed voice channel and saved AES-256 encrypted details to database."
+        ],
+        "failed": [
+          "Connection established on public phone channel.",
+          "IVR Navigation: Selected option \"{{option}}\".",
+          "Entered card data using DTMF tones.",
+          "Security authentication error in payment gateway.",
+          "Gateway error code: 402 Card Declined / Insufficient Funds.",
+          "Security audit log saved for failed transaction."
+        ],
+        "in_progress": [
+          "Call started in VoicePay telecom node.",
+          "User entering visual IVR decision tree.",
+          "Active WebSocket connection streaming flow events."
+        ]
+      }
+    },
+    "speech_bubbles": {
+      "bot_voice": "BOT VOICE (TTS)",
+      "user_stt": "USER (STT)",
+      "transcribing": "Transcribing...",
+      "listening": "Listening for voice...",
+      "establishing_connection": "Establishing connection in the voice line...",
+      "fallback_payment": "Yes, I want to confirm the secure card payment.",
+      "fallback_agent": "Hello, I need to speak to an operator to receive support.",
+      "fallback_auth": "Okay, I confirm my number and my identity.",
+      "fallback_welcome": "Hello, good afternoon. Thank you.",
+      "fallback_general": "Understood, let's proceed with the next step.",
+      "user_bubble_1": "Hello there. I would like to pay a pending invoice.",
+      "user_bubble_2": "Alright. I am calling from my corporate mobile phone.",
+      "user_bubble_3": "I want to pay the pending invoice of one hundred and fifty euros with my credit card.",
+      "user_bubble_4_1": "I want to pay the invoice, I press key one.",
+      "user_bubble_4_2": "I prefer to talk to an agent. I press key two.",
+      "user_bubble_5": "Perfect, payment confirmed. Thank you very much for the speed. Goodbye.",
+      "user_bubble_6": "Alright, I'm staying on the line waiting for the available agent to pick up.",
+      "sim_call_name": "Carlos Test (Simulated)"
+    },
+    "toasts": {
+      "node_configured": "Node Configured",
+      "node_configured_desc": "Updated configuration for \"{{label}}\".",
+      "flow_synced": "Flow Synchronized",
+      "flow_synced_desc": "The interactive decision tree has been successfully loaded from the server.",
+      "flow_saved": "IVR Flow Saved",
+      "flow_saved_desc": "The custom Interactive Designer flow layout was successfully saved to the PostgreSQL database.",
+      "flow_saved_local": "IVR Flow Saved Locally",
+      "flow_saved_local_desc": "The custom Interactive Designer flow was saved in local storage (Backend unavailable).",
+      "flow_restored": "Flow Restored",
+      "flow_restored_desc": "The IVR flow has been reset to the default template."
+    }
   }
 }

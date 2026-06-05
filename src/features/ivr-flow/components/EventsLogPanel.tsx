@@ -3,6 +3,7 @@ import { Card } from '../../../components/Card';
 import { Zap, Globe, ShieldCheck } from 'lucide-react';
 import type { Call } from '../../../types';
 import { WaveformCanvas } from '../../../components/WaveformCanvas';
+import { useLanguage } from '../../../hooks/useLanguage';
 
 interface EventsLogPanelProps {
   activeCall: Call | null;
@@ -13,6 +14,8 @@ export const EventsLogPanel: React.FC<EventsLogPanelProps> = ({
   activeCall,
   isSimulating,
 }) => {
+  const { t } = useLanguage();
+
   return (
     <Card className="flex-1 glass-dark border-white/5 p-6 flex flex-col overflow-hidden shadow-2xl">
       <div className="flex items-center justify-between mb-6">
@@ -20,7 +23,7 @@ export const EventsLogPanel: React.FC<EventsLogPanelProps> = ({
           <div className="p-2 bg-primary/20 rounded-lg text-primary">
             <Zap size={18} />
           </div>
-          <h3 className="font-black text-white uppercase tracking-[0.15em] text-xs">Events Log</h3>
+          <h3 className="font-black text-white uppercase tracking-[0.15em] text-xs">{t('ivr.events_log.title')}</h3>
         </div>
         <span className="text-[9px] font-mono text-text-secondary opacity-50 uppercase">Secured v2.4</span>
       </div>
@@ -47,7 +50,7 @@ export const EventsLogPanel: React.FC<EventsLogPanelProps> = ({
               <Globe size={32} className="text-border animate-spin-slow opacity-30" />
             </div>
             <p className="text-xs text-text-secondary font-medium italic px-6 opacity-60">
-              Awaiting encrypted signals from the voice node matrix...
+              {t('ivr.events_log.awaiting_signals')}
             </p>
           </div>
         )}
@@ -63,12 +66,12 @@ export const EventsLogPanel: React.FC<EventsLogPanelProps> = ({
             </div>
             <div className="flex justify-between items-center mb-2">
               <span className="text-[10px] uppercase font-black text-primary tracking-widest">
-                {isSimulating ? "SIMULATION SESSION" : "Active session"}
+                {isSimulating ? t('ivr.events_log.session_simulation') : t('ivr.events_log.session_active')}
               </span>
               <div className="flex items-center space-x-1">
                 <div className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
                 <span className="text-[9px] font-black font-mono text-green-500">
-                  {isSimulating ? "SIMULATED" : "ENCRYPTED"}
+                  {isSimulating ? t('ivr.events_log.simulated') : t('ivr.events_log.encrypted')}
                 </span>
               </div>
             </div>

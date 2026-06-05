@@ -42,7 +42,65 @@
     "revenue": "Ingresos",
     "active_calls": "Llamadas Activas",
     "recent_activity": "Actividad Reciente",
-    "system_health": "Estado del Sistema"
+    "system_health": "Estado del Sistema",
+    "live_voice_stream": "Transmisión de Voz en Vivo",
+    "live_voice_stream_desc": "Conexiones activas cifradas y llamadas de nodos seguros.",
+    "live_secure_stream": "Canal Seguro en Vivo",
+    "connecting_node": "Conectando Nodo...",
+    "scanning_nodes": "Escaneando nodos de voz activos...",
+    "transaction_ledger": "Historial de Transacciones",
+    "immutable_records": "Registros inmutables de los últimos 10 intentos.",
+    "average_ticket": "Ticket Promedio",
+    "volume_revenue": "Volumen de Facturación",
+    "average_ticket_value": "Valor del Ticket Promedio",
+    "total_active_calls": "Llamadas Activas Totales",
+    "avg_call_duration": "Duración Promedio",
+    "avg_call_duration_label": "Duración Prom. de Llamada",
+    "vs_last_month": "vs mes anterior",
+    "total_invoice_volume": "Volumen total facturado",
+    "value_per_successful_call": "Valor por llamada exitosa",
+    "ivr_iterations": "Iteraciones de canales IVR",
+    "successful_payment_ratio": "Tasa de pagos exitosos",
+    "avg_time_in_system": "Tiempo promedio en el sistema",
+    "table": {
+      "customer": "Cliente",
+      "phone": "Teléfono",
+      "amount": "Monto",
+      "option": "Opción",
+      "duration": "Duración",
+      "secure_status": "Estado Seguro",
+      "time": "Hora",
+      "verification": "Verificación",
+      "unknown": "Desconocido"
+    },
+    "charts": {
+      "live_flow_status": "Estado del Flujo de Llamadas en Vivo",
+      "monitoring_attempts": "Monitoreo de intentos de transmisión de transacciones",
+      "conversion_share": "Distribución de Conversión",
+      "ratio_secure_checkouts": "Tasa de pagos seguros realizados",
+      "revenue_flow_trend": "Tendencia del Flujo de Ingresos",
+      "volume_timeframe": "Volumen de facturas en el periodo seleccionado",
+      "ivr_choices": "Selecciones de Navegación IVR",
+      "user_distribution_ivr": "Distribución de usuarios en menús de nodos de voz",
+      "iterations": "iteraciones",
+      "operational_success_failure": "Éxito Operacional vs Fallas",
+      "comparison_counts": "Comparación de cantidad de pagos completados vs fallidos",
+      "kpi_health": "Resumen de Salud de KPIs",
+      "security_metrics_audits": "Métricas de seguridad y auditorías",
+      "security_compliance": "Cumplimiento de Seguridad",
+      "aes_enabled": "AES-256 Habilitado",
+      "active": "Activo",
+      "average_conversion": "Conversión Promedio",
+      "latency_check": "Control de Latencia",
+      "latency_val": "Respuesta IVR 82ms",
+      "excellent": "Excelente",
+      "optimal": "Óptimo",
+      "successful": "Exitoso",
+      "failed": "Fallido",
+      "revenue_volume": "Volumen de Ingresos",
+      "completed_payments": "Pagos Completados",
+      "failed_payments": "Pagos Fallidos"
+    }
   },
   "users": {
     "title": "Gestión de Usuarios",
@@ -158,7 +216,8 @@
     "saved_toast_desc": "La configuración del sistema se actualizó correctamente.",
     "tabs": {
       "security": "Seguridad & API",
-      "twilio": "Config. Twilio"
+      "twilio": "Config. Twilio",
+      "language": "Idioma"
     },
     "security": {
       "card_title": "Autenticación API",
@@ -179,6 +238,11 @@
       "card_title": "Ayuda",
       "where_to_get": "¿Dónde obtenerlas?",
       "where_to_get_desc": "Puedes encontrar tus credenciales de Twilio en el Dashboard de la Consola Twilio en \"Account Info\"."
+    },
+    "language": {
+      "card_title": "Idioma de la Interfaz",
+      "card_desc": "Elige el idioma predeterminado para la visualización del sistema.",
+      "select_label": "Idioma del sistema"
     }
   },
   "auth": {
@@ -189,7 +253,16 @@
     "sign_in": "Entrar",
     "sign_in_with_google": "Continuar con Google",
     "access_denied": "Acceso Denegado",
-    "redirecting": "Redirigiendo..."
+    "redirecting": "Redirigiendo...",
+    "welcome_back": "¡Bienvenido de nuevo!",
+    "enter_credentials": "Introduce tus credenciales para acceder al sistema VoicePay",
+    "or_continue_with": "O continuar con",
+    "session_expired": "Tu sesión ha expirado. Por favor, inicia sesión de nuevo.",
+    "login_failed": "Error al iniciar sesión. Por favor, comprueba tus credenciales.",
+    "access_denied_desc": "No tienes los permisos necesarios para acceder a esta área del sistema. Si crees que se trata de un error, ponte en contacto con tu administrador.",
+    "go_back": "Volver",
+    "dashboard_home": "Inicio de Dashboard",
+    "error_code": "Código de error:"
   },
   "notifications": {
     "title": "Notificaciones",
@@ -197,6 +270,229 @@
   },
   "ivr": {
     "title": "Flujo IVR",
-    "subtitle": "Editor visual del árbol de respuesta interactiva de voz."
+    "subtitle": "Editor visual del árbol de respuesta interactiva de voz.",
+    "flow_visualizer": "Visualizador de Flujo IVR",
+    "live_stream": "Transmisión en Vivo",
+    "local_simulation": "Simulación Local",
+    "designer_mode": "Modo Diseñador",
+    "designer_desc": "Lienzo visual interactivo para modelar, enrutar y estructurar menús de audio IVR.",
+    "live_desc": "Árbol de decisiones en tiempo real y matriz de comunicación de microservicios.",
+    "live_status": "Estado en Vivo",
+    "interactive_designer": "Diseñador Interactivo",
+    "active_streams": "Canales Activos",
+    "heartbeat": "Latido de Red",
+    "status_matrix": "Matriz de Estado",
+    "node_completed": "Nodo: Completado",
+    "node_processing": "Nodo: Procesando",
+    "node_error": "Nodo: Error",
+    "node_idle": "Nodo: Inactivo",
+    "designer_canvas": "Lienzo de Diseño",
+    "designer_toolbox": "Caja de Herramientas",
+    "editing_mode": "Modo Edición",
+    "node_properties": "Propiedades de Nodo",
+    "node_label": "Etiqueta de Nodo",
+    "label_placeholder": "Ej. Procesar Pago",
+    "description": "Descripción",
+    "desc_placeholder": "Resumen de la acción en este paso...",
+    "dtmf_trigger": "Tecla DTMF (Opcional)",
+    "dtmf_placeholder": "Ej. 1, 2, #, *",
+    "dtmf_hint": "Si se configura, este nodo se iluminará cuando el usuario presione esta tecla.",
+    "voice_prompt": "Prompt de Voz (TTS)",
+    "prompt_placeholder": "Escribe el prompt de voz...",
+    "api_endpoint": "Endpoint de API / Integración",
+    "visual_glyph": "Glifo Visual / Icono",
+    "delete_selected": "Eliminar Nodo Seleccionado",
+    "designer_guide_title": "Diseñador de Flujo Interactivo",
+    "designer_guide_desc": "Haz clic en cualquier nodo para ver/editar sus parámetros. Arrastra conexiones desde el conector inferior de un nodo al superior de otro para crear rutas.",
+    "available_blocks": "Bloques Disponibles (Arrastrar al Lienzo)",
+    "blocks": {
+      "welcome": {
+        "label": "Bienvenida",
+        "description": "Saludo inicial e introducción al flujo de voz."
+      },
+      "payment": {
+        "label": "Pasarela de Pago",
+        "description": "Módulo de procesamiento seguro de pagos."
+      },
+      "agent": {
+        "label": "Desvío",
+        "description": "Transferir la llamada a un agente humano."
+      },
+      "service": {
+        "label": "Servicio Externo",
+        "description": "Consulta o integración con API o microservicio."
+      }
+    },
+    "drag_hint": "Arrastra un bloque al lienzo o haz clic para añadirlo directamente.",
+    "tip_message": "💡 Consejo: Puedes seleccionar y eliminar líneas de conexión haciendo clic en ellas y presionando la tecla 'Retroceso' (Backspace) o 'Suprimir' (Delete) de tu teclado.",
+    "save_configuration": "Guardar Configuración de IVR",
+    "restore_default": "Restablecer Flujo Predeterminado",
+    "config_modal_title": "Configurar Nodo: {{label}}",
+    "advanced_config": "Configuración Avanzada IVR",
+    "advanced_config_desc": "Define el mensaje de audio sintetizado y la integración con el microservicio correspondiente.",
+    "tts_label": "Prompt de Voz (Texto a Voz)",
+    "tts_hint": "Este texto será leído por el motor de síntesis de voz (TTS) de VoicePay durante la llamada.",
+    "api_url_label": "Endpoint de la API",
+    "api_url_hint": "URL del microservicio al que se consultará la lógica de negocio al activar este paso.",
+    "export_signed_pdf": "Informe PDF (Firmado)",
+    "export_signed_excel": "Informe Excel (Firmado)",
+    "validate_digital_signature": "Validar Firma Digital",
+    "validate_authenticity_report": "Validar Autenticidad de Informe",
+    "validate_crypto_signature": "Verifique la firma digital criptográfica de sus informes descargados",
+    "user_id_filter": "Usuario ID (Filtro)",
+    "status_filter": "Estado (Filtro)",
+    "start_date_filter": "Fecha Inicio (Filtro)",
+    "end_date_filter": "Fecha Fin (Filtro)",
+    "rsa_crypto_signature": "Firma Criptográfica RSA (Base64) *",
+    "rsa_signature_placeholder": "Pegue la firma digital en Base64 aquí (presente en el bloque final del PDF o Excel)",
+    "checking_signature": "Comprobando Firma...",
+    "verify_legitimacy": "Verificar Legitimidad",
+    "valid_signature_msg": "¡DOCUMENTO LEGÍTIMO Y AUTÉNTICO!",
+    "invalid_signature_msg": "FIRMA INVÁLIDA / INFORME ALTERADO",
+    "validation_authority": "Autoridad de Validación: VoicePay Authority",
+    "date": "Fecha:",
+    "temporal_filter": "Filtro Temporal:",
+    "audited_period": "Periodo Auditado",
+    "verifying_signature_error": "No se pudo contactar con el servicio de verificación de firmas.",
+    "days_7": "7 Días",
+    "days_30": "30 Días",
+    "months_12": "12 Meses",
+    "today": "Hoy",
+    "nodes": {
+      "1": {
+        "label": "Llamada Entrante",
+        "description": "El usuario marca al sistema IVR",
+        "voicePrompt": "Bienvenido al sistema de pagos automáticos VoicePay. Por favor, espere mientras le identificamos."
+      },
+      "2": {
+        "label": "Autenticación",
+        "description": "Identificación de usuario por teléfono",
+        "voicePrompt": "Para garantizar su seguridad, estamos verificando el número de teléfono desde el que nos llama."
+      },
+      "3": {
+        "label": "Consulta de Pago",
+        "description": "Verificación de monto pendiente",
+        "voicePrompt": "Hemos detectado una factura pendiente de ciento cincuenta euros. Pulse uno para proceder con el pago seguro con tarjeta, o pulse dos si prefiere ser atendido por un agente."
+      },
+      "4": {
+        "label": "Selección de Usuario",
+        "description": "Esperando DTMF (1 o 2)",
+        "voicePrompt": "Esperando su selección. Marque uno para pagar, o dos para soporte."
+      },
+      "5": {
+        "label": "Estado del Pago",
+        "description": "Resultado de la transacción final",
+        "voicePrompt": "Su pago de ciento cincuenta euros ha sido procesado y aprobado correctamente. Muchas gracias por utilizar VoicePay. Hasta pronto."
+      },
+      "6": {
+        "label": "Desvío a Agente",
+        "description": "Conectando con agente humano",
+        "voicePrompt": "Estamos transfiriendo su llamada con el siguiente agente disponible. Por favor, no cuelgue."
+      },
+      "user_service": {
+        "label": "Servicio Usuarios"
+      },
+      "payment_service": {
+        "label": "Servicio Pagos"
+      },
+      "notif_service": {
+        "label": "Servicio Notif."
+      },
+      "agent_service": {
+        "label": "Servicio Agentes"
+      },
+      "human_agent": {
+        "label": "Agente Humano"
+      },
+      "new_node": "Nuevo Nodo",
+      "new_service": "Nuevo Servicio",
+      "configure_desc": "Configurar descripción",
+      "external_service": "Servicio externo",
+      "new_ivr_step": "Nuevo Paso IVR",
+      "new_service_node": "Nuevo Servicio",
+      "configure_step_desc": "Configurar descripción del paso",
+      "external_service_integration": "Integración de microservicio externo"
+    },
+    "simulator": {
+      "title": "Simulador Local IVR",
+      "standby": "En Espera",
+      "success_payment": "Pago Exitoso",
+      "agent_transfer": "Transf. Agente",
+      "clear_cache": "Limpiar Caché Local",
+      "simulating_step": "Simulando paso actual",
+      "step_1": "Recibiendo llamada entrante...",
+      "step_2": "Autenticando usuario mediante CallerID...",
+      "step_3": "Consultando deuda pendiente en BD...",
+      "step_4": "Emitiendo menú de opciones IVR...",
+      "step_5": "Selección ingresada [Opción {{opt}}]",
+      "step_6_pay": "Transacción procesada con éxito!",
+      "step_6_agent": "Conectando con agente directo...",
+      "progress": "Avance",
+      "stop_simulation": "Detener Simulación",
+      "description": "Simula flujos completos del árbol de decisiones IVR directamente en el frontend, sin dependencias del servidor."
+    },
+    "events_log": {
+      "title": "Registro de Eventos",
+      "awaiting_signals": "Esperando señales cifradas de la matriz de nodos de voz...",
+      "session_simulation": "SESIÓN DE SIMULACIÓN",
+      "session_active": "Sesión activa",
+      "simulated": "SIMULADO",
+      "encrypted": "CIFRADO",
+      "timeline_logs": {
+        "completed": [
+          "Conexión segura establecida con el nodo telefónico.",
+          "Navegación IVR: Opción seleccionada \"{{option}}\".",
+          "Ingreso de credenciales de facturación vía DTMF cifrado.",
+          "Auditoría de seguridad biométrica superada con firma de voz.",
+          "Transacción aprobada por el adquirente por un monto de ${{amount}}.",
+          "Cierre de canal de voz e inyección de datos cifrados AES-256 en base de datos."
+        ],
+        "failed": [
+          "Conexión establecida en canal telefónico público.",
+          "Navegación IVR: Opción seleccionada \"{{option}}\".",
+          "Ingreso de datos de tarjeta mediante tonos DTMF.",
+          "Error de autenticación de seguridad en la pasarela de pagos.",
+          "Código de error de pasarela: 402 Tarjeta Rechazada / Fondos Insuficientes.",
+          "Registro de auditoría de seguridad para transacción fallida almacenado."
+        ],
+        "in_progress": [
+          "Llamada iniciada en nodo de telecomunicación VoicePay.",
+          "Usuario ingresando al árbol interactivo IVR.",
+          "Conexión WebSocket activa transmitiendo eventos del flujo."
+        ]
+      }
+    },
+    "speech_bubbles": {
+      "bot_voice": "BOT VOICE (TTS)",
+      "user_stt": "USUARIO (STT)",
+      "transcribing": "Transcribiendo...",
+      "listening": "Escuchando voz...",
+      "establishing_connection": "Estableciendo conexión en la línea de voz...",
+      "fallback_payment": "Sí, quiero confirmar el pago seguro con tarjeta.",
+      "fallback_agent": "Hola, necesito hablar con un operador para recibir soporte.",
+      "fallback_auth": "De acuerdo, confirmo mi número y mi identidad.",
+      "fallback_welcome": "Hola, buenas tardes. Gracias.",
+      "fallback_general": "Entendido, procedamos con el siguiente paso.",
+      "user_bubble_1": "Hola, buenas. Quería pagar una factura pendiente.",
+      "user_bubble_2": "De acuerdo. Estoy llamando desde mi móvil de empresa.",
+      "user_bubble_3": "Quiero hacer el pago de la factura de ciento cincuenta euros con mi tarjeta bancaria.",
+      "user_bubble_4_1": "Quiero pagar la factura, pulso la tecla uno.",
+      "user_bubble_4_2": "Prefiero hablar con un agente. Pulso la tecla dos.",
+      "user_bubble_5": "Perfecto, pago confirmado. Muchas gracias por la rapidez. Adiós.",
+      "user_bubble_6": "Vale, aguardo en línea a que me atienda el agente disponible.",
+      "sim_call_name": "Carlos Prueba (Simulado)"
+    },
+    "toasts": {
+      "node_configured": "Nodo Configurado",
+      "node_configured_desc": "Se actualizó la configuración para \"{{label}}\".",
+      "flow_synced": "Flujo Sincronizado",
+      "flow_synced_desc": "El árbol de decisiones interactivo se ha cargado con éxito desde el servidor.",
+      "flow_saved": "Diseño de IVR Guardado",
+      "flow_saved_desc": "El diseño personalizado del Diseñador Interactivo se guardó con éxito en la base de datos PostgreSQL.",
+      "flow_saved_local": "Diseño de IVR Guardado Localmente",
+      "flow_saved_local_desc": "El diseño personalizado del Diseñador Interactivo se guardó en el almacenamiento local (Servidor no disponible).",
+      "flow_restored": "Flujo Restablecido",
+      "flow_restored_desc": "El flujo de IVR se ha restablecido a la plantilla predeterminada."
+    }
   }
 }

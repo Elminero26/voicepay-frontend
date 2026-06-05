@@ -4,11 +4,13 @@ import { PhoneCall, Lock, Mail, AlertCircle } from 'lucide-react';
 import { Card } from '../../../components/Card';
 import { Button } from '../../../components/Button';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useLanguage } from '../../../hooks/useLanguage';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -20,9 +22,9 @@ export const Login: React.FC = () => {
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('expired')) {
-      setError('Your session has expired. Please log in again.');
+      setError(t('auth.session_expired'));
     }
-  }, []);
+  }, [t]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +35,7 @@ export const Login: React.FC = () => {
       await login(email, password);
       navigate(from, { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Failed to login. Please check your credentials.');
+      setError(err.message || t('auth.login_failed'));
     } finally {
       setLoading(false);
     }
@@ -50,8 +52,8 @@ export const Login: React.FC = () => {
           <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-primary/25">
             <PhoneCall className="text-white" size={28} />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Welcome Back</h1>
-          <p className="text-text-secondary mt-2 text-center">Enter your credentials to access VoicePay System</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('auth.welcome_back')}</h1>
+          <p className="text-text-secondary mt-2 text-center">{t('auth.enter_credentials')}</p>
         </div>
 
         {error && (
@@ -63,7 +65,7 @@ export const Login: React.FC = () => {
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-text-primary">Email Address</label>
+            <label className="text-sm font-medium text-text-primary">{t('auth.email')}</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
               <input
@@ -78,7 +80,7 @@ export const Login: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-text-primary">Password</label>
+            <label className="text-sm font-medium text-text-primary">{t('auth.password')}</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
               <input
@@ -93,7 +95,7 @@ export const Login: React.FC = () => {
           </div>
 
           <Button type="submit" className="w-full h-11 text-base font-medium shadow-md shadow-primary/20" disabled={loading}>
-            {loading ? 'Authenticating...' : 'Sign In'}
+            {loading ? t('auth.redirecting') : t('auth.sign_in')}
           </Button>
         </form>
 
@@ -103,7 +105,7 @@ export const Login: React.FC = () => {
               <div className="w-full border-t border-border"></div>
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-4 text-text-secondary font-medium">Or continue with</span>
+              <span className="bg-background px-4 text-text-secondary font-medium">{t('auth.or_continue_with')}</span>
             </div>
           </div>
 
@@ -129,10 +131,11 @@ export const Login: React.FC = () => {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
-            <span>Sign in with Google</span>
+            <span>{t('auth.sign_in_with_google')}</span>
           </button>
         </div>
       </Card>
     </div>
   );
 };
+

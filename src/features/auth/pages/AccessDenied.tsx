@@ -2,9 +2,11 @@ import React from 'react';
 import { ShieldAlert, Home, ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/Button';
+import { useLanguage } from '../../../hooks/useLanguage';
 
 export const AccessDenied: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   return (
     <div className="min-h-[80vh] flex flex-col items-center justify-center p-4 text-center">
@@ -13,12 +15,11 @@ export const AccessDenied: React.FC = () => {
       </div>
       
       <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
-        Access Denied
+        {t('auth.access_denied')}
       </h1>
       
       <p className="text-text-secondary max-w-md mb-8">
-        You don't have the necessary permissions to access this area of the system. 
-        If you think this is a mistake, please contact your system administrator.
+        {t('auth.access_denied_desc')}
       </p>
 
       <div className="flex flex-col sm:flex-row gap-4">
@@ -28,20 +29,21 @@ export const AccessDenied: React.FC = () => {
           className="flex items-center"
         >
           <ArrowLeft size={18} className="mr-2" />
-          Go Back
+          {t('auth.go_back')}
         </Button>
         
         <Link to="/">
           <Button className="flex items-center">
             <Home size={18} className="mr-2" />
-            Dashboard Home
+            {t('auth.dashboard_home')}
           </Button>
         </Link>
       </div>
 
       <div className="mt-12 text-xs text-text-tertiary">
-        Error Code: 403_FORBIDDEN_VOICEPAY
+        {t('auth.error_code')} 403_FORBIDDEN_VOICEPAY
       </div>
     </div>
   );
 };
+

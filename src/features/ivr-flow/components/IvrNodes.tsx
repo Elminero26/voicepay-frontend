@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import { FloatingSpeechBubbles } from './FloatingSpeechBubbles';
+import { useLanguage } from '../../../hooks/useLanguage';
 
 // Icon mapping dictionary to support serializable node data (strings instead of components)
 export const iconMap: { [key: string]: any } = {
@@ -25,6 +26,7 @@ export const iconMap: { [key: string]: any } = {
 
 // Custom IVR Node
 export const IvrNode = ({ id, data, isConnectable }: any) => {
+  const { t } = useLanguage();
   const isCompleted = data.status === 'completed';
   const isInProgress = data.status === 'in-progress';
   const isFailed = data.status === 'failed';
@@ -33,6 +35,9 @@ export const IvrNode = ({ id, data, isConnectable }: any) => {
   const Icon = typeof data.icon === 'string' 
     ? (iconMap[data.icon] || HelpCircle) 
     : (data.icon || HelpCircle);
+
+  const label = t(`ivr.nodes.${id}.label`, data.label) as string;
+  const description = t(`ivr.nodes.${id}.description`, data.description) as string;
 
   return (
     <div className={cn(
@@ -47,7 +52,7 @@ export const IvrNode = ({ id, data, isConnectable }: any) => {
       {isInProgress && (
         <FloatingSpeechBubbles
           nodeId={id}
-          nodeLabel={data.label}
+          nodeLabel={label}
           voicePrompt={data.voicePrompt}
         />
       )}
@@ -76,14 +81,14 @@ export const IvrNode = ({ id, data, isConnectable }: any) => {
             isInProgress ? "text-white" :
             isFailed ? "text-red-400" :
             "text-text-secondary"
-          )}>{data.label}</h3>
-          <p className="text-[11px] text-text-secondary mt-1 leading-tight font-medium opacity-80">{data.description}</p>
+          )}>{label}</h3>
+          <p className="text-[11px] text-text-secondary mt-1 leading-tight font-medium opacity-80">{description}</p>
         </div>
       </div>
 
       {data.action && (
         <div className="mt-3 pt-2 border-t border-white/5 text-[10px] text-text-secondary font-mono bg-black/30 rounded-lg px-2 py-1.5 relative z-10 flex items-center justify-between">
-          <span>DTMF Input:</span>
+          <span>{t('ivr.dtmf_trigger').split(' (')[0]}:</span>
           <span className="text-primary font-black bg-primary/10 px-1.5 rounded">{data.action}</span>
         </div>
       )}
@@ -123,10 +128,13 @@ export const IvrNode = ({ id, data, isConnectable }: any) => {
 };
 
 // Custom Service Node
-export const ServiceNode = ({ data }: any) => {
+export const ServiceNode = ({ id, data }: any) => {
+  const { t } = useLanguage();
   const Icon = typeof data.icon === 'string'
     ? (iconMap[data.icon] || Globe)
     : (data.icon || Globe);
+
+  const label = t(`ivr.nodes.${id}.label`, data.label) as string;
 
   return (
     <div className={cn(
@@ -139,14 +147,14 @@ export const ServiceNode = ({ data }: any) => {
           <Icon size={20} />
         </div>
         <div>
-          <h3 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">{data.label}</h3>
+          <h3 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">{label}</h3>
           <p className="text-[9px] text-text-secondary font-mono mt-0.5 opacity-60">EXTERNAL_MICROSERVICE</p>
         </div>
       </div>
       
       {data.apiEndpoint && (
         <div className="mt-3 pt-2 text-[8px] text-green-400 font-mono bg-green-500/5 border border-green-500/10 rounded-lg px-2 py-1 truncate relative z-10 flex items-center justify-between">
-          <span>ENDPOINT:</span>
+          <span>{t('ivr.api_endpoint').split(' /')[0]}:</span>
           <span className="truncate max-w-[100px] ml-1 opacity-80" title={data.apiEndpoint}>{data.apiEndpoint}</span>
         </div>
       )}

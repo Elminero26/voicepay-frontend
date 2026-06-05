@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { 
-  CheckCircle, XCircle, 
-  Wifi, WifiOff
-} from 'lucide-react';
+   CheckCircle, XCircle, 
+   Wifi, WifiOff
+ } from 'lucide-react';
 import { Card } from '../../../components/Card';
 import { Table, TableRow, TableCell } from '../../../components/Table';
 import { paymentService } from '../../../services/api';
@@ -10,6 +10,7 @@ import { useLiveCalls } from '../../ivr-flow/hooks/useLiveCalls';
 import type { PaymentStats, Call } from '../../../types';
 import { Loader } from '../../../components/Loader';
 import { cn } from '../../../utils/cn';
+import { useLanguage } from '../../../hooks/useLanguage';
 
 // Subcomponents
 import { DashboardHeader } from '../components/DashboardHeader';
@@ -24,6 +25,7 @@ export const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<PaymentStats | null>(null);
   const [recentPayments, setRecentPayments] = useState<Call[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
 
   // WebSocket en tiempo real para llamadas activas
   const { liveCalls, connected } = useLiveCalls();
@@ -258,8 +260,8 @@ export const Dashboard: React.FC = () => {
       {activeTab === 'realtime' && (
         <>
           <Card 
-            title="Live Voice Stream" 
-            description="Encrypted active connections and calls from secure nodes."
+            title={t('dashboard.live_voice_stream')} 
+            description={t('dashboard.live_voice_stream_desc')}
             className="relative overflow-hidden border-indigo-500/20 bg-indigo-500/5 shadow-2xl shadow-indigo-500/5"
           >
             <div className="absolute top-6 right-8 flex items-center space-x-3 bg-black/20 px-4 py-2 rounded-full border border-white/5 backdrop-blur-md">
@@ -269,20 +271,20 @@ export const Dashboard: React.FC = () => {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">Live Secure Stream</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">{t('dashboard.live_secure_stream')}</span>
                 </>
               ) : (
                 <>
                   <WifiOff size={12} className="text-rose-500 animate-pulse" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500">Connecting Node...</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-rose-500">{t('dashboard.connecting_node')}</span>
                 </>
               )}
             </div>
             <div className="mt-4">
-              <Table headers={['Customer', 'Phone', 'Amount', 'Option', 'Duration', 'Secure Status', 'Time']}>
+              <Table headers={[t('dashboard.table.customer'), t('dashboard.table.phone'), t('dashboard.table.amount'), t('dashboard.table.option'), t('dashboard.table.duration'), t('dashboard.table.secure_status'), t('dashboard.table.time')]}>
                 {liveCalls.map((call) => (
                   <TableRow key={call.id} className="hover:bg-white/5 transition-colors group">
-                    <TableCell className="font-bold text-white group-hover:text-indigo-400 transition-colors">{call.customerName || 'Unknown'}</TableCell>
+                    <TableCell className="font-bold text-white group-hover:text-indigo-400 transition-colors">{call.customerName || t('dashboard.table.unknown')}</TableCell>
                     <TableCell className="text-text-secondary font-mono text-sm">{call.phoneNumber}</TableCell>
                     <TableCell className="font-black text-white">${(call.amount ?? 0).toFixed(2)}</TableCell>
                     <TableCell className="font-medium text-slate-300">{call.selectedOption || '-'}</TableCell>
@@ -294,7 +296,7 @@ export const Dashboard: React.FC = () => {
                         call.status === 'failed' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
                         'bg-amber-500/10 text-amber-400 border-amber-500/20 animate-pulse'
                       )}>
-                        {call.status}
+                        {call.status === 'completed' ? t('calls.status.completed') : call.status === 'failed' ? t('calls.status.failed') : t('calls.status.in_progress')}
                       </span>
                     </TableCell>
                     <TableCell className="text-text-secondary font-medium">{call.timestamp}</TableCell>
@@ -305,7 +307,7 @@ export const Dashboard: React.FC = () => {
                     <TableCell colSpan={7} className="text-center py-16">
                       <div className="flex flex-col items-center opacity-40">
                         <Wifi size={48} className="mb-4 text-text-secondary" />
-                        <p className="text-sm font-bold tracking-widest uppercase">Scanning for active voice nodes...</p>
+                        <p className="text-sm font-bold tracking-widest uppercase">{t('dashboard.scanning_nodes')}</p>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -316,11 +318,11 @@ export const Dashboard: React.FC = () => {
 
           {/* Recent Activity Table */}
           <Card 
-            title="Transaction Ledger" 
-            description="Immutable records of last 10 attempts."
+            title={t('dashboard.transaction_ledger')} 
+            description={t('dashboard.immutable_records')}
             className="bg-secondary/10 border-border/20"
           >
-            <Table headers={['Customer', 'Phone', 'Amount', 'Option', 'Duration', 'Verification', 'Time']}>
+            <Table headers={[t('dashboard.table.customer'), t('dashboard.table.phone'), t('dashboard.table.amount'), t('dashboard.table.option'), t('dashboard.table.duration'), t('dashboard.table.verification'), t('dashboard.table.time')]}>
               {recentPayments.map((payment) => (
                 <TableRow key={payment.id} className="hover:bg-white/5 transition-colors">
                   <TableCell className="font-bold">{payment.customerName}</TableCell>
@@ -337,7 +339,7 @@ export const Dashboard: React.FC = () => {
                     )}>
                       {payment.status === 'completed' && <CheckCircle size={10} className="mr-1.5" />}
                       {payment.status === 'failed' && <XCircle size={10} className="mr-1.5" />}
-                      {payment.status}
+                      {payment.status === 'completed' ? t('calls.status.completed') : payment.status === 'failed' ? t('calls.status.failed') : t('calls.status.in_progress')}
                     </div>
                   </TableCell>
                   <TableCell className="text-text-secondary font-medium">{payment.timestamp}</TableCell>
@@ -350,3 +352,4 @@ export const Dashboard: React.FC = () => {
     </div>
   );
 };
+

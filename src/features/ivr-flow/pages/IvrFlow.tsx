@@ -13,6 +13,7 @@ import { nodeTypes, SimulatorHud, EventsLogPanel, DesignerPanel } from '../compo
 import { useCallStore } from '../../../stores/useCallStore';
 import { cn } from '../../../utils/cn';
 import { ivrService } from '../../../services/api';
+import { useLanguage } from '../../../hooks/useLanguage';
 
 const initialNodes: Node[] = [
   // User Flow
@@ -50,6 +51,7 @@ const initialEdges: Edge[] = [
 ];
 
 export const IvrFlowContent: React.FC = () => {
+  const { t } = useLanguage();
   const { liveCalls, connected } = useLiveCalls();
   const { screenToFlowPosition } = useReactFlow();
   
@@ -102,8 +104,8 @@ export const IvrFlowContent: React.FC = () => {
         type,
         position,
         data: {
-          label: type === 'ivrNode' ? 'Nuevo Nodo' : 'Nuevo Servicio',
-          description: type === 'ivrNode' ? 'Configurar descripción' : 'Servicio externo',
+          label: type === 'ivrNode' ? t('ivr.nodes.new_ivr_step') : t('ivr.nodes.new_service_node'),
+          description: type === 'ivrNode' ? t('ivr.nodes.configure_step_desc') : t('ivr.nodes.external_service_integration'),
           status: 'pending',
           icon: type === 'ivrNode' ? 'HelpCircle' : 'Globe',
           ...customData,
@@ -114,7 +116,7 @@ export const IvrFlowContent: React.FC = () => {
       setSelectedNodeId(newId);
       setHasChanges(true);
     },
-    [screenToFlowPosition, mode]
+    [screenToFlowPosition, mode, t]
   );
 
   // Initialize nodes and edges from localStorage if present
@@ -489,10 +491,13 @@ export const IvrFlowContent: React.FC = () => {
 
   const onNodeDoubleClick = useCallback((_: React.MouseEvent, node: Node) => {
     setConfigNode(node);
-    setTempVoicePrompt((node.data?.voicePrompt as string) || '');
+    const resolvedPrompt = node.data?.voicePrompt
+      ? t(`ivr.nodes.${node.id}.voicePrompt`, node.data.voicePrompt as string)
+      : '';
+    setTempVoicePrompt(resolvedPrompt);
     setTempApiEndpoint((node.data?.apiEndpoint as string) || '');
     setIsConfigModalOpen(true);
-  }, []);
+  }, [t, setConfigNode, setTempVoicePrompt, setTempApiEndpoint, setIsConfigModalOpen]);
 
   const handleSaveNodeConfig = useCallback(() => {
     if (!configNode) return;
@@ -502,13 +507,14 @@ export const IvrFlowContent: React.FC = () => {
     });
     setIsConfigModalOpen(false);
     if (toastFn) {
+      const nodeLabel = t(`ivr.nodes.${configNode.id}.label`, configNode.data?.label as string);
       toastFn(
-        'Nodo Configurado',
-        `Se actualizó la configuración para "${configNode.data?.label || 'Nodo'}".`,
+        t('ivr.toasts.node_configured'),
+        t('ivr.toasts.node_configured_desc', { label: nodeLabel }),
         'success'
       );
     }
-  }, [configNode, tempVoicePrompt, tempApiEndpoint, handleUpdateNode, toastFn]);
+  }, [configNode, tempVoicePrompt, tempApiEndpoint, handleUpdateNode, setIsConfigModalOpen, toastFn, t]);
 
   const handleDeleteNode = useCallback((id: string) => {
     setNodes(nds => nds.filter(node => node.id !== id));
@@ -527,8 +533,8 @@ export const IvrFlowContent: React.FC = () => {
         y: 150 + Math.random() * 150 
       },
       data: {
-        label: type === 'ivrNode' ? 'New IVR Step' : 'New Service',
-        description: type === 'ivrNode' ? 'Configure step description' : 'External microservice integration',
+        label: type === 'ivrNode' ? t('ivr.nodes.new_ivr_step') : t('ivr.nodes.new_service_node'),
+        description: type === 'ivrNode' ? t('ivr.nodes.configure_step_desc') : t('ivr.nodes.external_service_integration'),
         status: 'pending',
         icon: type === 'ivrNode' ? 'HelpCircle' : 'Globe',
         ...customData
@@ -537,7 +543,7 @@ export const IvrFlowContent: React.FC = () => {
     setNodes(nds => [...nds, newNode]);
     setSelectedNodeId(newId);
     setHasChanges(true);
-  }, []);
+  }, [t, setNodes, setSelectedNodeId, setHasChanges]);
 
   const handleSaveFlow = useCallback(async () => {
     const serializedNodes = nodes.map(node => {
@@ -576,16 +582,16 @@ export const IvrFlowContent: React.FC = () => {
       setHasChanges(false);
       
       if (toastFn) {
-        toastFn('IVR Flow Saved', 'The custom Interactive Designer flow layout was successfully saved to PostgreSQL database.', 'success');
+        toastFn(t('ivr.toasts.flow_saved'), t('ivr.toasts.flow_saved_desc'), 'success');
       }
     } catch (error) {
       console.warn('Backend save failed, saved locally only:', error);
       setHasChanges(false);
       if (toastFn) {
-        toastFn('IVR Flow Saved Locally', 'The custom Interactive Designer flow was saved in local storage (Backend unavailable).', 'info');
+        toastFn(t('ivr.toasts.flow_saved_local'), t('ivr.toasts.flow_saved_local_desc'), 'info');
       }
     }
-  }, [nodes, edges, toastFn]);
+  }, [nodes, edges, toastFn, t, setHasChanges]);
 
   const handleResetFlow = useCallback(() => {
     localStorage.removeItem('voicepay_ivr_nodes');
@@ -595,9 +601,9 @@ export const IvrFlowContent: React.FC = () => {
     setHasChanges(false);
     setSelectedNodeId(null);
     if (toastFn) {
-      toastFn('Flow Restored', 'The IVR flow has been reset to the default template.', 'info');
+      toastFn(t('ivr.toasts.flow_restored'), t('ivr.toasts.flow_restored_desc'), 'info');
     }
-  }, [toastFn]);
+  }, [toastFn, t, setNodes, setEdges, setHasChanges, setSelectedNodeId]);
 
   // Memoize properties for designer selector
   const selectedNode = useMemo(() => {
@@ -632,20 +638,22 @@ export const IvrFlowContent: React.FC = () => {
     return edges;
   }, [edges, mode]);
 
+  const configNodeLabel = configNode ? t(`ivr.nodes.${configNode.id}.label`, configNode.data?.label as string) : '';
+
   return (
     <div className="space-y-6 flex-1 flex flex-col animate-fade-in pb-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center space-x-3 mb-1">
-            <h2 className="text-4xl font-black text-gradient tracking-tighter">IVR Flow Visualizer</h2>
+            <h2 className="text-4xl font-black text-gradient tracking-tighter">{t('ivr.flow_visualizer')}</h2>
             {mode === 'live' && connected && !isSimulating && (
               <div className="flex items-center space-x-2 bg-green-500/10 px-3 py-1 rounded-full border border-green-500/20">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                 </span>
-                <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest">Live Stream</span>
+                <span className="text-[10px] font-bold text-green-500 uppercase tracking-widest">{t('ivr.live_stream')}</span>
               </div>
             )}
             {mode === 'live' && isSimulating && (
@@ -654,7 +662,7 @@ export const IvrFlowContent: React.FC = () => {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                 </span>
-                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">Local Simulation</span>
+                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest">{t('ivr.local_simulation')}</span>
               </div>
             )}
             {mode === 'designer' && (
@@ -663,14 +671,14 @@ export const IvrFlowContent: React.FC = () => {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary/45 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                 </span>
-                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Designer Mode</span>
+                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{t('ivr.designer_mode')}</span>
               </div>
             )}
           </div>
           <p className="text-text-secondary font-medium opacity-70">
             {mode === 'designer' 
-              ? "Interactive visual canvas to model, route and structure VoicePay IVR audio menus." 
-              : "Real-time decision tree and microservices communication matrix."}
+              ? t('ivr.designer_desc') 
+              : t('ivr.live_desc')}
           </p>
         </div>
         
@@ -690,7 +698,7 @@ export const IvrFlowContent: React.FC = () => {
               )}
             >
               <Activity size={14} className={mode === 'live' ? 'animate-pulse' : ''} />
-              <span>Live Status</span>
+              <span>{t('ivr.live_status')}</span>
             </button>
             <button
               onClick={() => {
@@ -705,13 +713,13 @@ export const IvrFlowContent: React.FC = () => {
               )}
             >
               <Sparkles size={14} />
-              <span>Interactive Designer</span>
+              <span>{t('ivr.interactive_designer')}</span>
             </button>
           </div>
 
           {mode === 'live' && liveCalls.length > 0 && !isSimulating && (
             <div className="flex flex-col">
-              <span className="text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] mb-1.5 ml-1">Active Streams</span>
+              <span className="text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] mb-1.5 ml-1">{t('ivr.active_streams')}</span>
               <div className="flex items-center space-x-2 glass-dark px-4 py-2 rounded-2xl border border-white/5 shadow-xl">
                 <Activity size={16} className="text-primary animate-pulse" />
                 <select 
@@ -721,7 +729,7 @@ export const IvrFlowContent: React.FC = () => {
                 >
                   {liveCalls.map(call => (
                     <option key={call.id} value={call.id} className="bg-secondary text-white">
-                      {call.customerName || 'Unknown'} ({call.phoneNumber})
+                      {call.customerName || t('dashboard.table.unknown')} ({call.phoneNumber})
                     </option>
                   ))}
                 </select>
@@ -731,7 +739,7 @@ export const IvrFlowContent: React.FC = () => {
           
           {mode === 'live' && (
             <div className="text-right hidden sm:block">
-              <p className="text-[10px] text-text-secondary uppercase tracking-widest font-black opacity-50">Heartbeat</p>
+              <p className="text-[10px] text-text-secondary uppercase tracking-widest font-black opacity-50">{t('ivr.heartbeat')}</p>
               <p className="text-sm font-mono text-primary font-bold">{lastUpdate || '--:--:--'}</p>
             </div>
           )}
@@ -749,23 +757,23 @@ export const IvrFlowContent: React.FC = () => {
           {/* Status Legend - only in live mode */}
           {mode === 'live' && (
             <div className="absolute top-6 left-6 z-10 glass-dark px-5 py-4 rounded-2xl border border-white/10 shadow-2xl backdrop-blur-xl animate-fade-in">
-              <h4 className="text-[11px] font-black text-white uppercase tracking-widest mb-4 border-b border-white/5 pb-2">Status Matrix</h4>
+              <h4 className="text-[11px] font-black text-white uppercase tracking-widest mb-4 border-b border-white/5 pb-2">{t('ivr.status_matrix')}</h4>
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
                   <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]"></div>
-                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-tight">Node: Completed</span>
+                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-tight">{t('ivr.node_completed')}</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_12px_rgba(59,130,246,0.6)] animate-pulse"></div>
-                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-tight">Node: Processing</span>
+                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-tight">{t('ivr.node_processing')}</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]"></div>
-                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-tight">Node: Error</span>
+                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-tight">{t('ivr.node_error')}</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-2.5 h-2.5 rounded-full bg-secondary border border-white/10"></div>
-                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-tight">Node: Idle</span>
+                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-tight">{t('ivr.node_idle')}</span>
                 </div>
               </div>
             </div>
@@ -775,7 +783,7 @@ export const IvrFlowContent: React.FC = () => {
           {mode === 'designer' && (
             <div className="absolute top-6 left-6 z-10 glass-dark px-4 py-2.5 rounded-2xl border border-primary/20 shadow-2xl backdrop-blur-xl flex items-center space-x-2 animate-fade-in">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
-              <span className="text-[10px] font-black text-white uppercase tracking-widest">Designer Canvas</span>
+              <span className="text-[10px] font-black text-white uppercase tracking-widest">{t('ivr.designer_canvas')}</span>
             </div>
           )}
 
@@ -847,7 +855,7 @@ export const IvrFlowContent: React.FC = () => {
       <Modal
         isOpen={isConfigModalOpen}
         onClose={() => setIsConfigModalOpen(false)}
-        title={`Configurar Nodo: ${configNode?.data?.label || ''}`}
+        title={t('ivr.config_modal_title', { label: configNodeLabel })}
         className="max-w-lg bg-[#0d0e12]/95 border border-white/10 backdrop-blur-xl"
       >
         <div className="space-y-6">
@@ -856,9 +864,9 @@ export const IvrFlowContent: React.FC = () => {
               <Sparkles size={16} className="animate-pulse" />
             </div>
             <div className="space-y-0.5">
-              <p className="text-[10px] font-black uppercase text-primary tracking-wider">Configuración Avanzada IVR</p>
+              <p className="text-[10px] font-black uppercase text-primary tracking-wider">{t('ivr.advanced_config')}</p>
               <p className="text-[10px] text-text-secondary leading-tight opacity-80">
-                Define el mensaje de audio sintetizado y la integración con el microservicio correspondiente.
+                {t('ivr.advanced_config_desc')}
               </p>
             </div>
           </div>
@@ -866,24 +874,24 @@ export const IvrFlowContent: React.FC = () => {
           {/* Voice Prompt Textarea */}
           <div className="space-y-2">
             <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
-              Prompt de Voz (Texto a Voz)
+              {t('ivr.tts_label')}
             </label>
             <textarea
               value={tempVoicePrompt}
               onChange={(e) => setTempVoicePrompt(e.target.value)}
               rows={4}
               className="w-full bg-black/40 border border-white/10 rounded-2xl px-4 py-3 text-xs font-medium text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all resize-none custom-scrollbar"
-              placeholder="Escribe el mensaje de voz que el usuario escuchará al llegar a este nodo..."
+              placeholder={t('ivr.prompt_placeholder')}
             />
             <span className="text-[9px] text-text-secondary opacity-60 leading-tight block">
-              Este texto será leído por el motor de síntesis de voz (TTS) de VoicePay durante la llamada.
+              {t('ivr.tts_hint')}
             </span>
           </div>
 
           {/* API Endpoint Input */}
           <div className="space-y-2">
             <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
-              Endpoint de la API
+              {t('ivr.api_url_label')}
             </label>
             <div className="relative flex items-center">
               <span className="absolute left-4 text-[9px] font-mono font-black text-primary uppercase tracking-widest bg-primary/15 px-1.5 py-0.5 rounded pointer-events-none">
@@ -898,7 +906,7 @@ export const IvrFlowContent: React.FC = () => {
               />
             </div>
             <span className="text-[9px] text-text-secondary opacity-60 leading-tight block">
-              URL del microservicio al que se consultará la lógica de negocio al activar este paso.
+              {t('ivr.api_url_hint')}
             </span>
           </div>
 
@@ -909,14 +917,14 @@ export const IvrFlowContent: React.FC = () => {
               onClick={() => setIsConfigModalOpen(false)}
               className="flex-1 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 text-text-secondary hover:text-white rounded-xl py-3 text-xs font-bold transition-all"
             >
-              Cancelar
+              {t('common.cancel')}
             </button>
             <button
               type="button"
               onClick={handleSaveNodeConfig}
               className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl py-3 text-xs font-bold shadow-lg shadow-primary/30 transition-all cursor-pointer"
             >
-              Guardar Configuración
+              {t('ivr.save_configuration')}
             </button>
           </div>
         </div>

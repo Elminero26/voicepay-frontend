@@ -14,8 +14,10 @@ import { Loader } from '../../../components/Loader';
 import { cn } from '../../../utils/cn';
 import { AudioPlayer } from '../../../components/AudioPlayer';
 import { WaveformCanvas } from '../../../components/WaveformCanvas';
+import { useLanguage } from '../../../hooks/useLanguage';
 
 export const CallsPage: React.FC = () => {
+  const { t } = useLanguage();
   const [calls, setCalls] = useState<Call[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -153,8 +155,21 @@ export const CallsPage: React.FC = () => {
     if (filteredCalls.length === 0) return;
 
     // Encabezados del archivo CSV
-    const headers = ['ID de Auditoría', 'Cliente', 'Número de Teléfono', 'Monto (USD)', 'Duración (seg)', 'Estado', 'Hora de Registro'];
+    const headers = [
+      t('calls.table.audit_id'),
+      t('calls.table.client'),
+      t('calls.table.phone'),
+      t('calls.table.amount'),
+      t('calls.table.duration'),
+      t('calls.table.status'),
+      t('calls.table.timestamp')
+    ];
     
+    const getStatusKey = (status: string) => {
+      if (status === 'in-progress') return 'in_progress';
+      return status;
+    };
+
     // Contenido de las filas
     const rows = filteredCalls.map(c => [
       `AUD-${c.id}`,
@@ -162,7 +177,7 @@ export const CallsPage: React.FC = () => {
       c.phoneNumber,
       (c.amount ?? 0).toFixed(2),
       c.duration || '-',
-      c.status.toUpperCase(),
+      t(`calls.status.${getStatusKey(c.status)}`).toUpperCase(),
       c.timestamp
     ]);
 
@@ -186,30 +201,32 @@ export const CallsPage: React.FC = () => {
       return call.callEvents;
     }
 
+    const defaultOption = t('ivr.speech_bubbles.fallback_general');
+
     // Fallback descriptivo y realista basado en el estado
     if (call.status === 'completed') {
       return [
-        'Conexión segura establecida con el nodo telefónico.',
-        `Navegación IVR: Opción seleccionada "${call.selectedOption || call.option || 'Pago Directo'}".`,
-        'Ingreso de credenciales de facturación vía DTMF cifrado.',
-        'Auditoría de seguridad biométrica superada con firma de voz.',
-        `Transacción aprobada por el adquirente por un monto de $${(call.amount ?? 0).toFixed(2)}.`,
-        'Cierre de canal de voz e inyección de datos cifrados AES-256 en base de datos.'
+        t('ivr.events_log.timeline_logs.completed.0'),
+        t('ivr.events_log.timeline_logs.completed.1', { option: call.selectedOption || call.option || defaultOption }),
+        t('ivr.events_log.timeline_logs.completed.2'),
+        t('ivr.events_log.timeline_logs.completed.3'),
+        t('ivr.events_log.timeline_logs.completed.4', { amount: (call.amount ?? 0).toFixed(2) }),
+        t('ivr.events_log.timeline_logs.completed.5')
       ];
     } else if (call.status === 'failed') {
       return [
-        'Conexión establecida en canal telefónico público.',
-        `Navegación IVR: Opción seleccionada "${call.selectedOption || call.option || 'Pago Directo'}".`,
-        'Ingreso de datos de tarjeta mediante tonos DTMF.',
-        'Error de autenticación de seguridad en la pasarela de pagos.',
-        'Código de error de pasarela: 402 Tarjeta Rechazada / Fondos Insuficientes.',
-        'Registro de auditoría de seguridad para transacción fallida almacenado.'
+        t('ivr.events_log.timeline_logs.failed.0'),
+        t('ivr.events_log.timeline_logs.failed.1', { option: call.selectedOption || call.option || defaultOption }),
+        t('ivr.events_log.timeline_logs.failed.2'),
+        t('ivr.events_log.timeline_logs.failed.3'),
+        t('ivr.events_log.timeline_logs.failed.4'),
+        t('ivr.events_log.timeline_logs.failed.5')
       ];
     } else {
       return [
-        'Llamada iniciada en nodo de telecomunicación VoicePay.',
-        'Usuario ingresando al árbol interactivo IVR.',
-        'Conexión WebSocket activa transmitiendo eventos del flujo.'
+        t('ivr.events_log.timeline_logs.in_progress.0'),
+        t('ivr.events_log.timeline_logs.in_progress.1'),
+        t('ivr.events_log.timeline_logs.in_progress.2')
       ];
     }
   };
@@ -244,7 +261,7 @@ export const CallsPage: React.FC = () => {
                 {/* Drawer Header */}
                 <div className="flex items-center justify-between border-b border-white/5 pb-4">
                   <div>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Detalle de Auditoría</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">{t('calls.drawer.audit_detail')}</span>
                     <h3 className="text-xl font-black text-white mt-1">AUD-{selectedCall.id}</h3>
                   </div>
                   <button 
@@ -259,31 +276,31 @@ export const CallsPage: React.FC = () => {
                 <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center space-x-3 text-indigo-200">
                   <Lock size={20} className="shrink-0 text-indigo-400 animate-pulse" />
                   <div className="text-xs">
-                    <p className="font-bold">🔒 Registro Protegido con Cifrado AES-256</p>
-                    <p className="opacity-70 mt-0.5">Los campos sensibles están encriptados a nivel de campo en la base de datos de VoicePay.</p>
+                    <p className="font-bold">{t('calls.drawer.encryption_title')}</p>
+                    <p className="opacity-70 mt-0.5">{t('calls.drawer.encryption_desc')}</p>
                   </div>
                 </div>
 
                 {/* Call Details Grid */}
                 <div className="grid grid-cols-2 gap-4 text-sm bg-black/20 p-5 rounded-2xl border border-white/5">
                   <div>
-                    <span className="text-xs text-text-secondary">Cliente Auditado</span>
+                    <span className="text-xs text-text-secondary">{t('calls.drawer.audited_client')}</span>
                     <p className="font-bold text-white mt-1">{selectedCall.customerName}</p>
                   </div>
                   <div>
-                    <span className="text-xs text-text-secondary">Número Telefónico</span>
+                    <span className="text-xs text-text-secondary">{t('calls.drawer.phone_number')}</span>
                     <p className="font-mono font-semibold text-white mt-1">{selectedCall.phoneNumber}</p>
                   </div>
                   <div className="mt-2">
-                    <span className="text-xs text-text-secondary">Monto Transaccionado</span>
+                    <span className="text-xs text-text-secondary">{t('calls.drawer.amount_transacted')}</span>
                     <p className="font-black text-white mt-1">${(selectedCall.amount ?? 0).toFixed(2)} USD</p>
                   </div>
                   <div className="mt-2">
-                    <span className="text-xs text-text-secondary">Duración de Sesión</span>
+                    <span className="text-xs text-text-secondary">{t('calls.drawer.session_duration')}</span>
                     <p className="font-semibold text-white mt-1">{selectedCall.duration || '-'} s</p>
                   </div>
                   <div className="mt-2 col-span-2">
-                    <span className="text-xs text-text-secondary">Marca de Tiempo</span>
+                    <span className="text-xs text-text-secondary">{t('calls.drawer.timestamp')}</span>
                     <p className="font-semibold text-white mt-1">{selectedCall.timestamp}</p>
                   </div>
                 </div>
@@ -303,8 +320,8 @@ export const CallsPage: React.FC = () => {
                     <div className="p-4 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 flex items-center space-x-3 text-text-secondary text-xs">
                       <Phone className="shrink-0 text-amber-500 animate-pulse" size={18} />
                       <div className="text-[11px] leading-relaxed">
-                        <p className="font-bold text-white">📞 Llamada Activa / En Proceso</p>
-                        <p className="opacity-70 mt-0.5">Esta sesión de audio se está transmitiendo en vivo. La grabación final e interactiva estará disponible para auditoría al completarse.</p>
+                        <p className="font-bold text-white">{t('calls.drawer.active_call_title')}</p>
+                        <p className="opacity-70 mt-0.5">{t('calls.drawer.active_call_desc')}</p>
                       </div>
                     </div>
                     <WaveformCanvas />
@@ -315,7 +332,7 @@ export const CallsPage: React.FC = () => {
                 <div className="space-y-4">
                   <h4 className="text-xs font-black uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
                     <Network size={14} className="text-indigo-400" />
-                    Ruta del Flujo de Voz (IVR Flow Log)
+                    {t('calls.drawer.ivr_flow_log')}
                   </h4>
                   
                   <div className="relative border-l border-white/10 ml-2.5 pl-5 space-y-5 py-2">
@@ -341,7 +358,7 @@ export const CallsPage: React.FC = () => {
                   onClick={() => setSelectedCall(null)}
                   className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 transition-colors font-bold text-sm text-white rounded-xl"
                 >
-                  Cerrar Auditoría
+                  {t('calls.drawer.close_audit')}
                 </button>
               </div>
             </motion.div>
@@ -352,15 +369,15 @@ export const CallsPage: React.FC = () => {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-4xl font-extrabold text-gradient tracking-tight">Panel de Auditoría</h2>
-          <p className="text-text-secondary mt-2">Consulta el historial completo de llamadas, transacciones financieras y auditorías de seguridad del sistema.</p>
+          <h2 className="text-4xl font-extrabold text-gradient tracking-tight">{t('calls.title')}</h2>
+          <p className="text-text-secondary mt-2">{t('calls.subtitle')}</p>
         </div>
         <button 
           onClick={handleExportCSV}
           className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/25 active:scale-95 text-xs shrink-0 self-start md:self-center"
         >
           <Download size={16} />
-          <span>Exportar reporte CSV</span>
+          <span>{t('calls.export_csv')}</span>
         </button>
       </div>
 
@@ -369,20 +386,20 @@ export const CallsPage: React.FC = () => {
         <Card className="bg-secondary/10 hover:bg-secondary/20 transition-all duration-300 border-none shadow-xl shadow-indigo-500/5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-text-secondary">Procesado Total</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-text-secondary">{t('calls.stats.total_processed')}</p>
               <h3 className="text-3xl font-black mt-2 text-white">{calls.length}</h3>
             </div>
             <div className="p-3 bg-indigo-500/10 rounded-2xl text-indigo-400 border border-indigo-500/20">
               <Phone size={24} />
             </div>
           </div>
-          <p className="text-[10px] text-text-secondary mt-4">Auditorías de llamadas totales</p>
+          <p className="text-[10px] text-text-secondary mt-4">{t('calls.stats.total_processed_desc')}</p>
         </Card>
         
         <Card className="bg-secondary/10 hover:bg-secondary/20 transition-all duration-300 border-none shadow-xl shadow-emerald-500/5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-text-secondary">Tasa de Éxito</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-text-secondary">{t('calls.stats.success_rate')}</p>
               <h3 className="text-3xl font-black mt-2 text-emerald-400">
                 {calls.length > 0 ? Math.round((calls.filter(c => c.status === 'completed').length / calls.length) * 100) : 0}%
               </h3>
@@ -391,13 +408,13 @@ export const CallsPage: React.FC = () => {
               <ArrowUpRight size={24} />
             </div>
           </div>
-          <p className="text-[10px] text-text-secondary mt-4">Tasa de éxito comercial en cobro</p>
+          <p className="text-[10px] text-text-secondary mt-4">{t('calls.stats.success_rate_desc')}</p>
         </Card>
 
         <Card className="bg-secondary/10 hover:bg-secondary/20 transition-all duration-300 border-none shadow-xl shadow-amber-500/5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-text-secondary">Facturación Auditada</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-text-secondary">{t('calls.stats.billed_amount')}</p>
               <h3 className="text-3xl font-black mt-2 text-white">
                 ${calls.reduce((acc, c) => acc + (c.status === 'completed' ? c.amount : 0), 0).toLocaleString()}
               </h3>
@@ -406,20 +423,20 @@ export const CallsPage: React.FC = () => {
               <DollarSign size={24} />
             </div>
           </div>
-          <p className="text-[10px] text-text-secondary mt-4">Monto total auditado en USD</p>
+          <p className="text-[10px] text-text-secondary mt-4">{t('calls.stats.billed_amount_desc')}</p>
         </Card>
 
         <Card className="bg-secondary/10 hover:bg-secondary/20 transition-all duration-300 border-none shadow-xl shadow-teal-500/5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-text-secondary">Seguridad DB</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-text-secondary">{t('calls.stats.db_security')}</p>
               <h3 className="text-xl font-black mt-3 text-teal-400">AES-256</h3>
             </div>
             <div className="p-3 bg-teal-500/10 rounded-2xl text-teal-400 border border-teal-500/20">
               <ShieldCheck size={24} />
             </div>
           </div>
-          <p className="text-[10px] text-text-secondary mt-4">Cifrado de campos de datos activo</p>
+          <p className="text-[10px] text-text-secondary mt-4">{t('calls.stats.db_security_desc')}</p>
         </Card>
       </div>
 
@@ -435,7 +452,7 @@ export const CallsPage: React.FC = () => {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
               <input 
                 type="text" 
-                placeholder="Buscar por cliente o teléfono..." 
+                placeholder={t('calls.search_placeholder')} 
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 className="w-full bg-secondary/40 border border-white/5 rounded-xl py-2.5 pl-12 pr-4 text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
@@ -455,12 +472,12 @@ export const CallsPage: React.FC = () => {
                 )}
               >
                 <Filter size={14} />
-                <span>Búsqueda Avanzada</span>
+                <span>{t('calls.advanced_search')}</span>
               </button>
 
               {/* Status Selector Filter */}
               <div className="flex items-center space-x-1.5 bg-black/20 p-1 rounded-xl border border-white/5">
-                <span className="text-[9px] font-black uppercase px-2 text-text-secondary tracking-widest">Estado:</span>
+                <span className="text-[9px] font-black uppercase px-2 text-text-secondary tracking-widest">{t('calls.filters.status_label')}</span>
                 {(['all', 'completed', 'failed', 'in-progress'] as const).map((status) => (
                   <button 
                     key={status}
@@ -472,7 +489,7 @@ export const CallsPage: React.FC = () => {
                         : "text-text-secondary hover:text-text-primary"
                     )}
                   >
-                    {status === 'all' ? 'Todos' : status === 'completed' ? 'Completado' : status === 'failed' ? 'Fallido' : 'Activo'}
+                    {status === 'all' ? t('calls.filters.all') : status === 'completed' ? t('calls.filters.completed') : status === 'failed' ? t('calls.filters.failed') : t('calls.filters.in_progress')}
                   </button>
                 ))}
               </div>
@@ -485,22 +502,22 @@ export const CallsPage: React.FC = () => {
               
               {/* Duration filter */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-wider text-text-secondary">Duración de llamada</label>
+                <label className="text-[10px] font-black uppercase tracking-wider text-text-secondary">{t('calls.filters.duration_label')}</label>
                 <select 
                   value={filterDuration}
                   onChange={(e) => setFilterDuration(e.target.value as any)}
                   className="w-full bg-secondary/50 border border-white/5 rounded-xl px-3 py-2 text-xs text-white outline-none cursor-pointer focus:ring-1 focus:ring-indigo-500"
                 >
-                  <option value="all">Todas las duraciones</option>
-                  <option value="short">Corta (Menos de 1m)</option>
-                  <option value="medium">Media (1m a 5m)</option>
-                  <option value="long">Larga (Más de 5m)</option>
+                  <option value="all">{t('calls.filters.duration_all')}</option>
+                  <option value="short">{t('calls.filters.duration_short')}</option>
+                  <option value="medium">{t('calls.filters.duration_medium')}</option>
+                  <option value="long">{t('calls.filters.duration_long')}</option>
                 </select>
               </div>
 
               {/* Rango de montos (Minimo) */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-wider text-text-secondary">Monto Mínimo (USD)</label>
+                <label className="text-[10px] font-black uppercase tracking-wider text-text-secondary">{t('calls.filters.min_amount')}</label>
                 <input 
                   type="number"
                   placeholder="Min $0"
@@ -512,7 +529,7 @@ export const CallsPage: React.FC = () => {
 
               {/* Rango de montos (Maximo) */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-wider text-text-secondary">Monto Máximo (USD)</label>
+                <label className="text-[10px] font-black uppercase tracking-wider text-text-secondary">{t('calls.filters.max_amount')}</label>
                 <input 
                   type="number"
                   placeholder="Max $500"
@@ -524,7 +541,7 @@ export const CallsPage: React.FC = () => {
 
               {/* Date Filters Placeholder */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-wider text-text-secondary">Rango de fechas</label>
+                <label className="text-[10px] font-black uppercase tracking-wider text-text-secondary">{t('calls.filters.date_range')}</label>
                 <div className="flex gap-2">
                   <input 
                     type="date"
@@ -549,14 +566,14 @@ export const CallsPage: React.FC = () => {
           <div className="min-w-[1000px]">
             {/* Table Header */}
             <div className="grid grid-cols-[120px_2fr_1.5fr_1fr_1fr_1.2fr_1.5fr_100px] gap-4 py-4 px-4 border-b border-white/10 text-xs font-semibold uppercase tracking-wider text-text-secondary items-center">
-              <div>ID de Auditoría</div>
-              <div>Cliente</div>
-              <div>Número de Teléfono</div>
-              <div>Monto (USD)</div>
-              <div>Duración</div>
-              <div>Estado</div>
-              <div>Hora del Registro</div>
-              <div>Acciones</div>
+              <div>{t('calls.table.audit_id')}</div>
+              <div>{t('calls.table.client')}</div>
+              <div>{t('calls.table.phone')}</div>
+              <div>{t('calls.table.amount')}</div>
+              <div>{t('calls.table.duration')}</div>
+              <div>{t('calls.table.status')}</div>
+              <div>{t('calls.table.timestamp')}</div>
+              <div>{t('calls.table.actions')}</div>
             </div>
 
             {/* Virtualized Scroll Viewport */}
@@ -632,7 +649,7 @@ export const CallsPage: React.FC = () => {
                           call.status === 'failed' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
                           'bg-amber-500/10 text-amber-400 border-amber-500/20'
                         )}>
-                          {call.status === 'completed' ? 'completado' : call.status === 'failed' ? 'fallido' : 'activo'}
+                          {call.status === 'completed' ? t('calls.status.completed').toLowerCase() : call.status === 'failed' ? t('calls.status.failed').toLowerCase() : t('calls.status.in_progress').toLowerCase()}
                         </span>
                       </div>
 
@@ -646,14 +663,14 @@ export const CallsPage: React.FC = () => {
                         <button 
                           onClick={() => setSelectedCall(call)}
                           className="p-2 bg-secondary/40 hover:bg-indigo-500/20 text-text-secondary hover:text-indigo-400 rounded-lg transition-colors"
-                          title="Ver Auditoría Completa"
+                          title={t('calls.view_audit')}
                         >
                           <Info size={14} />
                         </button>
                         <a 
                           href="/ivr-flow" 
                           className="p-2 bg-secondary/40 hover:bg-indigo-500/20 text-text-secondary hover:text-indigo-400 rounded-lg transition-colors inline-block" 
-                          title="Ver Árbol IVR"
+                          title={t('calls.view_ivr')}
                         >
                           <Network size={14} />
                         </a>
@@ -671,12 +688,12 @@ export const CallsPage: React.FC = () => {
                   <div className="p-4 bg-secondary rounded-full mb-4">
                     <Search size={32} className="text-text-secondary" />
                   </div>
-                  <p className="text-sm font-bold tracking-widest uppercase">No se encontraron registros de auditoría</p>
+                  <p className="text-sm font-bold tracking-widest uppercase">{t('calls.no_records')}</p>
                   <button 
                     onClick={handleClearFilters}
                     className="text-indigo-400 text-xs font-black uppercase mt-3 tracking-widest hover:underline"
                   >
-                    Restablecer todos los filtros
+                    {t('calls.reset_filters')}
                   </button>
                 </div>
               </div>
@@ -687,9 +704,9 @@ export const CallsPage: React.FC = () => {
         {/* Footer simple showing stats */}
         {filteredCalls.length > 0 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border-t border-white/5 bg-black/10">
-            <span className="text-xs text-text-secondary font-semibold">
-              Mostrando <span className="text-white">{filteredCalls.length}</span> registros de auditoría en total. Use el scroll para navegar.
-            </span>
+            <span className="text-xs text-text-secondary font-semibold" dangerouslySetInnerHTML={{
+              __html: t('calls.showing_count', { count: filteredCalls.length })
+            }} />
           </div>
         )}
       </Card>

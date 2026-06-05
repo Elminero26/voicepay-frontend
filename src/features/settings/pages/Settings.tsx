@@ -2,14 +2,17 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card } from '../../../components/Card';
 import { Button } from '../../../components/Button';
-import { Shield, MessageSquare, Key, Save, Eye, EyeOff, Smartphone } from 'lucide-react';
+import { Shield, MessageSquare, Key, Save, Eye, EyeOff, Smartphone, Globe } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import { useToast } from '../../../components/Toast';
+import { useLanguage } from '../../../hooks/useLanguage';
+import { LanguageSwitcher } from '../../../components/LanguageSwitcher';
 
 export const Settings: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'security' | 'twilio'>('security');
+  const [activeTab, setActiveTab] = useState<'security' | 'twilio' | 'language'>('security');
   const [showToken, setShowToken] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   // Estados para los inputs
   const [apiKey, setApiKey] = useState('vp_live_xxxxxxxxxxxxxxxx');
@@ -19,19 +22,19 @@ export const Settings: React.FC = () => {
 
   const handleSave = () => {
     console.log('Saving settings:', { apiKey, twilioSid, twilioToken, twilioNumber });
-    toast('Settings Saved', 'System configuration updated successfully.', 'success');
+    toast(t('settings.saved_toast'), t('settings.saved_toast_desc'), 'success');
   };
 
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold text-gradient">System Settings</h2>
-          <p className="text-text-secondary mt-1">Configure your API authentication and communication services.</p>
+          <h2 className="text-3xl font-bold text-gradient">{t('settings.title')}</h2>
+          <p className="text-text-secondary mt-1">{t('settings.subtitle')}</p>
         </div>
         <Button onClick={handleSave} className="flex items-center space-x-2">
           <Save size={18} />
-          <span>Save Changes</span>
+          <span>{t('settings.save_changes')}</span>
         </Button>
       </div>
 
@@ -52,7 +55,7 @@ export const Settings: React.FC = () => {
           )}
           <span className="relative z-10 flex items-center space-x-2">
             <Shield size={18} />
-            <span>Security & API</span>
+            <span>{t('settings.tabs.security')}</span>
           </span>
         </button>
         <button
@@ -71,7 +74,26 @@ export const Settings: React.FC = () => {
           )}
           <span className="relative z-10 flex items-center space-x-2">
             <MessageSquare size={18} />
-            <span>Twilio Config</span>
+            <span>{t('settings.tabs.twilio')}</span>
+          </span>
+        </button>
+        <button
+          onClick={() => setActiveTab('language')}
+          className={cn(
+            'relative px-6 py-2.5 rounded-lg text-sm font-medium transition-all',
+            activeTab === 'language' ? 'text-white' : 'text-text-secondary hover:text-text-primary'
+          )}
+        >
+          {activeTab === 'language' && (
+            <motion.div
+              layoutId="settingsActiveTab"
+              className="absolute inset-0 bg-primary rounded-lg shadow-lg"
+              transition={{ type: "spring", stiffness: 380, damping: 30 }}
+            />
+          )}
+          <span className="relative z-10 flex items-center space-x-2">
+            <Globe size={18} />
+            <span>{t('settings.tabs.language')}</span>
           </span>
         </button>
       </div>
@@ -79,17 +101,17 @@ export const Settings: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           {activeTab === 'security' && (
-            <Card title="API Authentication" description="Manage your application secret keys and authentication methods.">
+            <Card title={t('settings.security.card_title')} description={t('settings.security.card_desc')}>
               <div className="space-y-6 mt-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Master API Key</label>
+                  <label className="text-sm font-medium">{t('settings.security.master_key')}</label>
                   <div className="relative">
                     <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
                     <input
                       type={showToken ? 'text' : 'password'}
                       value={apiKey}
                       onChange={(e) => setApiKey(e.target.value)}
-                      className="w-full bg-secondary border border-border rounded-xl py-2.5 pl-10 pr-12 text-sm focus:ring-2 focus:ring-primary/50 focus:outline-none"
+                      className="w-full bg-secondary border border-border rounded-xl py-2.5 pl-10 pr-12 text-sm focus:ring-2 focus:ring-primary/50 focus:outline-none text-white"
                     />
                     <button
                       onClick={() => setShowToken(!showToken)}
@@ -98,14 +120,14 @@ export const Settings: React.FC = () => {
                       {showToken ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
-                  <p className="text-xs text-text-secondary">This key allows external systems to interact with the VoicePay API.</p>
+                  <p className="text-xs text-text-secondary">{t('settings.security.key_hint')}</p>
                 </div>
 
                 <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start space-x-3 text-amber-500">
                   <Shield size={20} className="shrink-0 mt-0.5" />
                   <div className="text-xs">
-                    <p className="font-bold uppercase tracking-wider mb-1">Security Warning</p>
-                    <p>Keep your API keys secret. Never share them or commit them to version control. If compromised, regenerate them immediately.</p>
+                    <p className="font-bold uppercase tracking-wider mb-1">{t('settings.security.warning_title')}</p>
+                    <p>{t('settings.security.warning_desc')}</p>
                   </div>
                 </div>
               </div>
@@ -113,28 +135,28 @@ export const Settings: React.FC = () => {
           )}
 
           {activeTab === 'twilio' && (
-            <Card title="Twilio Integration" description="Configure your SMS and Voice credentials to enable real-time notifications.">
+            <Card title={t('settings.twilio.card_title')} description={t('settings.twilio.card_desc')}>
               <div className="space-y-6 mt-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-text-secondary uppercase tracking-widest text-[10px]">Account SID</label>
+                  <label className="text-sm font-medium text-text-secondary uppercase tracking-widest text-[10px]">{t('settings.twilio.account_sid')}</label>
                   <input
                     type="text"
                     value={twilioSid}
                     onChange={(e) => setTwilioSid(e.target.value)}
                     placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                    className="w-full bg-secondary border border-border rounded-xl py-2.5 px-4 text-sm font-mono focus:ring-2 focus:ring-primary/50 focus:outline-none"
+                    className="w-full bg-secondary border border-border rounded-xl py-2.5 px-4 text-sm font-mono focus:ring-2 focus:ring-primary/50 focus:outline-none text-white"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-text-secondary uppercase tracking-widest text-[10px]">Auth Token</label>
+                  <label className="text-sm font-medium text-text-secondary uppercase tracking-widest text-[10px]">{t('settings.twilio.auth_token')}</label>
                   <div className="relative">
                     <input
                       type={showToken ? 'text' : 'password'}
                       value={twilioToken}
                       onChange={(e) => setTwilioToken(e.target.value)}
                       placeholder="Your Auth Token"
-                      className="w-full bg-secondary border border-border rounded-xl py-2.5 px-4 pr-12 text-sm font-mono focus:ring-2 focus:ring-primary/50 focus:outline-none"
+                      className="w-full bg-secondary border border-border rounded-xl py-2.5 px-4 pr-12 text-sm font-mono focus:ring-2 focus:ring-primary/50 focus:outline-none text-white"
                     />
                     <button
                       onClick={() => setShowToken(!showToken)}
@@ -146,7 +168,7 @@ export const Settings: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-text-secondary uppercase tracking-widest text-[10px]">Twilio Phone Number</label>
+                  <label className="text-sm font-medium text-text-secondary uppercase tracking-widest text-[10px]">{t('settings.twilio.phone_number')}</label>
                   <div className="relative">
                     <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
                     <input
@@ -154,9 +176,22 @@ export const Settings: React.FC = () => {
                       value={twilioNumber}
                       onChange={(e) => setTwilioNumber(e.target.value)}
                       placeholder="+1234567890"
-                      className="w-full bg-secondary border border-border rounded-xl py-2.5 pl-10 px-4 text-sm focus:ring-2 focus:ring-primary/50 focus:outline-none"
+                      className="w-full bg-secondary border border-border rounded-xl py-2.5 pl-10 px-4 text-sm focus:ring-2 focus:ring-primary/50 focus:outline-none text-white"
                     />
                   </div>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {activeTab === 'language' && (
+            <Card title={t('settings.language.card_title')} description={t('settings.language.card_desc')}>
+              <div className="space-y-6 mt-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-text-secondary uppercase tracking-widest text-[10px]">
+                    {t('settings.language.select_label')}
+                  </label>
+                  <LanguageSwitcher variant="dropdown" className="!w-full h-11 bg-secondary border border-border rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-primary/50 focus:outline-none cursor-pointer" />
                 </div>
               </div>
             </Card>
@@ -164,15 +199,15 @@ export const Settings: React.FC = () => {
         </div>
 
         <div className="space-y-6">
-          <Card title="Helper" className="h-fit">
+          <Card title={t('settings.helper.card_title')} className="h-fit">
             <div className="space-y-4">
               <div className="flex items-start space-x-3">
                 <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
                   <Key className="text-primary" size={16} />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">Where to get them?</p>
-                  <p className="text-xs text-text-secondary mt-1">You can find your Twilio credentials in the Twilio Console Dashboard under "Account Info".</p>
+                  <p className="text-sm font-medium">{t('settings.helper.where_to_get')}</p>
+                  <p className="text-xs text-text-secondary mt-1">{t('settings.helper.where_to_get_desc')}</p>
                 </div>
               </div>
             </div>
@@ -182,3 +217,4 @@ export const Settings: React.FC = () => {
     </div>
   );
 };
+

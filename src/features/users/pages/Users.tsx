@@ -9,8 +9,10 @@ import { userService } from '../../../services/api';
 import type { User, CreateUserDTO } from '../../../types';
 import { Loader } from '../../../components/Loader';
 import { cn } from '../../../utils/cn';
+import { useLanguage } from '../../../hooks/useLanguage';
 
 export const UsersPage: React.FC = () => {
+  const { t } = useLanguage();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -90,7 +92,7 @@ export const UsersPage: React.FC = () => {
   };
 
   const handleDeleteUser = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
+    if (window.confirm(t('common.confirm_delete'))) {
       try {
         await userService.deleteUser(id);
         setUsers(users.filter(u => u.id !== id));
@@ -145,14 +147,22 @@ export const UsersPage: React.FC = () => {
 
   const handleExportCSV = () => {
     if (filteredUsers.length === 0) return;
-    const headers = ['ID', 'Name', 'Email', 'Phone Number', 'Role', 'Status', 'Created At'];
+    const headers = [
+      'ID',
+      t('users.form.full_name'),
+      t('users.form.email_address'),
+      t('users.form.phone_number'),
+      t('users.table.role'),
+      t('users.table.status'),
+      t('calls.table.timestamp')
+    ];
     const rows = filteredUsers.map(u => [
       u.id,
       u.name,
       u.email,
       u.phoneNumber || '-',
-      u.role.toUpperCase(),
-      (u.status || 'active').toUpperCase(),
+      t(`users.roles.${u.role}`).toUpperCase(),
+      t(`users.status.${u.status || 'active'}`).toUpperCase(),
       u.createdAt || '-'
     ]);
     const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(e => e.map(val => `"${val}"`).join(','))].join('\n');
@@ -172,12 +182,12 @@ export const UsersPage: React.FC = () => {
     <div className="space-y-8 animate-slide-up">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold">User Management</h2>
-          <p className="text-text-secondary">Manage customers, administrators and operators.</p>
+          <h2 className="text-2xl font-bold">{t('users.title')}</h2>
+          <p className="text-text-secondary">{t('users.subtitle')}</p>
         </div>
         <Button onClick={handleOpenCreate}>
           <Plus size={18} className="mr-2" />
-          Create User
+          {t('users.create_user')}
         </Button>
       </div>
 
@@ -189,7 +199,7 @@ export const UsersPage: React.FC = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
               <input
                 type="text"
-                placeholder="Search by name, email or phone..."
+                placeholder={t('users.search_placeholder')}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 className="w-full bg-secondary border border-border rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-white"
@@ -198,7 +208,7 @@ export const UsersPage: React.FC = () => {
             <div className="flex flex-wrap items-center gap-3">
               {/* Role Filter Toggles */}
               <div className="flex items-center space-x-1.5 bg-black/20 p-1 rounded-xl border border-border">
-                <span className="text-[10px] font-bold uppercase px-2 text-text-secondary tracking-widest">Role:</span>
+                <span className="text-[10px] font-bold uppercase px-2 text-text-secondary tracking-widest">{t('common.role')}:</span>
                 {(['all', 'admin', 'user'] as const).map((role) => (
                   <button 
                     key={role}
@@ -211,12 +221,12 @@ export const UsersPage: React.FC = () => {
                         : "text-text-secondary hover:text-text-primary"
                     )}
                   >
-                    {role === 'all' ? 'All' : role === 'admin' ? 'Admin' : 'Customer'}
+                    {role === 'all' ? t('users.roles.all') : role === 'admin' ? t('users.roles.admin') : t('users.roles.user')}
                   </button>
                 ))}
               </div>
               <Button variant="outline" size="sm" onClick={handleExportCSV}>
-                Export
+                {t('common.export')}
               </Button>
             </div>
           </div>
@@ -226,11 +236,11 @@ export const UsersPage: React.FC = () => {
             <div className="min-w-[800px]">
               {/* Grid Header */}
               <div className="grid grid-cols-[2.5fr_1.5fr_1.2fr_1.2fr_100px] gap-4 py-4 px-6 border-b border-border text-xs font-semibold uppercase tracking-wider text-text-secondary items-center">
-                <div>User</div>
-                <div>Phone</div>
-                <div>Role</div>
-                <div>Status</div>
-                <div className="text-right pr-4">Actions</div>
+                <div>{t('users.table.user')}</div>
+                <div>{t('users.table.phone')}</div>
+                <div>{t('users.table.role')}</div>
+                <div>{t('users.table.status')}</div>
+                <div className="text-right pr-4">{t('users.table.actions')}</div>
               </div>
 
               {/* Scrollable Container */}
@@ -276,7 +286,7 @@ export const UsersPage: React.FC = () => {
 
                         {/* Column 2: Phone */}
                         <div className="text-sm font-mono text-primary truncate">
-                          {user.phoneNumber || 'N/A'}
+                          {user.phoneNumber || t('common.na')}
                         </div>
 
                         {/* Column 3: Role */}
@@ -285,7 +295,7 @@ export const UsersPage: React.FC = () => {
                             'px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider inline-block',
                             user.role === 'admin' ? 'bg-primary/10 text-primary' : 'bg-secondary text-text-secondary'
                           )}>
-                            {user.role}
+                            {t(`users.roles.${user.role}`)}
                           </span>
                         </div>
 
@@ -295,7 +305,7 @@ export const UsersPage: React.FC = () => {
                             'w-2 h-2 rounded-full mr-2 shrink-0',
                             user.status === 'active' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-text-secondary'
                           )} />
-                          <span className="capitalize text-sm text-text-primary">{user.status || 'active'}</span>
+                          <span className="capitalize text-sm text-text-primary">{t(`users.status.${user.status || 'active'}`)}</span>
                         </div>
 
                         {/* Column 5: Actions */}
@@ -319,13 +329,13 @@ export const UsersPage: React.FC = () => {
                       <div className="p-4 bg-secondary rounded-full mb-4">
                         <Search size={32} className="text-text-secondary" />
                       </div>
-                      <p className="text-sm font-bold tracking-widest uppercase">No users found</p>
+                      <p className="text-sm font-bold tracking-widest uppercase">{t('users.no_users_found')}</p>
                       <button 
                         type="button"
                         onClick={() => { setSearchInput(''); setFilterRole('all'); }}
                         className="text-primary text-xs font-bold uppercase mt-3 tracking-widest hover:underline"
                       >
-                        Reset Filters
+                        {t('users.reset_filters')}
                       </button>
                     </div>
                   </div>
@@ -337,9 +347,9 @@ export const UsersPage: React.FC = () => {
           {/* Footer stats */}
           {filteredUsers.length > 0 && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border-t border-border bg-black/10">
-              <span className="text-xs text-text-secondary font-semibold">
-                Showing <span className="text-white">{filteredUsers.length}</span> users in total. Use scroll to navigate.
-              </span>
+              <span className="text-xs text-text-secondary font-semibold" dangerouslySetInnerHTML={{
+                __html: t('users.showing_count', { count: filteredUsers.length })
+              }} />
             </div>
           )}
         </Card>
@@ -349,11 +359,11 @@ export const UsersPage: React.FC = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingUser ? 'Edit User' : 'Create New User'}
+        title={editingUser ? t('users.edit_user') : t('users.create_new_user')}
       >
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-text-secondary">Full Name</label>
+            <label className="text-sm font-medium text-text-secondary">{t('users.form.full_name')}</label>
             <input
               required
               type="text"
@@ -364,7 +374,7 @@ export const UsersPage: React.FC = () => {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-text-secondary">Phone Number (with +)</label>
+            <label className="text-sm font-medium text-text-secondary">{t('users.form.phone_number')}</label>
             <div className="relative">
               <input
                 required
@@ -377,7 +387,7 @@ export const UsersPage: React.FC = () => {
             </div>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-text-secondary">Email Address</label>
+            <label className="text-sm font-medium text-text-secondary">{t('users.form.email_address')}</label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
               <input
@@ -391,14 +401,14 @@ export const UsersPage: React.FC = () => {
             </div>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-text-secondary">System Role</label>
+            <label className="text-sm font-medium text-text-secondary">{t('users.form.system_role')}</label>
             <select
               value={formData.role}
               onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'user' })}
               className="w-full bg-secondary border border-border rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all appearance-none text-white cursor-pointer"
             >
-              <option value="user" className="bg-secondary text-white">Customer / Operator</option>
-              <option value="admin" className="bg-secondary text-white">Administrator</option>
+              <option value="user" className="bg-secondary text-white">{t('users.form.roles.user')}</option>
+              <option value="admin" className="bg-secondary text-white">{t('users.form.roles.admin')}</option>
             </select>
           </div>
           <div className="flex gap-3 pt-4">
@@ -408,14 +418,14 @@ export const UsersPage: React.FC = () => {
               className="flex-1"
               onClick={() => setIsModalOpen(false)}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               type="submit"
               className="flex-1"
               isLoading={isSubmitting}
             >
-              {editingUser ? 'Save Changes' : 'Create Account'}
+              {editingUser ? t('users.form.save_changes') : t('users.form.create_account')}
             </Button>
           </div>
         </form>

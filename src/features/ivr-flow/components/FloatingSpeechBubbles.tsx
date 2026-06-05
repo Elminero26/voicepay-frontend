@@ -1,40 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Bot, Mic } from 'lucide-react';
 import { useCallStore } from '../../../stores/useCallStore';
+import { useLanguage } from '../../../hooks/useLanguage';
 
 interface FloatingSpeechBubblesProps {
   nodeId: string;
   nodeLabel: string;
   voicePrompt: string;
 }
-
-// Dialog map for standard nodes in Spanish
-const dialogMap: { [key: string]: { bot: string; user: string } } = {
-  '1': {
-    bot: "Bienvenido al sistema de pagos automáticos VoicePay. Por favor, espere mientras le identificamos.",
-    user: "Hola, buenas. Quería pagar una factura pendiente."
-  },
-  '2': {
-    bot: "Para garantizar su seguridad, estamos verificando el número de teléfono desde el que nos llama.",
-    user: "De acuerdo. Estoy llamando desde mi móvil de empresa."
-  },
-  '3': {
-    bot: "Hemos detectado una factura pendiente de ciento cincuenta euros. Pulse uno para proceder con el pago seguro con tarjeta, o pulse dos si prefiere ser atendido por un agente.",
-    user: "Quiero hacer el pago de la factura de ciento cincuenta euros con mi tarjeta bancaria."
-  },
-  '4': {
-    bot: "Esperando su selección. Marque uno para pagar, o dos para soporte.",
-    user: "Pulso la tecla uno para pagar."
-  },
-  '5': {
-    bot: "Su pago de ciento cincuenta euros ha sido procesado y aprobado correctamente. Muchas gracias por utilizar VoicePay. Hasta pronto.",
-    user: "Perfecto, pago confirmado. Muchas gracias por la rapidez. Adiós."
-  },
-  '6': {
-    bot: "Estamos transfiriendo su llamada con el siguiente agente disponible. Por favor, no cuelgue.",
-    user: "Vale, aguardo en línea a que me atienda el agente disponible."
-  }
-};
 
 // Sub-component for word-by-word typewriter text
 const WordTypewriterText: React.FC<{ text: string; speed?: number; onComplete?: () => void }> = ({
@@ -66,11 +39,21 @@ const WordTypewriterText: React.FC<{ text: string; speed?: number; onComplete?: 
   return <span>{displayedText}</span>;
 };
 
+const defaultPrompts: { [key: string]: string } = {
+  '1': "Bienvenido al sistema de pagos automáticos VoicePay. Por favor, espere mientras le identificamos.",
+  '2': "Para garantizar su seguridad, estamos verificando el número de teléfono desde el que nos llama.",
+  '3': "Hemos detectado una factura pendiente de ciento cincuenta euros. Pulse uno para proceder con el pago seguro con tarjeta, o pulse dos si prefiere ser atendido por un agente.",
+  '4': "Esperando su selección. Marque uno para pagar, o dos para soporte.",
+  '5': "Su pago de ciento cincuenta euros ha sido procesado y aprobado correctamente. Muchas gracias por utilizar VoicePay. Hasta pronto.",
+  '6': "Estamos transfiriendo su llamada con el siguiente agente disponible. Por favor, no cuelgue."
+};
+
 export const FloatingSpeechBubbles: React.FC<FloatingSpeechBubblesProps> = ({
   nodeId,
   nodeLabel,
   voicePrompt,
 }) => {
+  const { t } = useLanguage();
   const simPath = useCallStore((state) => state.simPath);
   const isSimulating = useCallStore((state) => state.isSimulating);
   const simulatedCall = useCallStore((state) => state.simulatedCall);
@@ -87,15 +70,17 @@ export const FloatingSpeechBubbles: React.FC<FloatingSpeechBubblesProps> = ({
 
   // Determine user speech dynamically
   const userSpeech = useMemo(() => {
-    if (dialogMap[nodeId]) {
-      // Dynamic adjustments for Node 4 (selection step)
+    const defaultOption = t('ivr.speech_bubbles.fallback_general');
+    
+    // For standard nodes 1 to 6
+    if (['1', '2', '3', '4', '5', '6'].includes(nodeId)) {
       if (nodeId === '4') {
         const option = activeCall?.selectedOption || (simPath === 'agent' ? '2' : '1');
         return option === '2'
-          ? "Prefiero hablar con un agente. Pulso la tecla dos."
-          : "Quiero pagar la factura, pulso la tecla uno.";
+          ? t('ivr.speech_bubbles.user_bubble_4_2')
+          : t('ivr.speech_bubbles.user_bubble_4_1');
       }
-      return dialogMap[nodeId].user;
+      return t(`ivr.speech_bubbles.user_bubble_${nodeId}`);
     }
 
     // Dynamic fallback generation for custom designer nodes
@@ -103,22 +88,25 @@ export const FloatingSpeechBubbles: React.FC<FloatingSpeechBubblesProps> = ({
     const labelLower = (nodeLabel || '').toLowerCase();
 
     if (promptLower.includes('pago') || promptLower.includes('tarjeta') || promptLower.includes('euros') || labelLower.includes('pago') || labelLower.includes('payment')) {
-      return "Sí, quiero confirmar el pago seguro con tarjeta.";
+      return t('ivr.speech_bubbles.fallback_payment');
     }
     if (promptLower.includes('agente') || promptLower.includes('soporte') || promptLower.includes('ayuda') || labelLower.includes('agent') || labelLower.includes('agente') || labelLower.includes('transfer')) {
-      return "Hola, necesito hablar con un operador para recibir soporte.";
+      return t('ivr.speech_bubbles.fallback_agent');
     }
     if (promptLower.includes('identifica') || promptLower.includes('teléfono') || promptLower.includes('seguridad') || labelLower.includes('auth') || labelLower.includes('verific')) {
-      return "De acuerdo, confirmo mi número y mi identidad.";
+      return t('ivr.speech_bubbles.fallback_auth');
     }
     if (promptLower.includes('bienvenido') || promptLower.includes('saludo') || labelLower.includes('welcome') || labelLower.includes('bienvenid')) {
-      return "Hola, buenas tardes. Gracias.";
+      return t('ivr.speech_bubbles.fallback_welcome');
     }
 
-    return "Entendido, procedamos con el siguiente paso.";
-  }, [nodeId, nodeLabel, voicePrompt, simPath, activeCall]);
+    return defaultOption;
+  }, [nodeId, nodeLabel, voicePrompt, simPath, activeCall, t]);
 
-  const botSpeech = voicePrompt || dialogMap[nodeId]?.bot || "Estableciendo conexión en la línea de voz...";
+  const isDefaultPrompt = voicePrompt === defaultPrompts[nodeId];
+  const botSpeech = isDefaultPrompt || !voicePrompt
+    ? t(`ivr.nodes.${nodeId}.voicePrompt`, voicePrompt || t('ivr.speech_bubbles.establishing_connection'))
+    : voicePrompt;
 
   // Sequence state management
   const [showBot, setShowBot] = useState(false);
@@ -156,7 +144,7 @@ export const FloatingSpeechBubbles: React.FC<FloatingSpeechBubblesProps> = ({
           <div className="flex items-center justify-between border-b border-indigo-500/10 pb-1">
             <div className="flex items-center space-x-1">
               <Bot size={12} className="text-indigo-400 shrink-0" />
-              <span className="text-[9px] font-black tracking-widest text-indigo-400 uppercase">BOT VOICE (TTS)</span>
+              <span className="text-[9px] font-black tracking-widest text-indigo-400 uppercase">{t('ivr.speech_bubbles.bot_voice')}</span>
             </div>
             {/* Animated Sound Wave bars */}
             <div className="flex items-end space-x-0.5 h-3.5 px-1 shrink-0">
@@ -177,11 +165,11 @@ export const FloatingSpeechBubbles: React.FC<FloatingSpeechBubblesProps> = ({
           <div className="flex items-center justify-between border-b border-emerald-500/10 pb-1">
             <div className="flex items-center space-x-1">
               <Mic size={11} className="text-emerald-400 shrink-0 animate-stt-pulse" />
-              <span className="text-[9px] font-black tracking-widest text-emerald-400 uppercase">USUARIO (STT)</span>
+              <span className="text-[9px] font-black tracking-widest text-emerald-400 uppercase">{t('ivr.speech_bubbles.user_stt')}</span>
             </div>
             {userTyping && (
               <span className="text-[8px] font-bold text-emerald-400/60 uppercase tracking-wider animate-pulse">
-                Transcribiendo...
+                {t('ivr.speech_bubbles.transcribing')}
               </span>
             )}
           </div>
@@ -193,7 +181,7 @@ export const FloatingSpeechBubbles: React.FC<FloatingSpeechBubblesProps> = ({
                 <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                 <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
-              <span className="text-[10px] italic font-medium text-emerald-400/70">Escuchando voz...</span>
+              <span className="text-[10px] italic font-medium text-emerald-400/70">{t('ivr.speech_bubbles.listening')}</span>
             </div>
           ) : (
             <p className="text-[11px] font-medium leading-normal text-slate-100 antialiased">

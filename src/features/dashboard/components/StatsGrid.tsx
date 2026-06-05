@@ -7,6 +7,7 @@ import { Card } from '../../../components/Card';
 import { cn } from '../../../utils/cn';
 import type { PaymentStats } from '../../../types';
 import type { DashboardTab } from './DashboardHeader';
+import { useLanguage } from '../../../hooks/useLanguage';
 
 interface AnalyticsData {
   totalCalls: number;
@@ -37,10 +38,12 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
   stats,
   analyticsData
 }) => {
+  const { t } = useLanguage();
+
   // Métricas de tiempo real
   const realtimeMetrics = [
     { 
-      label: 'Total Calls', 
+      label: t('dashboard.total_calls'), 
       value: stats.totalCalls ?? 0, 
       icon: Phone, 
       color: 'text-indigo-400', 
@@ -50,7 +53,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
       isPositive: true 
     },
     { 
-      label: 'Successful Payments', 
+      label: t('dashboard.charts.completed_payments'), 
       value: stats.successfulPayments ?? 0, 
       icon: CheckCircle, 
       color: 'text-emerald-400', 
@@ -60,7 +63,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
       isPositive: true 
     },
     { 
-      label: 'Failed Payments', 
+      label: t('dashboard.charts.failed_payments'), 
       value: stats.failedPayments ?? 0, 
       icon: XCircle, 
       color: 'text-rose-400', 
@@ -70,7 +73,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
       isPositive: true 
     },
     { 
-      label: 'Total Revenue', 
+      label: t('dashboard.revenue'), 
       value: `$${(stats.totalRevenue ?? 0).toLocaleString()}`, 
       icon: DollarSign, 
       color: 'text-amber-400', 
@@ -84,7 +87,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
   // Métricas avanzadas para la vista analítica
   const analyticsMetrics = [
     { 
-      label: 'Volume Volume (Revenue)', 
+      label: t('dashboard.volume_revenue'), 
       value: `$${analyticsData.totalRevenue.toLocaleString()}`, 
       icon: DollarSign, 
       color: 'text-violet-400', 
@@ -92,10 +95,10 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
       glow: 'shadow-violet-500/10 hover:shadow-violet-500/20 border-violet-500/20',
       trend: analyticsData.revenueTrend, 
       isPositive: analyticsData.isRevenuePositive,
-      subtitle: 'Total invoice volume'
+      subtitle: t('dashboard.total_invoice_volume')
     },
     { 
-      label: 'Average Ticket Value', 
+      label: t('dashboard.average_ticket_value'), 
       value: `$${analyticsData.avgTicket.toFixed(2)}`, 
       icon: ShieldCheck, 
       color: 'text-emerald-400', 
@@ -103,10 +106,10 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
       glow: 'shadow-emerald-500/10 hover:shadow-emerald-500/20 border-emerald-500/20',
       trend: '+3.1%', 
       isPositive: true,
-      subtitle: 'Value per successful call'
+      subtitle: t('dashboard.value_per_successful_call')
     },
     { 
-      label: 'Total Active Calls', 
+      label: t('dashboard.total_active_calls'), 
       value: analyticsData.totalCalls.toLocaleString(), 
       icon: Phone, 
       color: 'text-blue-400', 
@@ -114,10 +117,10 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
       glow: 'shadow-blue-500/10 hover:shadow-blue-500/20 border-blue-500/20',
       trend: analyticsData.callsTrend, 
       isPositive: analyticsData.isCallsPositive,
-      subtitle: 'IVR Stream iterations'
+      subtitle: t('dashboard.ivr_iterations')
     },
     { 
-      label: 'Conversion Rate', 
+      label: t('dashboard.success_rate'), 
       value: `${analyticsData.conversionRate}%`, 
       icon: Percent, 
       color: 'text-pink-400', 
@@ -125,10 +128,10 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
       glow: 'shadow-pink-500/10 hover:shadow-pink-500/20 border-pink-500/20',
       trend: analyticsData.conversionTrend, 
       isPositive: analyticsData.isConversionPositive,
-      subtitle: 'Successful payment ratio'
+      subtitle: t('dashboard.successful_payment_ratio')
     },
     { 
-      label: 'Avg. Call Duration', 
+      label: t('dashboard.avg_call_duration_label'), 
       value: `${analyticsData.avgDuration}s`, 
       icon: Clock, 
       color: 'text-amber-400', 
@@ -136,7 +139,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
       glow: 'shadow-amber-500/10 hover:shadow-amber-500/20 border-amber-500/20',
       trend: analyticsData.durationTrend, 
       isPositive: analyticsData.isDurationPositive,
-      subtitle: 'Average time in system'
+      subtitle: t('dashboard.avg_time_in_system')
     },
   ];
 
@@ -166,7 +169,7 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
                 {metric.isPositive ? <TrendingUp size={12} className="mr-1" /> : <TrendingDown size={12} className="mr-1" />}
                 <span>{metric.trend}</span>
               </div>
-              <span className="ml-2 text-text-secondary opacity-60">vs last month</span>
+              <span className="ml-2 text-text-secondary opacity-60">{t('dashboard.vs_last_month')}</span>
             </div>
           </Card>
         ))
@@ -201,3 +204,4 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
     </div>
   );
 };
+

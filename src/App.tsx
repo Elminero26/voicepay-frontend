@@ -1,10 +1,11 @@
 import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Layout } from './layouts/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ToastProvider } from './components/Toast';
 import { AuthProvider } from './contexts/AuthContext';
 import { Loader } from './components/Loader';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
 
 // Lazy loading features
 const Login = React.lazy(() => import('./features/auth').then(m => ({ default: m.Login })));
@@ -16,6 +17,14 @@ const CallsPage = React.lazy(() => import('./features/calls').then(m => ({ defau
 const IvrFlow = React.lazy(() => import('./features/ivr-flow').then(m => ({ default: m.IvrFlow })));
 const Notifications = React.lazy(() => import('./features/notifications').then(m => ({ default: m.Notifications })));
 const Settings = React.lazy(() => import('./features/settings').then(m => ({ default: m.Settings })));
+
+// VP-18: Render floating switcher on public auth pages
+const GlobalFloatingSwitcher: React.FC = () => {
+  const location = useLocation();
+  const showFloating = ['/login'].includes(location.pathname);
+  if (!showFloating) return null;
+  return <LanguageSwitcher variant="floating" />;
+};
 
 function App() {
   return (
@@ -39,6 +48,7 @@ function App() {
 
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            <GlobalFloatingSwitcher />
           </Suspense>
         </AuthProvider>
       </Router>
@@ -47,4 +57,5 @@ function App() {
 }
 
 export default App;
+
 

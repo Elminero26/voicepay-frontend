@@ -6,6 +6,7 @@ import {
   User, Headset, MessageSquare, Zap, AlertTriangle, GripVertical
 } from 'lucide-react';
 import { cn } from '../../../utils/cn';
+import { useLanguage } from '../../../hooks/useLanguage';
 
 interface DesignerPanelProps {
   selectedNode: any | null;
@@ -26,6 +27,7 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
   onReset,
   hasChanges,
 }) => {
+  const { t } = useLanguage();
   const [label, setLabel] = useState('');
   const [description, setDescription] = useState('');
   const [icon, setIcon] = useState('HelpCircle');
@@ -36,8 +38,8 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
   const availableBlocks = [
     {
       type: 'ivrNode' as const,
-      label: 'Bienvenida',
-      description: 'Saludo inicial e introducción al flujo de voz.',
+      label: t('ivr.blocks.welcome.label'),
+      description: t('ivr.blocks.welcome.description'),
       icon: 'PhoneCall',
       lucideIcon: PhoneCall,
       accentClass: 'border-indigo-500/20 bg-indigo-500/5 text-indigo-400 group-hover:border-indigo-500/40 group-hover:bg-indigo-500/10 shadow-indigo-500/5 hover:shadow-indigo-500/10',
@@ -45,8 +47,8 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
     },
     {
       type: 'ivrNode' as const,
-      label: 'Pasarela de Pago',
-      description: 'Módulo de procesamiento seguro de pagos.',
+      label: t('ivr.blocks.payment.label'),
+      description: t('ivr.blocks.payment.description'),
       icon: 'CreditCard',
       lucideIcon: CreditCard,
       accentClass: 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400 group-hover:border-emerald-500/40 group-hover:bg-emerald-500/10 shadow-emerald-500/5 hover:shadow-emerald-500/10',
@@ -54,8 +56,8 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
     },
     {
       type: 'ivrNode' as const,
-      label: 'Desvío',
-      description: 'Transferir la llamada a un agente humano.',
+      label: t('ivr.blocks.agent.label'),
+      description: t('ivr.blocks.agent.description'),
       icon: 'Headset',
       lucideIcon: Headset,
       accentClass: 'border-amber-500/20 bg-amber-500/5 text-amber-400 group-hover:border-amber-500/40 group-hover:bg-amber-500/10 shadow-amber-500/5 hover:shadow-amber-500/10',
@@ -63,8 +65,8 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
     },
     {
       type: 'serviceNode' as const,
-      label: 'Servicio Externo',
-      description: 'Consulta o integración con API o microservicio.',
+      label: t('ivr.blocks.service.label'),
+      description: t('ivr.blocks.service.description'),
       icon: 'Globe',
       lucideIcon: Globe,
       accentClass: 'border-teal-500/20 bg-teal-500/5 text-teal-400 group-hover:border-teal-500/40 group-hover:bg-teal-500/10 shadow-teal-500/5 hover:shadow-teal-500/10',
@@ -133,10 +135,10 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
           <div className="p-2 bg-primary/20 rounded-lg text-primary">
             <Sliders size={18} />
           </div>
-          <h3 className="font-black text-white uppercase tracking-[0.15em] text-xs">Designer Toolbox</h3>
+          <h3 className="font-black text-white uppercase tracking-[0.15em] text-xs">{t('ivr.designer_toolbox')}</h3>
         </div>
         <span className="text-[9px] font-mono text-primary font-bold bg-primary/10 px-2 py-0.5 rounded-full uppercase">
-          Editing Mode
+          {t('ivr.editing_mode')}
         </span>
       </div>
 
@@ -146,7 +148,7 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
           <div className="space-y-5 animate-slide-in-right">
             <div className="flex items-center justify-between">
               <span className="text-[10px] uppercase font-black text-primary tracking-widest">
-                Node Properties
+                {t('ivr.node_properties')}
               </span>
               <span className="text-[9px] font-mono text-white/40 bg-white/5 px-2 py-0.5 rounded">
                 ID: {selectedNode.id}
@@ -156,14 +158,14 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
             {/* Label Input */}
             <div className="space-y-1.5">
               <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
-                Node Label
+                {t('ivr.node_label')}
               </label>
               <input
                 type="text"
                 value={label}
                 onChange={(e) => handleFieldChange('label', e.target.value)}
                 className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
-                placeholder="e.g. Process Payment"
+                placeholder={t('ivr.label_placeholder')}
               />
             </div>
 
@@ -171,14 +173,14 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
             {selectedNode.type === 'ivrNode' && (
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
-                  Description
+                  {t('ivr.description')}
                 </label>
                 <textarea
                   value={description}
                   onChange={(e) => handleFieldChange('description', e.target.value)}
                   rows={2}
                   className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-medium text-text-secondary focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all resize-none"
-                  placeholder="Summarize the action at this step..."
+                  placeholder={t('ivr.desc_placeholder')}
                 />
               </div>
             )}
@@ -187,7 +189,7 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
             {selectedNode.type === 'ivrNode' && (
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
-                  DTMF Trigger Key (Optional)
+                  {t('ivr.dtmf_trigger')}
                 </label>
                 <input
                   type="text"
@@ -195,10 +197,10 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
                   value={action}
                   onChange={(e) => handleFieldChange('action', e.target.value)}
                   className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono font-bold text-primary focus:outline-none focus:border-primary/50 transition-all"
-                  placeholder="e.g. 1, 2, #, *"
+                  placeholder={t('ivr.dtmf_placeholder')}
                 />
                 <span className="text-[9px] text-text-secondary opacity-60 leading-tight block">
-                  If set, this node will light up when the user enters this key during option selection.
+                  {t('ivr.dtmf_hint')}
                 </span>
               </div>
             )}
@@ -207,14 +209,14 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
             {selectedNode.type === 'ivrNode' && (
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
-                  Voice Prompt (TTS)
+                  {t('ivr.voice_prompt')}
                 </label>
                 <textarea
                   value={voicePrompt}
                   onChange={(e) => handleFieldChange('voicePrompt', e.target.value)}
                   rows={3}
                   className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-medium text-text-secondary focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all resize-none"
-                  placeholder="Escribe el prompt de voz..."
+                  placeholder={t('ivr.prompt_placeholder')}
                 />
               </div>
             )}
@@ -222,21 +224,21 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
             {/* API Endpoint Input (For both Node types) */}
             <div className="space-y-1.5">
               <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
-                API Endpoint / Integración
+                {t('ivr.api_endpoint')}
               </label>
               <input
                 type="text"
                 value={apiEndpoint}
                 onChange={(e) => handleFieldChange('apiEndpoint', e.target.value)}
                 className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono font-medium text-white focus:outline-none focus:border-primary/50 transition-all"
-                placeholder="https://api.voicepay.com/v1/..."
+                placeholder={t('ivr.api_url_label')}
               />
             </div>
 
             {/* Visual Icon Grid Selector */}
             <div className="space-y-2">
               <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
-                Visual Glyph / Icon
+                {t('ivr.visual_glyph')}
               </label>
               <div className="grid grid-cols-5 gap-2 bg-black/20 p-2.5 rounded-xl border border-white/5">
                 {designerIcons.map((ico) => {
@@ -270,7 +272,7 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
                 className="w-full flex items-center justify-center space-x-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 text-red-400 font-bold text-xs py-2.5 rounded-xl transition-all"
               >
                 <Trash2 size={14} />
-                <span>Delete Selected Node</span>
+                <span>{t('ivr.delete_selected')}</span>
               </button>
             </div>
           </div>
@@ -280,9 +282,9 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
             <div className="bg-primary/5 p-4 rounded-2xl border border-primary/20 flex items-start space-x-3">
               <Info size={16} className="text-primary shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <span className="text-[10px] font-black uppercase text-primary tracking-widest block">Interactive Flow Designer</span>
+                <span className="text-[10px] font-black uppercase text-primary tracking-widest block">{t('ivr.designer_guide_title')}</span>
                 <p className="text-[10px] leading-relaxed text-text-secondary font-medium">
-                  Click on any node to view/edit its parameters. Drag connections from the bottom handle of a node to the top of another to form flow routes.
+                  {t('ivr.designer_guide_desc')}
                 </p>
               </div>
             </div>
@@ -291,10 +293,10 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
             <div className="space-y-4">
               <div>
                 <span className="text-[10px] uppercase font-black text-primary tracking-widest block">
-                  Bloques Disponibles (Arrastrar al Lienzo)
+                  {t('ivr.available_blocks')}
                 </span>
                 <span className="text-[9px] text-text-secondary opacity-60 leading-tight block mt-1">
-                  Arrastra un bloque al lienzo o haz clic para añadirlo directamente.
+                  {t('ivr.drag_hint')}
                 </span>
               </div>
               <div className="grid grid-cols-1 gap-3">
@@ -339,7 +341,7 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
                             {block.label}
                           </p>
                           <span className="text-[8px] font-mono opacity-50 uppercase tracking-widest">
-                            {block.type === 'ivrNode' ? 'IVR' : 'Servicio'}
+                            {block.type === 'ivrNode' ? 'IVR' : t('ivr.nodes.new_service').split(' ')[1] || 'Servicio'}
                           </span>
                         </div>
                         <p className="text-[10px] text-text-secondary opacity-75 font-medium leading-tight mt-1 truncate">
@@ -353,7 +355,7 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
             </div>
             
             <div className="text-[10px] text-text-secondary leading-relaxed bg-black/20 p-3.5 rounded-2xl border border-white/5 italic font-medium opacity-70">
-              💡 Tip: You can select and delete edges/connections by clicking on them and hitting the "Backspace" or "Delete" key on your keyboard.
+              {t('ivr.tip_message')}
             </div>
           </div>
         )}
@@ -373,7 +375,7 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
           )}
         >
           <Save size={14} />
-          <span>Save IVR Configuration</span>
+          <span>{t('ivr.save_configuration')}</span>
         </button>
 
         <button
@@ -382,7 +384,7 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
           className="w-full flex items-center justify-center space-x-2 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 text-text-secondary hover:text-white rounded-xl py-2.5 text-[10px] font-bold transition-all"
         >
           <RotateCcw size={12} />
-          <span>Restore Default Flow</span>
+          <span>{t('ivr.restore_default')}</span>
         </button>
       </div>
     </Card>
