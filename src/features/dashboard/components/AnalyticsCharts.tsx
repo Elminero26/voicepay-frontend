@@ -46,7 +46,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
   const CustomTooltip = useCallback(({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="glass border border-white/10 rounded-2xl p-4 shadow-2xl backdrop-blur-md bg-secondary/85 animate-fade-in">
+        <div className="glass border border-border/30 rounded-2xl p-4 shadow-2xl backdrop-blur-md bg-secondary/85 animate-fade-in">
           <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-2">{label}</p>
           {payload.map((item: any, index: number) => (
             <div key={index} className="flex items-center justify-between gap-6 my-1.5">
@@ -54,7 +54,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color || item.stroke }}></span>
                 {item.name}
               </span>
-              <span className="text-sm font-bold text-white">
+              <span className="text-sm font-bold text-text-primary">
                 {item.dataKey === 'amount' ? `$${item.value.toLocaleString()}` : item.value.toLocaleString()}
               </span>
             </div>
@@ -154,7 +154,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
               <div className="w-[1.5px] h-10 bg-border/40" />
               <div className="text-center">
                 <p className="text-[10px] uppercase font-black tracking-widest text-text-secondary mb-1">{t('dashboard.average_ticket')}</p>
-                <p className="text-2xl font-black text-white">$43.20</p>
+                <p className="text-2xl font-black text-text-primary">$43.20</p>
               </div>
             </div>
           </div>
@@ -316,7 +316,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
                 </div>
                 <div>
                   <h4 className="text-xs font-black uppercase text-text-secondary">{t('dashboard.charts.security_compliance')}</h4>
-                  <p className="text-sm font-bold text-white mt-0.5">{t('dashboard.charts.aes_enabled')}</p>
+                  <p className="text-sm font-bold text-text-primary mt-0.5">{t('dashboard.charts.aes_enabled')}</p>
                 </div>
               </div>
               <span className="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">{t('dashboard.charts.active')}</span>
@@ -329,7 +329,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
                 </div>
                 <div>
                   <h4 className="text-xs font-black uppercase text-text-secondary">{t('dashboard.charts.average_conversion')}</h4>
-                  <p className="text-sm font-bold text-white mt-0.5">80.4% {t('dashboard.success_rate')}</p>
+                  <p className="text-sm font-bold text-text-primary mt-0.5">80.4% {t('dashboard.success_rate')}</p>
                 </div>
               </div>
               <span className="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">{t('dashboard.charts.optimal')}</span>
@@ -341,8 +341,8 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
                   <Clock size={20} />
                 </div>
                 <div>
-                  <h4 className="text-xs font-black uppercase text-text-secondary">{t('dashboard.charts.latency_check')}</h4>
-                  <p className="text-sm font-bold text-white mt-0.5">{t('dashboard.charts.latency_val')}</p>
+                  <h4 className="text-xs font-black uppercase text-text-secondary">{t('dashboard.charts.focus_mode_desc') || t('dashboard.charts.latency_check')}</h4>
+                  <p className="text-sm font-bold text-text-primary mt-0.5">{t('dashboard.charts.latency_val')}</p>
                 </div>
               </div>
               <span className="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-400 border border-amber-500/20">{t('dashboard.charts.excellent')}</span>

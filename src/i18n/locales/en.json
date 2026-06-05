@@ -1,6 +1,11 @@
 {
   "common": {
     "appName": "VoicePay",
+    "theme": {
+      "light": "Light Mode",
+      "dark": "Dark Mode",
+      "toggle": "Toggle Theme"
+    },
     "loading": "Loading...",
     "save": "Save",
     "cancel": "Cancel",

@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useCallStore } from '../stores/useCallStore';
 import { WebSocketBanner } from '../components/WebSocketBanner';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
+import { ThemeSwitcher } from '../components/ThemeSwitcher';
 import { useLanguage } from '../hooks/useLanguage';
 
 export const Layout: React.FC = () => {
@@ -160,6 +161,8 @@ export const Layout: React.FC = () => {
           </div>
           
           <div className="flex items-center space-x-4 ml-auto">
+            {/* VP-19: Light/Dark Theme Switcher */}
+            <ThemeSwitcher />
             {/* VP-17: Language switcher */}
             <LanguageSwitcher />
             <div className="flex flex-col items-end mr-2">

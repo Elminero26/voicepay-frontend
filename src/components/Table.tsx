@@ -32,7 +32,7 @@ export const Table: React.FC<TableProps> = ({ headers, children, className }) =>
 };
 
 export const TableRow: React.FC<React.HTMLAttributes<HTMLTableRowElement>> = ({ children, className, ...props }) => (
-  <tr className={cn('group hover:bg-white/5 transition-colors', className)} {...props}>
+  <tr className={cn('group hover:bg-secondary/50 transition-colors', className)} {...props}>
     {children}
   </tr>
 );

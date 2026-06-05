@@ -8,17 +8,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#0a0a0c',
-        card: '#141416',
+        background: 'rgb(var(--background) / <alpha-value>)',
+        card: 'rgb(var(--card) / <alpha-value>)',
         primary: {
-          DEFAULT: '#6366f1',
-          hover: '#4f46e5',
+          DEFAULT: 'rgb(var(--primary) / <alpha-value>)',
+          hover: 'rgb(var(--primary-hover) / <alpha-value>)',
         },
-        secondary: '#1e1e21',
-        border: '#27272a',
+        secondary: 'rgb(var(--secondary) / <alpha-value>)',
+        border: 'rgb(var(--border) / <alpha-value>)',
         text: {
-          primary: '#ffffff',
-          secondary: '#a1a1aa',
+          primary: 'rgb(var(--text-primary) / <alpha-value>)',
+          secondary: 'rgb(var(--text-secondary) / <alpha-value>)',
         }
       },
       fontFamily: {

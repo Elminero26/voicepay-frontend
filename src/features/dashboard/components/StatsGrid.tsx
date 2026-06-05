@@ -181,13 +181,13 @@ export const StatsGrid: React.FC<StatsGridProps> = ({
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-text-secondary opacity-70">{metric.label}</p>
-                  <h3 className="text-2xl font-black mt-2 tracking-tight text-white">{metric.value}</h3>
+                  <h3 className="text-2xl font-black mt-2 tracking-tight text-text-primary">{metric.value}</h3>
                 </div>
                 <div className={cn('p-3 rounded-xl transition-all duration-500 group-hover:rotate-12 group-hover:scale-110 shadow-inner', metric.bg)}>
                   <metric.icon className={metric.color} size={20} />
                 </div>
               </div>
-              <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs font-bold">
+              <div className="mt-4 pt-3 border-t border-border/30 flex items-center justify-between text-xs font-bold">
                 <span className="text-[10px] text-text-secondary font-medium truncate max-w-[90px]">{metric.subtitle}</span>
                 <div className={cn(
                   "flex items-center px-1.5 py-0.5 rounded-lg shrink-0",
