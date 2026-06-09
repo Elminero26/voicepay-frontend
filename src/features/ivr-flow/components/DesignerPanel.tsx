@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../../../components/Card';
 import { 
   Sliders, Trash2, Save, RotateCcw, Info,
   PhoneCall, Globe, ShieldCheck, CreditCard, CheckCircle2, 
   User, Headset, MessageSquare, Zap, AlertTriangle, GripVertical, GitFork,
-  Volume2, VolumeX
+  Volume2, VolumeX, Upload, Download
 } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import { useLanguage } from '../../../hooks/useLanguage';
@@ -16,8 +16,33 @@ interface DesignerPanelProps {
   onAddNode: (type: 'ivrNode' | 'serviceNode' | 'conditionalNode', customData?: any) => void;
   onSave: () => void;
   onReset: () => void;
+  onExport: () => void;
+  onImport: (nodes: any[], edges: any[]) => void;
+  onImportError: (errorMsg: string) => void;
   hasChanges: boolean;
 }
+
+const isValidFlow = (json: any): boolean => {
+  if (!json || typeof json !== 'object') return false;
+  if (!Array.isArray(json.nodes) || !Array.isArray(json.edges)) return false;
+  
+  for (const node of json.nodes) {
+    if (!node || typeof node !== 'object') return false;
+    if (typeof node.id !== 'string') return false;
+    if (typeof node.type !== 'string') return false;
+    if (!node.position || typeof node.position !== 'object') return false;
+    if (typeof node.position.x !== 'number' || typeof node.position.y !== 'number') return false;
+    if (!node.data || typeof node.data !== 'object') return false;
+  }
+
+  for (const edge of json.edges) {
+    if (!edge || typeof edge !== 'object') return false;
+    if (typeof edge.id !== 'string') return false;
+    if (typeof edge.source !== 'string' || typeof edge.target !== 'string') return false;
+  }
+
+  return true;
+};
 
 export const DesignerPanel: React.FC<DesignerPanelProps> = ({
   selectedNode,
@@ -26,6 +51,9 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
   onAddNode,
   onSave,
   onReset,
+  onExport,
+  onImport,
+  onImportError,
   hasChanges,
 }) => {
   const { t, language } = useLanguage();
@@ -33,6 +61,35 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
   const [description, setDescription] = useState('');
   const [icon, setIcon] = useState('HelpCircle');
   const [action, setAction] = useState('');
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        if (isValidFlow(json)) {
+          onImport(json.nodes, json.edges);
+        } else {
+          onImportError('invalid_format');
+        }
+      } catch (err) {
+        console.error('Error parsing JSON:', err);
+        onImportError('parse_error');
+      } finally {
+        e.target.value = '';
+      }
+    };
+    reader.readAsText(file);
+  };
   const [voicePrompt, setVoicePrompt] = useState('');
   const [apiEndpoint, setApiEndpoint] = useState('');
   const [ruleType, setRuleType] = useState('business_hours');
@@ -497,6 +554,32 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
           <Save size={14} />
           <span>{t('ivr.save_configuration')}</span>
         </button>
+
+        <div className="grid grid-cols-2 gap-3">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".json"
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={handleImportClick}
+            className="flex items-center justify-center space-x-2 bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 text-primary font-bold text-xs py-2.5 rounded-xl transition-all duration-300 cursor-pointer shadow-md hover:shadow-primary/5"
+          >
+            <Upload size={14} />
+            <span>{t('ivr.import_flow')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={onExport}
+            className="flex items-center justify-center space-x-2 bg-primary/10 hover:bg-primary/20 border border-primary/20 hover:border-primary/40 text-primary font-bold text-xs py-2.5 rounded-xl transition-all duration-300 cursor-pointer shadow-md hover:shadow-primary/5"
+          >
+            <Download size={14} />
+            <span>{t('ivr.export_flow')}</span>
+          </button>
+        </div>
 
         <button
           type="button"

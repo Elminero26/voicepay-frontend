@@ -781,6 +781,74 @@ export const IvrFlowContent: React.FC = () => {
     }
   }, [toastFn, t, setNodes, setEdges, setHasChanges, setSelectedNodeId]);
 
+  const handleExportFlow = useCallback(() => {
+    const serializedNodes = nodes.map(node => {
+      let iconName = 'HelpCircle';
+      if (typeof node.data.icon === 'string') {
+        iconName = node.data.icon;
+      } else if (node.data.icon && (node.data.icon as any).name) {
+        iconName = (node.data.icon as any).name;
+      } else {
+        if (node.id === '1') iconName = 'PhoneCall';
+        else if (node.id === '2') iconName = 'ShieldCheck';
+        else if (node.id === 'cond-vip') iconName = 'GitFork';
+        else if (node.id === '3') iconName = 'CreditCard';
+        else if (node.id === '4') iconName = 'User';
+        else if (node.id === '5') iconName = 'CheckCircle2';
+        else if (node.id === '6') iconName = 'Headset';
+        else if (node.id === 'user-service') iconName = 'User';
+        else if (node.id === 'payment-service') iconName = 'CreditCard';
+        else if (node.id === 'notification-service') iconName = 'Globe';
+        else if (node.id === 'agent-service') iconName = 'Headset';
+      }
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          icon: iconName
+        }
+      };
+    });
+
+    const flowData = { nodes: serializedNodes, edges };
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(flowData, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href",     dataStr);
+    downloadAnchor.setAttribute("download", `voicepay-ivr-flow-${new Date().toISOString().slice(0, 10)}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+
+    if (toastFn) {
+      toastFn(t('ivr.toasts.flow_exported'), t('ivr.toasts.flow_exported_desc'), 'success');
+    }
+  }, [nodes, edges, toastFn, t]);
+
+  const handleImportFlow = useCallback((importedNodes: any[], importedEdges: any[]) => {
+    const normalizedNodes = importedNodes.map(node => ({
+      ...node,
+      data: {
+        ...node.data,
+        status: mode === 'designer' ? 'idle' : 'pending'
+      }
+    }));
+
+    setNodes(normalizedNodes);
+    setEdges(importedEdges);
+    setHasChanges(true);
+    setSelectedNodeId(null);
+
+    if (toastFn) {
+      toastFn(t('ivr.toasts.flow_imported'), t('ivr.toasts.flow_imported_desc'), 'success');
+    }
+  }, [toastFn, t, mode]);
+
+  const handleImportError = useCallback((_errorType: string) => {
+    if (toastFn) {
+      toastFn(t('ivr.toasts.flow_import_error'), t('ivr.toasts.flow_import_error_desc'), 'error');
+    }
+  }, [toastFn, t]);
+
   // Memoize properties for designer selector
   const selectedNode = useMemo(() => {
     return nodes.find(n => n.id === selectedNodeId) || null;
@@ -1017,6 +1085,9 @@ export const IvrFlowContent: React.FC = () => {
             onAddNode={handleAddNode}
             onSave={handleSaveFlow}
             onReset={handleResetFlow}
+            onExport={handleExportFlow}
+            onImport={handleImportFlow}
+            onImportError={handleImportError}
             hasChanges={hasChanges}
           />
         ) : (

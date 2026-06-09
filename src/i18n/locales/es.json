@@ -346,6 +346,8 @@
     "tip_message": "💡 Consejo: Puedes seleccionar y eliminar líneas de conexión haciendo clic en ellas y presionando la tecla 'Retroceso' (Backspace) o 'Suprimir' (Delete) de tu teclado.",
     "save_configuration": "Guardar Configuración de IVR",
     "restore_default": "Restablecer Flujo Predeterminado",
+    "export_flow": "Exportar Flujo (JSON)",
+    "import_flow": "Importar Flujo (JSON)",
     "config_modal_title": "Configurar Nodo: {{label}}",
     "advanced_config": "Configuración Avanzada IVR",
     "advanced_config_desc": "Define el mensaje de audio sintetizado y la integración con el microservicio correspondiente.",
@@ -515,7 +517,13 @@
       "flow_saved_local": "Diseño de IVR Guardado Localmente",
       "flow_saved_local_desc": "El diseño personalizado del Diseñador Interactivo se guardó en el almacenamiento local (Servidor no disponible).",
       "flow_restored": "Flujo Restablecido",
-      "flow_restored_desc": "El flujo de IVR se ha restablecido a la plantilla predeterminada."
+      "flow_restored_desc": "El flujo de IVR se ha restablecido a la plantilla predeterminada.",
+      "flow_exported": "Flujo Exportado",
+      "flow_exported_desc": "El archivo de configuración del flujo IVR se ha descargado con éxito.",
+      "flow_imported": "Flujo Importado",
+      "flow_imported_desc": "El flujo IVR se ha importado con éxito al diseñador.",
+      "flow_import_error": "Error de Importación",
+      "flow_import_error_desc": "El archivo JSON seleccionado no tiene un formato de flujo IVR válido."
     }
   }
 }

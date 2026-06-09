@@ -346,6 +346,8 @@
     "tip_message": "💡 Tip: You can select and delete edges/connections by clicking on them and hitting the 'Backspace' or 'Delete' key on your keyboard.",
     "save_configuration": "Save IVR Configuration",
     "restore_default": "Restore Default Flow",
+    "export_flow": "Export Flow (JSON)",
+    "import_flow": "Import Flow (JSON)",
     "config_modal_title": "Configure Node: {{label}}",
     "advanced_config": "Advanced IVR Configuration",
     "advanced_config_desc": "Define the synthesized voice message and integration with corresponding microservice.",
@@ -515,7 +517,13 @@
       "flow_saved_local": "IVR Flow Saved Locally",
       "flow_saved_local_desc": "The custom Interactive Designer flow was saved in local storage (Backend unavailable).",
       "flow_restored": "Flow Restored",
-      "flow_restored_desc": "The IVR flow has been reset to the default template."
+      "flow_restored_desc": "The IVR flow has been reset to the default template.",
+      "flow_exported": "Flow Exported",
+      "flow_exported_desc": "The IVR flow configuration file has been successfully downloaded.",
+      "flow_imported": "Flow Imported",
+      "flow_imported_desc": "The IVR flow has been successfully imported into the designer.",
+      "flow_import_error": "Import Error",
+      "flow_import_error_desc": "The selected JSON file does not have a valid IVR flow format."
     }
   }
 }
