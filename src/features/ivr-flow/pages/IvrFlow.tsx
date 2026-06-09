@@ -5,7 +5,7 @@ import '@xyflow/react/dist/style.css';
 import { Card } from '../../../components/Card';
 import { Modal } from '../../../components/Modal';
 import { 
-  Activity, Sparkles
+  Activity, Sparkles, Volume2, VolumeX
 } from 'lucide-react';
 import { useLiveCalls } from '../hooks/useLiveCalls';
 import type { Call } from '../../../types';
@@ -18,25 +18,28 @@ import { useLanguage } from '../../../hooks/useLanguage';
 const initialNodes: Node[] = [
   // User Flow
   { id: '1', type: 'ivrNode', position: { x: 250, y: 50 }, data: { label: 'Incoming Call', description: 'User dials the IVR system', status: 'pending', icon: 'PhoneCall', voicePrompt: 'Bienvenido al sistema de pagos automáticos VoicePay. Por favor, espere mientras le identificamos.', apiEndpoint: 'https://api.voicepay.com/v1/ivr/welcome' } },
-  { id: '2', type: 'ivrNode', position: { x: 250, y: 180 }, data: { label: 'Authentication', description: 'Identifying user by phone', status: 'pending', icon: 'ShieldCheck', voicePrompt: 'Para garantizar su seguridad, estamos verificando el número de teléfono desde el que nos llama.', apiEndpoint: 'https://api.voicepay.com/v1/users/verify' } },
-  { id: '3', type: 'ivrNode', position: { x: 250, y: 310 }, data: { label: 'Payment Inquiry', description: 'Checking pending amount', status: 'pending', icon: 'CreditCard', voicePrompt: 'Hemos detectado una factura pendiente de ciento cincuenta euros. Pulse uno para proceder con el pago seguro con tarjeta, o pulse dos si prefiere ser atendido por un agente.', apiEndpoint: 'https://api.voicepay.com/v1/payments/inquiry' } },
-  { id: '4', type: 'ivrNode', position: { x: 250, y: 440 }, data: { label: 'User Selection', description: 'Waiting for DTMF (1 or 2)', status: 'pending', icon: 'User', voicePrompt: 'Esperando su selección. Marque uno para pagar, o dos para soporte.', apiEndpoint: 'https://api.voicepay.com/v1/ivr/selection' } },
+  { id: '2', type: 'ivrNode', position: { x: 250, y: 170 }, data: { label: 'Authentication', description: 'Identifying user by phone', status: 'pending', icon: 'ShieldCheck', voicePrompt: 'Para garantizar su seguridad, estamos verificando el número de teléfono desde el que nos llama.', apiEndpoint: 'https://api.voicepay.com/v1/users/verify' } },
+  { id: 'cond-vip', type: 'conditionalNode', position: { x: 250, y: 290 }, data: { label: '¿Cliente VIP?', description: 'Validar estatus del cliente en base de datos', status: 'pending', ruleType: 'vip_customer', selectedPath: null } },
+  { id: '3', type: 'ivrNode', position: { x: 50, y: 420 }, data: { label: 'Payment Inquiry', description: 'Checking pending amount', status: 'pending', icon: 'CreditCard', voicePrompt: 'Hemos detectado una factura pendiente de ciento cincuenta euros. Pulse uno para proceder con el pago seguro con tarjeta, o pulse dos si prefiere ser atendido por un agente.', apiEndpoint: 'https://api.voicepay.com/v1/payments/inquiry' } },
+  { id: '4', type: 'ivrNode', position: { x: 50, y: 550 }, data: { label: 'User Selection', description: 'Waiting for DTMF (1 or 2)', status: 'pending', icon: 'User', voicePrompt: 'Esperando su selección. Marque uno para pagar, o dos para soporte.', apiEndpoint: 'https://api.voicepay.com/v1/ivr/selection' } },
   
   // Branches
-  { id: '5', type: 'ivrNode', position: { x: 50, y: 580 }, data: { label: 'Payment Status', description: 'Final transaction result', status: 'pending', icon: 'CheckCircle2', voicePrompt: 'Su pago de ciento cincuenta euros ha sido procesado y aprobado correctamente. Muchas gracias por utilizar VoicePay. Hasta pronto.', apiEndpoint: 'https://api.voicepay.com/v1/payments/checkout' } },
-  { id: '6', type: 'ivrNode', position: { x: 450, y: 580 }, data: { label: 'Agent Transfer', description: 'Connecting to human agent', status: 'pending', icon: 'Headset', voicePrompt: 'Estamos transfiriendo su llamada con el siguiente agente disponible. Por favor, no cuelgue.', apiEndpoint: 'https://api.voicepay.com/v1/agents/transfer' } },
+  { id: '5', type: 'ivrNode', position: { x: 50, y: 680 }, data: { label: 'Payment Status', description: 'Final transaction result', status: 'pending', icon: 'CheckCircle2', voicePrompt: 'Su pago de ciento cincuenta euros ha sido procesado y aprobado correctamente. Muchas gracias por utilizar VoicePay. Hasta pronto.', apiEndpoint: 'https://api.voicepay.com/v1/payments/checkout' } },
+  { id: '6', type: 'ivrNode', position: { x: 450, y: 550 }, data: { label: 'Agent Transfer', description: 'Connecting to human agent', status: 'pending', icon: 'Headset', voicePrompt: 'Estamos transfiriendo su llamada con el siguiente agente disponible. Por favor, no cuelgue.', apiEndpoint: 'https://api.voicepay.com/v1/agents/transfer' } },
 
   // External Services
-  { id: 'user-service', type: 'serviceNode', position: { x: 650, y: 180 }, data: { label: 'User Service', icon: 'User', apiEndpoint: 'https://api.voicepay.com/v1/users' } },
-  { id: 'payment-service', type: 'serviceNode', position: { x: 650, y: 310 }, data: { label: 'Payment Service', icon: 'CreditCard', apiEndpoint: 'https://api.voicepay.com/v1/payments' } },
-  { id: 'notification-service', type: 'serviceNode', position: { x: 650, y: 580 }, data: { label: 'Notif. Service', icon: 'Globe', apiEndpoint: 'https://api.voicepay.com/v1/notifications' } },
-  { id: 'agent-service', type: 'serviceNode', position: { x: 650, y: 700 }, data: { label: 'Human Agent', icon: 'Headset', apiEndpoint: 'https://api.voicepay.com/v1/agents' } }
+  { id: 'user-service', type: 'serviceNode', position: { x: 650, y: 170 }, data: { label: 'User Service', icon: 'User', apiEndpoint: 'https://api.voicepay.com/v1/users' } },
+  { id: 'payment-service', type: 'serviceNode', position: { x: 650, y: 420 }, data: { label: 'Payment Service', icon: 'CreditCard', apiEndpoint: 'https://api.voicepay.com/v1/payments' } },
+  { id: 'notification-service', type: 'serviceNode', position: { x: 650, y: 680 }, data: { label: 'Notif. Service', icon: 'Globe', apiEndpoint: 'https://api.voicepay.com/v1/notifications' } },
+  { id: 'agent-service', type: 'serviceNode', position: { x: 650, y: 780 }, data: { label: 'Human Agent', icon: 'Headset', apiEndpoint: 'https://api.voicepay.com/v1/agents' } }
 ];
 
 const initialEdges: Edge[] = [
   // User Flow Edges
   { id: 'e1-2', source: '1', target: '2', animated: false, style: { stroke: '#4b5563', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#4b5563' } },
-  { id: 'e2-3', source: '2', target: '3', animated: false, style: { stroke: '#4b5563', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#4b5563' } },
+  { id: 'e2-cond', source: '2', target: 'cond-vip', animated: false, style: { stroke: '#4b5563', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#4b5563' } },
+  { id: 'econd-3', source: 'cond-vip', sourceHandle: 'yes', target: '3', label: 'SÍ (VIP)', labelStyle: { fill: '#22c55e', fontSize: 9, fontWeight: 700 }, animated: false, style: { stroke: '#4b5563', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#4b5563' } },
+  { id: 'econd-6', source: 'cond-vip', sourceHandle: 'no', target: '6', label: 'NO (Regular)', labelStyle: { fill: '#ef4444', fontSize: 9, fontWeight: 700 }, animated: false, style: { stroke: '#4b5563', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#4b5563' } },
   { id: 'e3-4', source: '3', target: '4', animated: false, style: { stroke: '#4b5563', strokeWidth: 2 }, markerEnd: { type: MarkerType.ArrowClosed, color: '#4b5563' } },
   
   // Branch Edges
@@ -51,7 +54,7 @@ const initialEdges: Edge[] = [
 ];
 
 export const IvrFlowContent: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { liveCalls, connected } = useLiveCalls();
   const { screenToFlowPosition } = useReactFlow();
   
@@ -65,6 +68,63 @@ export const IvrFlowContent: React.FC = () => {
   const [configNode, setConfigNode] = useState<Node | null>(null);
   const [tempVoicePrompt, setTempVoicePrompt] = useState('');
   const [tempApiEndpoint, setTempApiEndpoint] = useState('');
+  const [isTtsPlaying, setIsTtsPlaying] = useState(false);
+
+  // Cancel speech synthesis on modal close or state change
+  useEffect(() => {
+    if (!isConfigModalOpen) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      setIsTtsPlaying(false);
+    }
+  }, [isConfigModalOpen]);
+
+  // Cancel speech synthesis on unmount
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const handlePlayTts = useCallback(() => {
+    if (!tempVoicePrompt) return;
+    if (isTtsPlaying) {
+      window.speechSynthesis.cancel();
+      setIsTtsPlaying(false);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(tempVoicePrompt);
+    
+    // Set language matching UI
+    const voiceLang = language === 'es' ? 'es-ES' : 'en-US';
+    utterance.lang = voiceLang;
+    
+    // Find matching voice
+    const voices = window.speechSynthesis.getVoices();
+    const matchedVoice = voices.find(v => 
+      v.lang.toLowerCase().startsWith(voiceLang.toLowerCase()) || 
+      v.lang.toLowerCase().includes(language.toLowerCase())
+    );
+    if (matchedVoice) {
+      utterance.voice = matchedVoice;
+    }
+    
+    utterance.onend = () => {
+      setIsTtsPlaying(false);
+    };
+    
+    utterance.onerror = () => {
+      setIsTtsPlaying(false);
+    };
+
+    setIsTtsPlaying(true);
+    window.speechSynthesis.speak(utterance);
+  }, [tempVoicePrompt, language, isTtsPlaying]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -93,6 +153,16 @@ export const IvrFlowContent: React.FC = () => {
         }
       }
 
+      const defaultLabel = type === 'ivrNode' ? t('ivr.nodes.new_ivr_step') 
+                         : type === 'conditionalNode' ? t('ivr.blocks.conditional.label', 'Nodo Condicional')
+                         : t('ivr.nodes.new_service_node');
+      const defaultDesc = type === 'ivrNode' ? t('ivr.nodes.configure_step_desc')
+                        : type === 'conditionalNode' ? t('ivr.blocks.conditional.description', 'Evalúa reglas de negocio.')
+                        : t('ivr.nodes.external_service_integration');
+      const defaultIcon = type === 'ivrNode' ? 'HelpCircle' 
+                        : type === 'conditionalNode' ? 'GitFork'
+                        : 'Globe';
+
       const position = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
@@ -104,10 +174,12 @@ export const IvrFlowContent: React.FC = () => {
         type,
         position,
         data: {
-          label: type === 'ivrNode' ? t('ivr.nodes.new_ivr_step') : t('ivr.nodes.new_service_node'),
-          description: type === 'ivrNode' ? t('ivr.nodes.configure_step_desc') : t('ivr.nodes.external_service_integration'),
+          label: defaultLabel,
+          description: defaultDesc,
           status: 'pending',
-          icon: type === 'ivrNode' ? 'HelpCircle' : 'Globe',
+          icon: defaultIcon,
+          ruleType: type === 'conditionalNode' ? 'business_hours' : undefined,
+          selectedPath: null,
           ...customData,
         },
       };
@@ -304,64 +376,128 @@ export const IvrFlowContent: React.FC = () => {
     const status = call.status;
     const option = call.selectedOption;
     
-    setNodes(prevNodes => prevNodes.map(node => {
-      let newNodeStatus = 'pending';
-      let action = node.data.action;
-      
-      // Node 1: Always completed if call exists
-      if (node.id === '1') newNodeStatus = 'completed';
-      
-      // Node 2: Authentication (Completed if user name identified)
-      if (node.id === '2') {
-        if (call.customerName && call.customerName !== 'Unknown Caller') newNodeStatus = 'completed';
-        else newNodeStatus = 'in-progress';
-      }
-      
-      // Node 3: Payment Inquiry (Completed if amount > 0 or user identified)
-      if (node.id === '3') {
-        if (call.amount > 0) newNodeStatus = 'completed';
-        else if (call.customerName && call.customerName !== 'Unknown Caller') newNodeStatus = 'in-progress';
-        else newNodeStatus = 'pending';
-      }
-      
-      // Node 4: User Selection (Active when waiting confirmation)
-      if (node.id === '4') {
-        if (option) {
-          newNodeStatus = 'completed';
-          action = option;
-        } else if (call.amount > 0) {
-          newNodeStatus = 'in-progress';
+    let currentNodes: any[] = [];
+    setNodes(prevNodes => {
+      currentNodes = prevNodes.map(node => {
+        let newNodeStatus = 'pending';
+        let action = node.data.action;
+        let selectedPath = node.data.selectedPath;
+        
+        // Node 1: Always completed if call exists
+        if (node.id === '1') newNodeStatus = 'completed';
+        
+        // Node 2: Authentication (Completed if user name identified)
+        if (node.id === '2') {
+          if (call.customerName && call.customerName !== 'Unknown Caller') newNodeStatus = 'completed';
+          else newNodeStatus = 'in-progress';
         }
-      }
 
-      // Branch 5: Payment (Option 1)
-      if (node.id === '5') {
-        if (option === '1') {
-          newNodeStatus = status === 'completed' ? 'completed' : 
-                         status === 'failed' ? 'failed' : 'in-progress';
+        // Conditional VIP check node
+        if (node.id === 'cond-vip') {
+          const isAuthCompleted = call.customerName && call.customerName !== 'Unknown Caller';
+          if (isAuthCompleted) {
+            newNodeStatus = 'completed';
+            selectedPath = call.customerName.includes('Carlos') || call.customerName.includes('VIP') ? 'yes' : 'no';
+          } else if (call.status === 'in-progress') {
+            newNodeStatus = 'pending';
+            selectedPath = null;
+          }
         }
-      }
-
-      // Branch 6: Agent (Option 2)
-      if (node.id === '6') {
-        if (option === '2') {
-          newNodeStatus = 'completed';
+        
+        // Node 3: Payment Inquiry (Completed if amount > 0 or user identified as VIP)
+        if (node.id === '3') {
+          const isVip = call.customerName && (call.customerName.includes('Carlos') || call.customerName.includes('VIP'));
+          if (call.amount > 0) {
+            newNodeStatus = 'completed';
+          } else if (isVip) {
+            newNodeStatus = 'in-progress';
+          } else {
+            newNodeStatus = 'pending';
+          }
         }
-      }
+        
+        // Node 4: User Selection (Active when waiting confirmation)
+        if (node.id === '4') {
+          if (option) {
+            newNodeStatus = 'completed';
+            action = option;
+          } else if (call.amount > 0) {
+            newNodeStatus = 'in-progress';
+          }
+        }
 
-      return {
-        ...node,
-        data: { ...node.data, status: newNodeStatus, action }
-      };
-    }));
+        // Branch 5: Payment (Option 1)
+        if (node.id === '5') {
+          if (option === '1') {
+            newNodeStatus = status === 'completed' ? 'completed' : 
+                           status === 'failed' ? 'failed' : 'in-progress';
+          }
+        }
+
+        // Branch 6: Agent (Option 2 or NOT VIP path)
+        if (node.id === '6') {
+          const isAuthCompleted = call.customerName && call.customerName !== 'Unknown Caller';
+          const isNotVip = isAuthCompleted && !(call.customerName.includes('Carlos') || call.customerName.includes('VIP'));
+          
+          if (option === '2' || isNotVip) {
+            newNodeStatus = 'completed';
+          }
+        }
+
+        // Generic conditional node fallback (if user adds new custom ones)
+        if (node.type === 'conditionalNode' && node.id !== 'cond-vip') {
+          if (call.status === 'in-progress' || call.status === 'completed') {
+            newNodeStatus = 'completed';
+            selectedPath = node.data.ruleType === 'business_hours' ? 'yes' : 'yes';
+          }
+        }
+
+        return {
+          ...node,
+          data: { ...node.data, status: newNodeStatus, action, selectedPath }
+        };
+      });
+      return currentNodes;
+    });
 
     // Animate edges
     setEdges(prevEdges => prevEdges.map(edge => {
       let animated = false;
       let stroke = '#4b5563';
+      let opacity: number | undefined = undefined;
+      
+      const isAuthCompleted = call.customerName && call.customerName !== 'Unknown Caller';
+      const isVip = isAuthCompleted && (call.customerName.includes('Carlos') || call.customerName.includes('VIP'));
       
       if (edge.id === 'e1-2') { stroke = '#22c55e'; }
-      if (edge.id === 'e2-3' && call.customerName && call.customerName !== 'Unknown Caller') { stroke = '#22c55e'; }
+      if (edge.id === 'e2-cond') { 
+        stroke = isAuthCompleted ? '#22c55e' : '#4b5563'; 
+      }
+      
+      if (edge.id === 'econd-3') {
+        if (isAuthCompleted) {
+          if (isVip) {
+            stroke = '#22c55e';
+            animated = call.status === 'in-progress';
+          } else {
+            stroke = '#ef4444';
+            opacity = 0.3;
+          }
+        }
+      }
+      
+      if (edge.id === 'econd-6') {
+        if (isAuthCompleted) {
+          if (!isVip) {
+            stroke = '#22c55e';
+            animated = call.status === 'in-progress';
+          } else {
+            stroke = '#ef4444';
+            opacity = 0.3;
+          }
+        }
+      }
+      
       if (edge.id === 'e3-4' && call.amount > 0) { stroke = '#22c55e'; }
       
       if (edge.id === 'e4-5' && option === '1') { 
@@ -370,6 +506,25 @@ export const IvrFlowContent: React.FC = () => {
       }
       if (edge.id === 'e4-6' && option === '2') { stroke = '#22c55e'; animated = true; }
       
+      // Generic conditional node edge coloring
+      const sourceNode = currentNodes.find((n: any) => n.id === edge.source);
+      if (sourceNode && sourceNode.type === 'conditionalNode' && edge.id !== 'econd-3' && edge.id !== 'econd-6') {
+        if (sourceNode.data.status === 'completed') {
+          const isYesEdge = edge.sourceHandle === 'yes';
+          const isNoEdge = edge.sourceHandle === 'no';
+          const isSelected = (isYesEdge && sourceNode.data.selectedPath === 'yes') || 
+                             (isNoEdge && sourceNode.data.selectedPath === 'no');
+          
+          if (isSelected) {
+            stroke = '#22c55e';
+            animated = call.status === 'in-progress';
+          } else {
+            stroke = '#ef4444';
+            opacity = 0.3;
+          }
+        }
+      }
+      
       // Service edges
       if (edge.id === 'comm-user' && call.customerName) animated = false;
       if (edge.id === 'comm-pay' && call.amount > 0) animated = false;
@@ -377,12 +532,20 @@ export const IvrFlowContent: React.FC = () => {
         animated = true;
         stroke = '#3b82f6';
       }
-      if (edge.id === 'comm-agent' && option === '2') {
+      if (edge.id === 'comm-agent' && (option === '2' || !isVip)) {
         animated = true;
         stroke = '#3b82f6';
       }
 
-      return { ...edge, animated, style: { ...edge.style, stroke } };
+      return { 
+        ...edge, 
+        animated, 
+        style: { 
+          ...edge.style, 
+          stroke,
+          opacity: opacity !== undefined ? opacity : edge.style?.opacity 
+        } 
+      };
     }));
     
     setLastUpdate(new Date().toLocaleTimeString());
@@ -523,8 +686,18 @@ export const IvrFlowContent: React.FC = () => {
     setHasChanges(true);
   }, []);
 
-  const handleAddNode = useCallback((type: 'ivrNode' | 'serviceNode', customData?: any) => {
+  const handleAddNode = useCallback((type: 'ivrNode' | 'serviceNode' | 'conditionalNode', customData?: any) => {
     const newId = `node-${Date.now()}`;
+    const defaultLabel = type === 'ivrNode' ? t('ivr.nodes.new_ivr_step') 
+                       : type === 'conditionalNode' ? t('ivr.blocks.conditional.label', 'Nodo Condicional')
+                       : t('ivr.nodes.new_service_node');
+    const defaultDesc = type === 'ivrNode' ? t('ivr.nodes.configure_step_desc')
+                      : type === 'conditionalNode' ? t('ivr.blocks.conditional.description', 'Evalúa reglas de negocio.')
+                      : t('ivr.nodes.external_service_integration');
+    const defaultIcon = type === 'ivrNode' ? 'HelpCircle' 
+                      : type === 'conditionalNode' ? 'GitFork'
+                      : 'Globe';
+                      
     const newNode: Node = {
       id: newId,
       type,
@@ -533,10 +706,12 @@ export const IvrFlowContent: React.FC = () => {
         y: 150 + Math.random() * 150 
       },
       data: {
-        label: type === 'ivrNode' ? t('ivr.nodes.new_ivr_step') : t('ivr.nodes.new_service_node'),
-        description: type === 'ivrNode' ? t('ivr.nodes.configure_step_desc') : t('ivr.nodes.external_service_integration'),
+        label: defaultLabel,
+        description: defaultDesc,
         status: 'pending',
-        icon: type === 'ivrNode' ? 'HelpCircle' : 'Globe',
+        icon: defaultIcon,
+        ruleType: type === 'conditionalNode' ? 'business_hours' : undefined,
+        selectedPath: null,
         ...customData
       }
     };
@@ -556,6 +731,7 @@ export const IvrFlowContent: React.FC = () => {
         // Fallback map based on default nodes
         if (node.id === '1') iconName = 'PhoneCall';
         else if (node.id === '2') iconName = 'ShieldCheck';
+        else if (node.id === 'cond-vip') iconName = 'GitFork';
         else if (node.id === '3') iconName = 'CreditCard';
         else if (node.id === '4') iconName = 'User';
         else if (node.id === '5') iconName = 'CheckCircle2';
@@ -873,9 +1049,39 @@ export const IvrFlowContent: React.FC = () => {
 
           {/* Voice Prompt Textarea */}
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
-              {t('ivr.tts_label')}
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
+                {t('ivr.tts_label')}
+              </label>
+              
+              {/* TTS Preview Button & Waveform Animation */}
+              {tempVoicePrompt && (
+                <div className="flex items-center space-x-2">
+                  {isTtsPlaying && (
+                    <div className="flex items-end space-x-0.5 h-2.5 px-1">
+                      <span className="w-[2px] h-full bg-primary origin-bottom animate-wave-bar-1 rounded-full"></span>
+                      <span className="w-[2px] h-full bg-primary origin-bottom animate-wave-bar-2 rounded-full"></span>
+                      <span className="w-[2px] h-full bg-primary origin-bottom animate-wave-bar-3 rounded-full"></span>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handlePlayTts}
+                    className={cn(
+                      "flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all border shadow-sm",
+                      isTtsPlaying
+                        ? "bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20"
+                        : "bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
+                    )}
+                    title={isTtsPlaying ? t('ivr.tts_stop') : t('ivr.tts_play')}
+                  >
+                    {isTtsPlaying ? <VolumeX size={10} /> : <Volume2 size={10} />}
+                    <span>{isTtsPlaying ? t('ivr.tts_btn_stop') : t('ivr.tts_btn_play')}</span>
+                  </button>
+                </div>
+              )}
+            </div>
+            
             <textarea
               value={tempVoicePrompt}
               onChange={(e) => setTempVoicePrompt(e.target.value)}

@@ -303,6 +303,10 @@
     "dtmf_placeholder": "e.g. 1, 2, #, *",
     "dtmf_hint": "If set, this node will light up when the user enters this key during option selection.",
     "voice_prompt": "Voice Prompt (TTS)",
+    "tts_play": "Play Preview",
+    "tts_stop": "Stop Preview",
+    "tts_btn_play": "Play",
+    "tts_btn_stop": "Stop",
     "prompt_placeholder": "Enter voice prompt...",
     "api_endpoint": "API Endpoint / Integration",
     "visual_glyph": "Visual Glyph / Icon",
@@ -326,7 +330,17 @@
       "service": {
         "label": "External Service",
         "description": "Query or integration with API or microservice."
+      },
+      "conditional": {
+        "label": "Conditional Node",
+        "description": "Evaluates business rules (Hours, VIP customer, etc.) and routes the call."
       }
+    },
+    "routing_rule": "Routing Rule",
+    "rules": {
+      "business_hours": "Business Hours (M-F 9:00 - 18:00)",
+      "vip_customer": "VIP Customer (Check caller number)",
+      "custom_api": "External API (JSON condition check)"
     },
     "drag_hint": "Drag a block to canvas or click to add it directly.",
     "tip_message": "💡 Tip: You can select and delete edges/connections by clicking on them and hitting the 'Backspace' or 'Delete' key on your keyboard.",
@@ -364,6 +378,10 @@
     "months_12": "12 Months",
     "today": "Today",
     "nodes": {
+      "cond-vip": {
+        "label": "VIP Customer?",
+        "description": "Verify customer status"
+      },
       "1": {
         "label": "Incoming Call",
         "description": "User dials the IVR system",
@@ -427,7 +445,7 @@
       "simulating_step": "Simulating current step",
       "step_1": "Receiving incoming call...",
       "step_2": "Authenticating user via CallerID...",
-      "step_3": "Consulting pending balance in DB...",
+      "step_3": "Evaluating condition: VIP Customer? -> YES. Routing to pending balance inquiry...",
       "step_4": "Playing IVR options menu...",
       "step_5": "Selection entered [Option {{opt}}]",
       "step_6_pay": "Transaction processed successfully!",

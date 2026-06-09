@@ -3,7 +3,8 @@ import { Card } from '../../../components/Card';
 import { 
   Sliders, Trash2, Save, RotateCcw, Info,
   PhoneCall, Globe, ShieldCheck, CreditCard, CheckCircle2, 
-  User, Headset, MessageSquare, Zap, AlertTriangle, GripVertical
+  User, Headset, MessageSquare, Zap, AlertTriangle, GripVertical, GitFork,
+  Volume2, VolumeX
 } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import { useLanguage } from '../../../hooks/useLanguage';
@@ -12,7 +13,7 @@ interface DesignerPanelProps {
   selectedNode: any | null;
   onUpdateNode: (id: string, updatedData: any) => void;
   onDeleteNode: (id: string) => void;
-  onAddNode: (type: 'ivrNode' | 'serviceNode', customData?: any) => void;
+  onAddNode: (type: 'ivrNode' | 'serviceNode' | 'conditionalNode', customData?: any) => void;
   onSave: () => void;
   onReset: () => void;
   hasChanges: boolean;
@@ -27,13 +28,15 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
   onReset,
   hasChanges,
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [label, setLabel] = useState('');
   const [description, setDescription] = useState('');
   const [icon, setIcon] = useState('HelpCircle');
   const [action, setAction] = useState('');
   const [voicePrompt, setVoicePrompt] = useState('');
   const [apiEndpoint, setApiEndpoint] = useState('');
+  const [ruleType, setRuleType] = useState('business_hours');
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const availableBlocks = [
     {
@@ -71,6 +74,15 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
       lucideIcon: Globe,
       accentClass: 'border-teal-500/20 bg-teal-500/5 text-teal-400 group-hover:border-teal-500/40 group-hover:bg-teal-500/10 shadow-teal-500/5 hover:shadow-teal-500/10',
       iconBgClass: 'bg-teal-500/15 text-teal-400',
+    },
+    {
+      type: 'conditionalNode' as const,
+      label: t('ivr.blocks.conditional.label'),
+      description: t('ivr.blocks.conditional.description'),
+      icon: 'GitFork',
+      lucideIcon: GitFork,
+      accentClass: 'border-purple-500/20 bg-purple-500/5 text-purple-400 group-hover:border-purple-500/40 group-hover:bg-purple-500/10 shadow-purple-500/5 hover:shadow-purple-500/10',
+      iconBgClass: 'bg-purple-500/15 text-purple-400',
     }
   ];
 
@@ -80,6 +92,60 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
       event.dataTransfer.setData('application/reactflow-data', JSON.stringify(blockData));
       event.dataTransfer.effectAllowed = 'move';
     }
+  };
+
+  // Cancel speech synthesis on unmount
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  // Cancel speech synthesis when selectedNode changes
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsPlaying(false);
+  }, [selectedNode?.id]);
+
+  const handlePlayTts = () => {
+    if (!voicePrompt) return;
+    if (isPlaying) {
+      window.speechSynthesis.cancel();
+      setIsPlaying(false);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(voicePrompt);
+    
+    // Set language matching UI
+    const voiceLang = language === 'es' ? 'es-ES' : 'en-US';
+    utterance.lang = voiceLang;
+    
+    // Find matching voice
+    const voices = window.speechSynthesis.getVoices();
+    const matchedVoice = voices.find(v => 
+      v.lang.toLowerCase().startsWith(voiceLang.toLowerCase()) || 
+      v.lang.toLowerCase().includes(language.toLowerCase())
+    );
+    if (matchedVoice) {
+      utterance.voice = matchedVoice;
+    }
+    
+    utterance.onend = () => {
+      setIsPlaying(false);
+    };
+    
+    utterance.onerror = () => {
+      setIsPlaying(false);
+    };
+
+    setIsPlaying(true);
+    window.speechSynthesis.speak(utterance);
   };
 
   // Sync state with selected node
@@ -95,6 +161,7 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
       setAction(selectedNode.data.action || '');
       setVoicePrompt(selectedNode.data.voicePrompt || '');
       setApiEndpoint(selectedNode.data.apiEndpoint || '');
+      setRuleType(selectedNode.data.ruleType || 'business_hours');
     }
   }, [selectedNode]);
 
@@ -108,6 +175,7 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
     if (field === 'action') setAction(value);
     if (field === 'voicePrompt') setVoicePrompt(value);
     if (field === 'apiEndpoint') setApiEndpoint(value);
+    if (field === 'ruleType') setRuleType(value);
 
     onUpdateNode(selectedNode.id, {
       ...selectedNode.data,
@@ -126,6 +194,7 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
     { name: 'Zap', icon: Zap, label: 'Trigger' },
     { name: 'AlertTriangle', icon: AlertTriangle, label: 'Alert' },
     { name: 'CheckCircle2', icon: CheckCircle2, label: 'Success' },
+    { name: 'GitFork', icon: GitFork, label: 'Condition' },
   ];
 
   return (
@@ -169,8 +238,8 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
               />
             </div>
 
-            {/* Description Textarea (Only for IVR Nodes) */}
-            {selectedNode.type === 'ivrNode' && (
+            {/* Description Textarea (For IVR and Conditional Nodes) */}
+            {(selectedNode.type === 'ivrNode' || selectedNode.type === 'conditionalNode') && (
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
                   {t('ivr.description')}
@@ -182,6 +251,24 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
                   className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-medium text-text-secondary focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all resize-none"
                   placeholder={t('ivr.desc_placeholder')}
                 />
+              </div>
+            )}
+
+            {/* Rule Selector (Only for Conditional Nodes) */}
+            {selectedNode.type === 'conditionalNode' && (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
+                  {t('ivr.routing_rule', 'Regla de Enrutamiento')}
+                </label>
+                <select
+                  value={ruleType}
+                  onChange={(e) => handleFieldChange('ruleType', e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all cursor-pointer"
+                >
+                  <option value="business_hours" className="bg-secondary text-white">{t('ivr.rules.business_hours')}</option>
+                  <option value="vip_customer" className="bg-secondary text-white">{t('ivr.rules.vip_customer')}</option>
+                  <option value="custom_api" className="bg-secondary text-white">{t('ivr.rules.custom_api')}</option>
+                </select>
               </div>
             )}
 
@@ -208,9 +295,38 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
             {/* Voice Prompt Textarea (Only for IVR Nodes) */}
             {selectedNode.type === 'ivrNode' && (
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
-                  {t('ivr.voice_prompt')}
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
+                    {t('ivr.voice_prompt')}
+                  </label>
+                  
+                  {/* TTS Preview Button & Waveform Animation */}
+                  {voicePrompt && (
+                    <div className="flex items-center space-x-2">
+                      {isPlaying && (
+                        <div className="flex items-end space-x-0.5 h-2.5 px-1">
+                          <span className="w-[2px] h-full bg-primary origin-bottom animate-wave-bar-1 rounded-full"></span>
+                          <span className="w-[2px] h-full bg-primary origin-bottom animate-wave-bar-2 rounded-full"></span>
+                          <span className="w-[2px] h-full bg-primary origin-bottom animate-wave-bar-3 rounded-full"></span>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handlePlayTts}
+                        className={cn(
+                          "flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all border shadow-sm",
+                          isPlaying
+                            ? "bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20"
+                            : "bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
+                        )}
+                        title={isPlaying ? t('ivr.tts_stop') : t('ivr.tts_play')}
+                      >
+                        {isPlaying ? <VolumeX size={10} /> : <Volume2 size={10} />}
+                        <span>{isPlaying ? t('ivr.tts_btn_stop') : t('ivr.tts_btn_play')}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <textarea
                   value={voicePrompt}
                   onChange={(e) => handleFieldChange('voicePrompt', e.target.value)}
@@ -221,19 +337,21 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
               </div>
             )}
 
-            {/* API Endpoint Input (For both Node types) */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
-                {t('ivr.api_endpoint')}
-              </label>
-              <input
-                type="text"
-                value={apiEndpoint}
-                onChange={(e) => handleFieldChange('apiEndpoint', e.target.value)}
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono font-medium text-white focus:outline-none focus:border-primary/50 transition-all"
-                placeholder={t('ivr.api_url_label')}
-              />
-            </div>
+            {/* API Endpoint Input */}
+            {(selectedNode.type === 'serviceNode' || selectedNode.type === 'ivrNode' || (selectedNode.type === 'conditionalNode' && ruleType === 'custom_api')) && (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
+                  {t('ivr.api_endpoint')}
+                </label>
+                <input
+                  type="text"
+                  value={apiEndpoint}
+                  onChange={(e) => handleFieldChange('apiEndpoint', e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-mono font-medium text-white focus:outline-none focus:border-primary/50 transition-all"
+                  placeholder={t('ivr.api_url_label')}
+                />
+              </div>
+            )}
 
             {/* Visual Icon Grid Selector */}
             <div className="space-y-2">
@@ -341,7 +459,9 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
                             {block.label}
                           </p>
                           <span className="text-[8px] font-mono opacity-50 uppercase tracking-widest">
-                            {block.type === 'ivrNode' ? 'IVR' : t('ivr.nodes.new_service').split(' ')[1] || 'Servicio'}
+                            {block.type === 'ivrNode' ? 'IVR' : 
+                             block.type === 'conditionalNode' ? 'REGLA' : 
+                             t('ivr.nodes.new_service').split(' ')[1] || 'Servicio'}
                           </span>
                         </div>
                         <p className="text-[10px] text-text-secondary opacity-75 font-medium leading-tight mt-1 truncate">
