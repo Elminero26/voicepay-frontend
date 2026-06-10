@@ -4,7 +4,7 @@ import {
   Sliders, Trash2, Save, RotateCcw, Info,
   PhoneCall, Globe, ShieldCheck, CreditCard, CheckCircle2, 
   User, Headset, MessageSquare, Zap, AlertTriangle, GripVertical, GitFork,
-  Volume2, VolumeX, Upload, Download
+  Volume2, VolumeX, Upload, Download, Clock, Cpu
 } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import { useLanguage } from '../../../hooks/useLanguage';
@@ -13,7 +13,7 @@ interface DesignerPanelProps {
   selectedNode: any | null;
   onUpdateNode: (id: string, updatedData: any) => void;
   onDeleteNode: (id: string) => void;
-  onAddNode: (type: 'ivrNode' | 'serviceNode' | 'conditionalNode', customData?: any) => void;
+  onAddNode: (type: string, customData?: any) => void;
   onSave: () => void;
   onReset: () => void;
   onExport: () => void;
@@ -94,10 +94,12 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
   const [apiEndpoint, setApiEndpoint] = useState('');
   const [ruleType, setRuleType] = useState('business_hours');
   const [isPlaying, setIsPlaying] = useState(false);
+  const [timeWindow, setTimeWindow] = useState('09:00 - 18:00');
+  const [httpMethod, setHttpMethod] = useState('POST');
 
   const availableBlocks = [
     {
-      type: 'ivrNode' as const,
+      type: 'ivrNode' as string,
       label: t('ivr.blocks.welcome.label'),
       description: t('ivr.blocks.welcome.description'),
       icon: 'PhoneCall',
@@ -106,7 +108,7 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
       iconBgClass: 'bg-indigo-500/15 text-indigo-400',
     },
     {
-      type: 'ivrNode' as const,
+      type: 'ivrNode' as string,
       label: t('ivr.blocks.payment.label'),
       description: t('ivr.blocks.payment.description'),
       icon: 'CreditCard',
@@ -115,7 +117,7 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
       iconBgClass: 'bg-emerald-500/15 text-emerald-400',
     },
     {
-      type: 'ivrNode' as const,
+      type: 'ivrNode' as string,
       label: t('ivr.blocks.agent.label'),
       description: t('ivr.blocks.agent.description'),
       icon: 'Headset',
@@ -124,7 +126,7 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
       iconBgClass: 'bg-amber-500/15 text-amber-400',
     },
     {
-      type: 'serviceNode' as const,
+      type: 'serviceNode' as string,
       label: t('ivr.blocks.service.label'),
       description: t('ivr.blocks.service.description'),
       icon: 'Globe',
@@ -133,13 +135,31 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
       iconBgClass: 'bg-teal-500/15 text-teal-400',
     },
     {
-      type: 'conditionalNode' as const,
-      label: t('ivr.blocks.conditional.label'),
-      description: t('ivr.blocks.conditional.description'),
+      type: 'ConditionNode' as string,
+      label: t('ivr.blocks.condition.label'),
+      description: t('ivr.blocks.condition.description'),
       icon: 'GitFork',
       lucideIcon: GitFork,
       accentClass: 'border-purple-500/20 bg-purple-500/5 text-purple-400 group-hover:border-purple-500/40 group-hover:bg-purple-500/10 shadow-purple-500/5 hover:shadow-purple-500/10',
       iconBgClass: 'bg-purple-500/15 text-purple-400',
+    },
+    {
+      type: 'TimeRouteNode' as string,
+      label: t('ivr.blocks.timeroute.label'),
+      description: t('ivr.blocks.timeroute.description'),
+      icon: 'Clock',
+      lucideIcon: Clock,
+      accentClass: 'border-amber-500/20 bg-amber-500/5 text-amber-400 group-hover:border-amber-500/40 group-hover:bg-amber-500/10 shadow-amber-500/5 hover:shadow-amber-500/10',
+      iconBgClass: 'bg-amber-500/15 text-amber-400',
+    },
+    {
+      type: 'APIRequestNode' as string,
+      label: t('ivr.blocks.apirequest.label'),
+      description: t('ivr.blocks.apirequest.description'),
+      icon: 'Cpu',
+      lucideIcon: Cpu,
+      accentClass: 'border-teal-500/20 bg-teal-500/5 text-teal-400 group-hover:border-teal-500/40 group-hover:bg-teal-500/10 shadow-teal-500/5 hover:shadow-teal-500/10',
+      iconBgClass: 'bg-teal-500/15 text-teal-400',
     }
   ];
 
@@ -219,6 +239,8 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
       setVoicePrompt(selectedNode.data.voicePrompt || '');
       setApiEndpoint(selectedNode.data.apiEndpoint || '');
       setRuleType(selectedNode.data.ruleType || 'business_hours');
+      setTimeWindow(selectedNode.data.timeWindow || '09:00 - 18:00');
+      setHttpMethod(selectedNode.data.httpMethod || 'POST');
     }
   }, [selectedNode]);
 
@@ -233,6 +255,8 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
     if (field === 'voicePrompt') setVoicePrompt(value);
     if (field === 'apiEndpoint') setApiEndpoint(value);
     if (field === 'ruleType') setRuleType(value);
+    if (field === 'timeWindow') setTimeWindow(value);
+    if (field === 'httpMethod') setHttpMethod(value);
 
     onUpdateNode(selectedNode.id, {
       ...selectedNode.data,
@@ -295,8 +319,8 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
               />
             </div>
 
-            {/* Description Textarea (For IVR and Conditional Nodes) */}
-            {(selectedNode.type === 'ivrNode' || selectedNode.type === 'conditionalNode') && (
+            {/* Description Textarea (For IVR and Conditional/Custom Nodes) */}
+            {(selectedNode.type === 'ivrNode' || selectedNode.type === 'conditionalNode' || selectedNode.type === 'ConditionNode' || selectedNode.type === 'conditionNode' || selectedNode.type === 'TimeRouteNode' || selectedNode.type === 'timeRouteNode' || selectedNode.type === 'APIRequestNode' || selectedNode.type === 'apiRequestNode') && (
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
                   {t('ivr.description')}
@@ -312,7 +336,7 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
             )}
 
             {/* Rule Selector (Only for Conditional Nodes) */}
-            {selectedNode.type === 'conditionalNode' && (
+            {(selectedNode.type === 'conditionalNode' || selectedNode.type === 'ConditionNode' || selectedNode.type === 'conditionNode') && (
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
                   {t('ivr.routing_rule', 'Regla de Enrutamiento')}
@@ -326,6 +350,41 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
                   <option value="vip_customer" className="bg-secondary text-white">{t('ivr.rules.vip_customer')}</option>
                   <option value="custom_api" className="bg-secondary text-white">{t('ivr.rules.custom_api')}</option>
                 </select>
+              </div>
+            )}
+
+            {/* HTTP Method Selector (Only for API Request Nodes) */}
+            {(selectedNode.type === 'APIRequestNode' || selectedNode.type === 'apiRequestNode') && (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
+                  {t('ivr.http_method', 'Método HTTP')}
+                </label>
+                <select
+                  value={httpMethod}
+                  onChange={(e) => handleFieldChange('httpMethod', e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all cursor-pointer"
+                >
+                  <option value="GET" className="bg-secondary text-white">GET</option>
+                  <option value="POST" className="bg-secondary text-white">POST</option>
+                  <option value="PUT" className="bg-secondary text-white">PUT</option>
+                  <option value="DELETE" className="bg-secondary text-white">DELETE</option>
+                </select>
+              </div>
+            )}
+
+            {/* Time Window Config (Only for Time Route Nodes) */}
+            {(selectedNode.type === 'TimeRouteNode' || selectedNode.type === 'timeRouteNode') && (
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
+                  {t('ivr.time_window', 'Horario de Activación')}
+                </label>
+                <input
+                  type="text"
+                  value={timeWindow}
+                  onChange={(e) => handleFieldChange('timeWindow', e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
+                  placeholder="Ej. 09:00 - 18:00"
+                />
               </div>
             )}
 
@@ -395,7 +454,7 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
             )}
 
             {/* API Endpoint Input */}
-            {(selectedNode.type === 'serviceNode' || selectedNode.type === 'ivrNode' || (selectedNode.type === 'conditionalNode' && ruleType === 'custom_api')) && (
+            {(selectedNode.type === 'serviceNode' || selectedNode.type === 'ivrNode' || selectedNode.type === 'APIRequestNode' || selectedNode.type === 'apiRequestNode' || (selectedNode.type === 'conditionalNode' && ruleType === 'custom_api')) && (
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-text-secondary uppercase tracking-wider block">
                   {t('ivr.api_endpoint')}
@@ -517,7 +576,7 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
                           </p>
                           <span className="text-[8px] font-mono opacity-50 uppercase tracking-widest">
                             {block.type === 'ivrNode' ? 'IVR' : 
-                             block.type === 'conditionalNode' ? 'REGLA' : 
+                             (block.type === 'conditionalNode' || block.type === 'ConditionNode' || block.type === 'TimeRouteNode' || block.type === 'APIRequestNode') ? 'REGLA' : 
                              t('ivr.nodes.new_service').split(' ')[1] || 'Servicio'}
                           </span>
                         </div>

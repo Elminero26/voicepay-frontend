@@ -334,9 +334,23 @@
       "conditional": {
         "label": "Conditional Node",
         "description": "Evaluates business rules (Hours, VIP customer, etc.) and routes the call."
+      },
+      "condition": {
+        "label": "Condition Check",
+        "description": "Evaluates a custom expression and branches to True/False."
+      },
+      "timeroute": {
+        "label": "Time Route",
+        "description": "Routes calls based on the hour of day or day of week."
+      },
+      "apirequest": {
+        "label": "API Request",
+        "description": "Performs an integration query to a REST API and branches to Success/Failure."
       }
     },
     "routing_rule": "Routing Rule",
+    "http_method": "HTTP Method",
+    "time_window": "Activation Schedule",
     "rules": {
       "business_hours": "Business Hours (M-F 9:00 - 18:00)",
       "vip_customer": "VIP Customer (Check caller number)",

@@ -334,9 +334,23 @@
       "conditional": {
         "label": "Nodo Condicional",
         "description": "Evalúa reglas de negocio (Horario, Cliente VIP, etc.) y desvía la llamada."
+      },
+      "condition": {
+        "label": "Verificación de Condición",
+        "description": "Evalúa una expresión personalizada y bifurca en True/False."
+      },
+      "timeroute": {
+        "label": "Ruta por Horario",
+        "description": "Enruta la llamada según la hora del día o día de la semana."
+      },
+      "apirequest": {
+        "label": "Petición API",
+        "description": "Realiza una consulta a un servicio REST y bifurca en Éxito/Fallo."
       }
     },
     "routing_rule": "Regla de Enrutamiento",
+    "http_method": "Método HTTP",
+    "time_window": "Horario de Activación",
     "rules": {
       "business_hours": "Horario Laboral (L-V 9:00 - 18:00)",
       "vip_customer": "Cliente VIP (Verificar número)",

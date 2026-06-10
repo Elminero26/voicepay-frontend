@@ -155,12 +155,21 @@ export const IvrFlowContent: React.FC = () => {
 
       const defaultLabel = type === 'ivrNode' ? t('ivr.nodes.new_ivr_step') 
                          : type === 'conditionalNode' ? t('ivr.blocks.conditional.label', 'Nodo Condicional')
+                         : type === 'ConditionNode' || type === 'conditionNode' ? t('ivr.blocks.condition.label', 'Verificación de Condición')
+                         : type === 'TimeRouteNode' || type === 'timeRouteNode' ? t('ivr.blocks.timeroute.label', 'Ruta por Horario')
+                         : type === 'APIRequestNode' || type === 'apiRequestNode' ? t('ivr.blocks.apirequest.label', 'Petición API')
                          : t('ivr.nodes.new_service_node');
       const defaultDesc = type === 'ivrNode' ? t('ivr.nodes.configure_step_desc')
                         : type === 'conditionalNode' ? t('ivr.blocks.conditional.description', 'Evalúa reglas de negocio.')
+                        : type === 'ConditionNode' || type === 'conditionNode' ? t('ivr.blocks.condition.description', 'Evalúa una expresión personalizada y bifurca en True/False.')
+                        : type === 'TimeRouteNode' || type === 'timeRouteNode' ? t('ivr.blocks.timeroute.description', 'Enruta la llamada según la hora del día o día de la semana.')
+                        : type === 'APIRequestNode' || type === 'apiRequestNode' ? t('ivr.blocks.apirequest.description', 'Realiza una consulta a un servicio REST y bifurca en Éxito/Fallo.')
                         : t('ivr.nodes.external_service_integration');
       const defaultIcon = type === 'ivrNode' ? 'HelpCircle' 
                         : type === 'conditionalNode' ? 'GitFork'
+                        : type === 'ConditionNode' || type === 'conditionNode' ? 'GitFork'
+                        : type === 'TimeRouteNode' || type === 'timeRouteNode' ? 'Clock'
+                        : type === 'APIRequestNode' || type === 'apiRequestNode' ? 'Cpu'
                         : 'Globe';
 
       const position = screenToFlowPosition({
@@ -178,7 +187,10 @@ export const IvrFlowContent: React.FC = () => {
           description: defaultDesc,
           status: 'pending',
           icon: defaultIcon,
-          ruleType: type === 'conditionalNode' ? 'business_hours' : undefined,
+          ruleType: (type === 'conditionalNode' || type === 'ConditionNode' || type === 'conditionNode') ? 'business_hours' : undefined,
+          timeWindow: (type === 'TimeRouteNode' || type === 'timeRouteNode') ? '09:00 - 18:00' : undefined,
+          httpMethod: (type === 'APIRequestNode' || type === 'apiRequestNode') ? 'POST' : undefined,
+          apiEndpoint: (type === 'APIRequestNode' || type === 'apiRequestNode') ? 'https://api.voicepay.com/v1/ivr/request' : undefined,
           selectedPath: null,
           ...customData,
         },
@@ -445,10 +457,16 @@ export const IvrFlowContent: React.FC = () => {
         }
 
         // Generic conditional node fallback (if user adds new custom ones)
-        if (node.type === 'conditionalNode' && node.id !== 'cond-vip') {
+        if ((node.type === 'conditionalNode' || node.type === 'ConditionNode' || node.type === 'conditionNode' || node.type === 'TimeRouteNode' || node.type === 'timeRouteNode' || node.type === 'APIRequestNode' || node.type === 'apiRequestNode') && node.id !== 'cond-vip') {
           if (call.status === 'in-progress' || call.status === 'completed') {
             newNodeStatus = 'completed';
-            selectedPath = node.data.ruleType === 'business_hours' ? 'yes' : 'yes';
+            if (node.type === 'APIRequestNode' || node.type === 'apiRequestNode') {
+              selectedPath = 'success';
+            } else if (node.type === 'TimeRouteNode' || node.type === 'timeRouteNode' || node.type === 'ConditionNode' || node.type === 'conditionNode') {
+              selectedPath = 'true';
+            } else {
+              selectedPath = 'yes';
+            }
           }
         }
 
@@ -508,12 +526,21 @@ export const IvrFlowContent: React.FC = () => {
       
       // Generic conditional node edge coloring
       const sourceNode = currentNodes.find((n: any) => n.id === edge.source);
-      if (sourceNode && sourceNode.type === 'conditionalNode' && edge.id !== 'econd-3' && edge.id !== 'econd-6') {
+      const isAnyConditionalNode = sourceNode && (
+        sourceNode.type === 'conditionalNode' ||
+        sourceNode.type === 'ConditionNode' ||
+        sourceNode.type === 'conditionNode' ||
+        sourceNode.type === 'TimeRouteNode' ||
+        sourceNode.type === 'timeRouteNode' ||
+        sourceNode.type === 'APIRequestNode' ||
+        sourceNode.type === 'apiRequestNode'
+      );
+      if (isAnyConditionalNode && edge.id !== 'econd-3' && edge.id !== 'econd-6') {
         if (sourceNode.data.status === 'completed') {
-          const isYesEdge = edge.sourceHandle === 'yes';
-          const isNoEdge = edge.sourceHandle === 'no';
-          const isSelected = (isYesEdge && sourceNode.data.selectedPath === 'yes') || 
-                             (isNoEdge && sourceNode.data.selectedPath === 'no');
+          const isYesEdge = edge.sourceHandle === 'yes' || edge.sourceHandle === 'true' || edge.sourceHandle === 'success';
+          const isNoEdge = edge.sourceHandle === 'no' || edge.sourceHandle === 'false' || edge.sourceHandle === 'failure';
+          const isSelected = (isYesEdge && (sourceNode.data.selectedPath === 'yes' || sourceNode.data.selectedPath === 'true' || sourceNode.data.selectedPath === 'success')) || 
+                             (isNoEdge && (sourceNode.data.selectedPath === 'no' || sourceNode.data.selectedPath === 'false' || sourceNode.data.selectedPath === 'failure'));
           
           if (isSelected) {
             stroke = '#22c55e';
@@ -686,16 +713,25 @@ export const IvrFlowContent: React.FC = () => {
     setHasChanges(true);
   }, []);
 
-  const handleAddNode = useCallback((type: 'ivrNode' | 'serviceNode' | 'conditionalNode', customData?: any) => {
+  const handleAddNode = useCallback((type: string, customData?: any) => {
     const newId = `node-${Date.now()}`;
     const defaultLabel = type === 'ivrNode' ? t('ivr.nodes.new_ivr_step') 
                        : type === 'conditionalNode' ? t('ivr.blocks.conditional.label', 'Nodo Condicional')
+                       : type === 'ConditionNode' || type === 'conditionNode' ? t('ivr.blocks.condition.label', 'Verificación de Condición')
+                       : type === 'TimeRouteNode' || type === 'timeRouteNode' ? t('ivr.blocks.timeroute.label', 'Ruta por Horario')
+                       : type === 'APIRequestNode' || type === 'apiRequestNode' ? t('ivr.blocks.apirequest.label', 'Petición API')
                        : t('ivr.nodes.new_service_node');
     const defaultDesc = type === 'ivrNode' ? t('ivr.nodes.configure_step_desc')
                       : type === 'conditionalNode' ? t('ivr.blocks.conditional.description', 'Evalúa reglas de negocio.')
+                      : type === 'ConditionNode' || type === 'conditionNode' ? t('ivr.blocks.condition.description', 'Evalúa una expresión personalizada y bifurca en True/False.')
+                      : type === 'TimeRouteNode' || type === 'timeRouteNode' ? t('ivr.blocks.timeroute.description', 'Enruta la llamada según la hora del día o día de la semana.')
+                      : type === 'APIRequestNode' || type === 'apiRequestNode' ? t('ivr.blocks.apirequest.description', 'Realiza una consulta a un servicio REST y bifurca en Éxito/Fallo.')
                       : t('ivr.nodes.external_service_integration');
     const defaultIcon = type === 'ivrNode' ? 'HelpCircle' 
                       : type === 'conditionalNode' ? 'GitFork'
+                      : type === 'ConditionNode' || type === 'conditionNode' ? 'GitFork'
+                      : type === 'TimeRouteNode' || type === 'timeRouteNode' ? 'Clock'
+                      : type === 'APIRequestNode' || type === 'apiRequestNode' ? 'Cpu'
                       : 'Globe';
                       
     const newNode: Node = {
@@ -710,7 +746,10 @@ export const IvrFlowContent: React.FC = () => {
         description: defaultDesc,
         status: 'pending',
         icon: defaultIcon,
-        ruleType: type === 'conditionalNode' ? 'business_hours' : undefined,
+        ruleType: (type === 'conditionalNode' || type === 'ConditionNode' || type === 'conditionNode') ? 'business_hours' : undefined,
+        timeWindow: (type === 'TimeRouteNode' || type === 'timeRouteNode') ? '09:00 - 18:00' : undefined,
+        httpMethod: (type === 'APIRequestNode' || type === 'apiRequestNode') ? 'POST' : undefined,
+        apiEndpoint: (type === 'APIRequestNode' || type === 'apiRequestNode') ? 'https://api.voicepay.com/v1/ivr/request' : undefined,
         selectedPath: null,
         ...customData
       }
@@ -740,6 +779,9 @@ export const IvrFlowContent: React.FC = () => {
         else if (node.id === 'payment-service') iconName = 'CreditCard';
         else if (node.id === 'notification-service') iconName = 'Globe';
         else if (node.id === 'agent-service') iconName = 'Headset';
+        else if (node.type === 'TimeRouteNode' || node.type === 'timeRouteNode') iconName = 'Clock';
+        else if (node.type === 'APIRequestNode' || node.type === 'apiRequestNode') iconName = 'Cpu';
+        else if (node.type === 'ConditionNode' || node.type === 'conditionNode') iconName = 'GitFork';
       }
       return {
         ...node,
