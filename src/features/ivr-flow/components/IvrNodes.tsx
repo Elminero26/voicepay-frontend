@@ -480,7 +480,7 @@ export const APIRequestNode = ({ id, data, isConnectable }: any) => {
         </div>
       </div>
 
-      <div className="mt-3 pt-2 border-t border-white/5 text-[8px] text-teal-400 font-mono bg-teal-500/5 border border-teal-500/10 rounded-lg px-2 py-1.5 relative z-10 flex flex-col space-y-1">
+      <div className="mt-3 pt-2 text-[8px] text-teal-400 font-mono bg-teal-500/5 border border-teal-500/10 rounded-lg px-2 py-1.5 relative z-10 flex flex-col space-y-1">
         <div className="flex items-center justify-between">
           <span className="text-white/40">METHOD:</span>
           <span className="text-teal-400 font-bold bg-teal-500/10 px-1 rounded">{httpMethod}</span>
