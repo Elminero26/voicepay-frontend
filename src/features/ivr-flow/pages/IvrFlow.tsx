@@ -9,11 +9,12 @@ import {
 } from 'lucide-react';
 import { useLiveCalls } from '../hooks/useLiveCalls';
 import type { Call } from '../../../types';
-import { nodeTypes, SimulatorHud, EventsLogPanel, DesignerPanel } from '../components';
+import { nodeTypes, SimulatorHud, EventsLogPanel, DesignerPanel, PromptAutocompleteInput } from '../components';
 import { useCallStore } from '../../../stores/useCallStore';
 import { cn } from '../../../utils/cn';
 import { ivrService } from '../../../services/api';
 import { useLanguage } from '../../../hooks/useLanguage';
+import { resolvePromptVariables } from '../utils/resolveVariables';
 
 const initialNodes: Node[] = [
   // User Flow
@@ -55,6 +56,7 @@ const initialEdges: Edge[] = [
 
 export const IvrFlowContent: React.FC = () => {
   const { t, language } = useLanguage();
+  const cachedCall = useCallStore((state) => state.cachedCall);
   const { liveCalls, connected } = useLiveCalls();
   const { screenToFlowPosition } = useReactFlow();
   
@@ -98,7 +100,8 @@ export const IvrFlowContent: React.FC = () => {
     }
 
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(tempVoicePrompt);
+    const resolvedPrompt = resolvePromptVariables(tempVoicePrompt, cachedCall);
+    const utterance = new SpeechSynthesisUtterance(resolvedPrompt);
     
     // Set language matching UI
     const voiceLang = language === 'es' ? 'es-ES' : 'en-US';
@@ -124,7 +127,7 @@ export const IvrFlowContent: React.FC = () => {
 
     setIsTtsPlaying(true);
     window.speechSynthesis.speak(utterance);
-  }, [tempVoicePrompt, language, isTtsPlaying]);
+  }, [tempVoicePrompt, language, isTtsPlaying, cachedCall]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -233,7 +236,6 @@ export const IvrFlowContent: React.FC = () => {
   const {
     selectedCallId,
     setSelectedCallId,
-    cachedCall,
     setCachedCall,
     isSimulating,
     simStep,
@@ -1195,9 +1197,9 @@ export const IvrFlowContent: React.FC = () => {
               )}
             </div>
             
-            <textarea
+            <PromptAutocompleteInput
               value={tempVoicePrompt}
-              onChange={(e) => setTempVoicePrompt(e.target.value)}
+              onChange={setTempVoicePrompt}
               rows={4}
               className="w-full bg-black/40 border border-white/10 rounded-2xl px-4 py-3 text-xs font-medium text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all resize-none custom-scrollbar"
               placeholder={t('ivr.prompt_placeholder')}

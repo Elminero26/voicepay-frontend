@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../../../components/Card';
+import { useCallStore } from '../../../stores/useCallStore';
 import { 
   Sliders, Trash2, Save, RotateCcw, Info,
   PhoneCall, Globe, ShieldCheck, CreditCard, CheckCircle2, 
@@ -8,6 +9,8 @@ import {
 } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import { useLanguage } from '../../../hooks/useLanguage';
+import { PromptAutocompleteInput } from './PromptAutocompleteInput';
+import { resolvePromptVariables } from '../utils/resolveVariables';
 
 interface DesignerPanelProps {
   selectedNode: any | null;
@@ -196,8 +199,10 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
       return;
     }
 
+    const cachedCall = useCallStore.getState().cachedCall;
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(voicePrompt);
+    const resolvedPrompt = resolvePromptVariables(voicePrompt, cachedCall);
+    const utterance = new SpeechSynthesisUtterance(resolvedPrompt);
     
     // Set language matching UI
     const voiceLang = language === 'es' ? 'es-ES' : 'en-US';
@@ -443,9 +448,9 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
                     </div>
                   )}
                 </div>
-                <textarea
+                <PromptAutocompleteInput
                   value={voicePrompt}
-                  onChange={(e) => handleFieldChange('voicePrompt', e.target.value)}
+                  onChange={(val) => handleFieldChange('voicePrompt', val)}
                   rows={3}
                   className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs font-medium text-text-secondary focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all resize-none"
                   placeholder={t('ivr.prompt_placeholder')}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Bot, Mic } from 'lucide-react';
 import { useCallStore } from '../../../stores/useCallStore';
 import { useLanguage } from '../../../hooks/useLanguage';
+import { resolvePromptVariables } from '../utils/resolveVariables';
 
 interface FloatingSpeechBubblesProps {
   nodeId: string;
@@ -104,9 +105,13 @@ export const FloatingSpeechBubbles: React.FC<FloatingSpeechBubblesProps> = ({
   }, [nodeId, nodeLabel, voicePrompt, simPath, activeCall, t]);
 
   const isDefaultPrompt = voicePrompt === defaultPrompts[nodeId];
-  const botSpeech = isDefaultPrompt || !voicePrompt
+  const rawBotSpeech = isDefaultPrompt || !voicePrompt
     ? t(`ivr.nodes.${nodeId}.voicePrompt`, voicePrompt || t('ivr.speech_bubbles.establishing_connection'))
     : voicePrompt;
+
+  const botSpeech = useMemo(() => {
+    return resolvePromptVariables(rawBotSpeech, activeCall);
+  }, [rawBotSpeech, activeCall]);
 
   // Sequence state management
   const [showBot, setShowBot] = useState(false);
