@@ -69,8 +69,16 @@ export const FloatingSpeechBubbles: React.FC<FloatingSpeechBubblesProps> = ({
     return liveCalls.find(c => c.id === selectedCallId) || liveCalls[0] || null;
   }, [isSimulating, simulatedCall, liveCalls, selectedCallId]);
 
+  const liveTranscriptions = useCallStore((state) => state.transcriptions);
+  const activeCallTranscription = activeCall ? liveTranscriptions[activeCall.id] : null;
+  const isRealCall = activeCall && !activeCall.id.startsWith('SIM-') && !isSimulating;
+
   // Determine user speech dynamically
   const userSpeech = useMemo(() => {
+    if (isRealCall && activeCallTranscription) {
+      return activeCallTranscription;
+    }
+
     const defaultOption = t('ivr.speech_bubbles.fallback_general');
     
     // For standard nodes 1 to 6
@@ -102,7 +110,7 @@ export const FloatingSpeechBubbles: React.FC<FloatingSpeechBubblesProps> = ({
     }
 
     return defaultOption;
-  }, [nodeId, nodeLabel, voicePrompt, simPath, activeCall, t]);
+  }, [nodeId, nodeLabel, voicePrompt, simPath, activeCall, t, isRealCall, activeCallTranscription]);
 
   const isDefaultPrompt = voicePrompt === defaultPrompts[nodeId];
   const rawBotSpeech = isDefaultPrompt || !voicePrompt
@@ -119,6 +127,18 @@ export const FloatingSpeechBubbles: React.FC<FloatingSpeechBubblesProps> = ({
   const [userTyping, setUserTyping] = useState(false);
 
   useEffect(() => {
+    if (isRealCall) {
+      setShowBot(true);
+      if (activeCallTranscription) {
+        setShowUser(true);
+        setUserTyping(false);
+      } else {
+        setShowUser(true);
+        setUserTyping(true);
+      }
+      return;
+    }
+
     // Reset sequence on node active change
     setShowBot(true);
     setShowUser(false);
@@ -139,7 +159,7 @@ export const FloatingSpeechBubbles: React.FC<FloatingSpeechBubblesProps> = ({
       clearTimeout(userTypingTimeout);
       clearTimeout(userRevealTimeout);
     };
-  }, [nodeId]);
+  }, [nodeId, isRealCall, activeCallTranscription]);
 
   return (
     <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-5 flex flex-col space-y-3 w-[290px] z-50 pointer-events-none select-none">

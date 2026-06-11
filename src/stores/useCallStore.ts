@@ -23,6 +23,7 @@ interface CallStoreState {
   cachedCall: Call | null;
   notifications: SystemNotification[];
   client: Client | null;
+  transcriptions: Record<string, string>;
 
   // Reconnection and status state
   connectionState: ConnectionState;
@@ -43,6 +44,7 @@ interface CallStoreState {
   setConnected: (connected: boolean) => void;
   setSelectedCallId: (id: string | null) => void;
   setCachedCall: (call: Call | null) => void;
+  setCallTranscription: (callId: string, text: string) => void;
   addNotification: (title: string, message: string, type?: 'success' | 'error' | 'warning' | 'info') => void;
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
@@ -77,6 +79,7 @@ export const useCallStore = create<CallStoreState>((set, get) => ({
   })(),
   notifications: [],
   client: null,
+  transcriptions: {},
 
   // Reconnection state
   connectionState: 'disconnected',
@@ -103,6 +106,12 @@ export const useCallStore = create<CallStoreState>((set, get) => ({
     }
     set({ cachedCall });
   },
+  setCallTranscription: (callId, text) => set((state) => ({
+    transcriptions: {
+      ...state.transcriptions,
+      [callId]: text
+    }
+  })),
 
   addNotification: (title, message, type = 'info') => {
     const newNotification: SystemNotification = {
@@ -249,6 +258,17 @@ export const useCallStore = create<CallStoreState>((set, get) => ({
             set({ liveCalls: mapped });
           } catch (err) {
             console.error('[WebSocket Store] Error parsing live calls:', err);
+          }
+        });
+
+        stompClient.subscribe('/topic/transcriptions', (message) => {
+          try {
+            const data = JSON.parse(message.body);
+            if (data && data.callSid && data.role === 'user') {
+              get().setCallTranscription(data.callSid, data.text);
+            }
+          } catch (err) {
+            console.error('[WebSocket Store] Error parsing transcription:', err);
           }
         });
       },
