@@ -22,6 +22,8 @@ interface DesignerPanelProps {
   onImport: (nodes: any[], edges: any[]) => void;
   onImportError: (errorMsg: string) => void;
   hasChanges: boolean;
+  validationErrors: any[];
+  onFocusNode: (nodeId: string) => void;
 }
 
 const isValidFlow = (json: any): boolean => {
@@ -60,6 +62,8 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
   onImport,
   onImportError,
   hasChanges,
+  validationErrors,
+  onFocusNode,
 }) => {
   const { t, language } = useLanguage();
   const [label, setLabel] = useState('');
@@ -291,6 +295,49 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-6 pr-1 custom-scrollbar">
+        {/* Real-time graph validation report panel */}
+        {validationErrors.length === 0 ? (
+          <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-3.5 flex items-center space-x-3 text-green-400 font-medium animate-fade-in shadow-lg shadow-green-500/5">
+            <CheckCircle2 size={16} className="text-green-400 shrink-0" />
+            <div className="space-y-0.5">
+              <span className="text-[10px] font-black uppercase tracking-wider block">{t('ivr.validation.flow_status')}</span>
+              <p className="text-[10px] opacity-80 leading-normal">{t('ivr.validation.no_issues')}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-red-500/5 border border-red-500/10 rounded-2xl p-3.5 space-y-3 animate-fade-in shadow-lg shadow-red-500/5">
+            <div className="flex items-center justify-between border-b border-white/5 pb-2">
+              <div className="flex items-center space-x-2 text-red-400 font-bold">
+                <AlertTriangle size={16} className="shrink-0 animate-pulse text-red-400" />
+                <span className="text-[10px] font-black uppercase tracking-wider">{t('ivr.validation.flow_status')}</span>
+              </div>
+              <span className="text-[9px] font-mono font-black text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full">
+                {validationErrors.length === 1 
+                  ? t('ivr.validation.issues_count_one') 
+                  : t('ivr.validation.issues_count_other', { count: validationErrors.length })}
+              </span>
+            </div>
+            
+            <div className="max-h-[180px] overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
+              {validationErrors.map((err) => (
+                <div 
+                  key={err.id}
+                  onClick={() => onFocusNode(err.nodeId)}
+                  className={cn(
+                    "p-2.5 rounded-xl transition-all flex items-start space-x-2 cursor-pointer border",
+                    err.severity === 'error'
+                      ? "bg-red-500/5 hover:bg-red-500/10 border-red-500/10 hover:border-red-500/20 text-red-400"
+                      : "bg-amber-500/5 hover:bg-amber-500/10 border-amber-500/10 hover:border-amber-500/20 text-amber-400"
+                  )}
+                >
+                  <AlertTriangle size={12} className="shrink-0 mt-0.5" />
+                  <p className="text-[10px] leading-tight font-medium opacity-90">{err.message}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {selectedNode ? (
           // Node Inspector Form
           <div className="space-y-5 animate-slide-in-right">

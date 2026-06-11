@@ -540,6 +540,18 @@
       "flow_import_error_desc": "The selected JSON file does not have a valid IVR flow format.",
       "flow_import_corrupt": "Corrupted File",
       "flow_import_corrupt_desc": "The JSON file is corrupted or is not a valid JSON format."
+    },
+    "validation": {
+      "errors_detected": "Errors detected",
+      "warnings_detected": "Warnings detected",
+      "flow_status": "Flow Validation",
+      "no_issues": "No structural issues found in the flow.",
+      "issues_count_one": "1 issue detected",
+      "issues_count_other": "{{count}} issues detected",
+      "orphan_node": "Node \"{{label}}\" is orphan (unreachable from incoming call).",
+      "orphan_service": "Service \"{{label}}\" is not connected to any node in the flow.",
+      "infinite_loop": "Node \"{{label}}\" is trapped in an infinite loop without exit.",
+      "payment_endpoint_missing": "Payment node \"{{label}}\" requires an API endpoint assigned."
     }
   }
 }

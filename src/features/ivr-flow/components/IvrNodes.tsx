@@ -29,6 +29,39 @@ export const iconMap: { [key: string]: any } = {
   Cpu
 };
 
+const NodeValidationBadge = ({ errors, t }: { errors: any[]; t: any }) => {
+  if (!errors || errors.length === 0) return null;
+  const hasErrors = errors.some((e: any) => e.severity === 'error');
+  
+  return (
+    <div className="absolute -top-3 -right-3 z-50 flex items-center justify-center">
+      <div className={cn(
+        "p-1.5 rounded-full border shadow-lg cursor-help animate-bounce-slow hover:scale-110 transition-all duration-300",
+        hasErrors 
+          ? "bg-red-500 border-red-400 text-white shadow-red-500/30" 
+          : "bg-amber-500 border-amber-400 text-black shadow-amber-500/30"
+      )}>
+        <AlertTriangle size={12} />
+      </div>
+      {/* Custom tooltip on hover */}
+      <div className="hidden group-hover:block absolute bottom-full mb-2 right-0 bg-[#0d0e12]/95 border border-white/10 rounded-xl p-3 shadow-2xl backdrop-blur-xl w-64 text-left pointer-events-none animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <p className="text-[10px] font-black text-white uppercase tracking-wider mb-1.5 flex items-center space-x-1">
+          <AlertTriangle size={10} className={hasErrors ? "text-red-400 animate-pulse" : "text-amber-400"} />
+          <span>{hasErrors ? t('ivr.validation.errors_detected') : t('ivr.validation.warnings_detected')}</span>
+        </p>
+        <ul className="space-y-1.5">
+          {errors.map((err: any, idx: number) => (
+            <li key={idx} className="text-[9px] text-text-secondary leading-tight flex items-start space-x-1.5">
+              <span className={cn("inline-block w-1.5 h-1.5 rounded-full mt-1 shrink-0", err.severity === 'error' ? 'bg-red-500' : 'bg-amber-500')} />
+              <span>{err.message}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+};
+
 // Custom IVR Node
 export const IvrNode = ({ id, data, isConnectable }: any) => {
   const { t, language } = useLanguage();
@@ -86,16 +119,25 @@ export const IvrNode = ({ id, data, isConnectable }: any) => {
   const label = t(`ivr.nodes.${id}.label`, data.label) as string;
   const description = t(`ivr.nodes.${id}.description`, data.description) as string;
 
+  const errors = data.validationErrors || [];
+  const isDesigner = data.mode === 'designer';
+  const hasErrors = isDesigner && errors.some((e: any) => e.severity === 'error');
+  const hasWarnings = isDesigner && errors.some((e: any) => e.severity === 'warning');
+
   return (
     <div className={cn(
       "px-4 py-3 rounded-2xl border-2 shadow-2xl w-[240px] transition-all duration-500",
       "glass backdrop-blur-xl relative group",
-      !isInProgress && "overflow-hidden",
+      !isInProgress && !hasErrors && !hasWarnings && "overflow-hidden",
       isCompleted ? "border-green-500/40 bg-green-500/5 shadow-green-500/10" :
       isInProgress ? "border-primary/50 bg-primary/10 shadow-primary/30 animate-pulse-slow" :
       isFailed ? "border-red-500/40 bg-red-500/5 shadow-red-500/10" :
+      hasErrors ? "border-red-500/50 bg-red-500/5 shadow-lg shadow-red-500/10 animate-pulse-slow" :
+      hasWarnings ? "border-amber-500/50 bg-amber-500/5 shadow-lg shadow-amber-500/10" :
       "border-border/40 bg-secondary/20 opacity-60 grayscale-[0.5]"
     )}>
+      <NodeValidationBadge errors={errors} t={t} />
+
       {isInProgress && (
         <FloatingSpeechBubbles
           nodeId={id}
@@ -117,6 +159,8 @@ export const IvrNode = ({ id, data, isConnectable }: any) => {
           isCompleted ? "bg-green-500/20 text-green-400" :
           isInProgress ? "bg-primary/20 text-primary" :
           isFailed ? "bg-red-500/20 text-red-400" :
+          hasErrors ? "bg-red-500/20 text-red-400" :
+          hasWarnings ? "bg-amber-500/20 text-amber-400" :
           "bg-secondary/50 text-text-secondary"
         )}>
           <Icon size={22} className={cn(isInProgress && "animate-bounce-slow")} />
@@ -127,6 +171,8 @@ export const IvrNode = ({ id, data, isConnectable }: any) => {
             isCompleted ? "text-green-400" :
             isInProgress ? "text-white" :
             isFailed ? "text-red-400" :
+            hasErrors ? "text-red-400" :
+            hasWarnings ? "text-amber-400" :
             "text-text-secondary"
           )}>{label}</h3>
           <p className="text-[11px] text-text-secondary mt-1 leading-tight font-medium opacity-80">{description}</p>
@@ -207,11 +253,20 @@ export const ServiceNode = ({ id, data }: any) => {
 
   const label = t(`ivr.nodes.${id}.label`, data.label) as string;
 
+  const errors = data.validationErrors || [];
+  const isDesigner = data.mode === 'designer';
+  const hasErrors = isDesigner && errors.some((e: any) => e.severity === 'error');
+  const hasWarnings = isDesigner && errors.some((e: any) => e.severity === 'warning');
+
   return (
     <div className={cn(
-      "px-5 py-4 rounded-2xl border border-white/10 shadow-2xl w-[200px] transition-all duration-300",
-      "glass-dark backdrop-blur-md bg-black/40 group hover:border-primary/30"
+      "px-5 py-4 rounded-2xl border border-white/10 shadow-2xl w-[200px] transition-all duration-300 relative group",
+      "glass-dark backdrop-blur-md bg-black/40",
+      hasErrors ? "border-red-500/50 shadow-red-500/10" :
+      hasWarnings ? "border-amber-500/50 shadow-amber-500/10" :
+      "hover:border-primary/30"
     )}>
+      <NodeValidationBadge errors={errors} t={t} />
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-primary !border-none" />
       <div className="flex items-center space-x-3">
         <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-transparent text-primary group-hover:rotate-12 transition-transform">
@@ -247,15 +302,25 @@ export const ConditionalNode = ({ id, data, isConnectable }: any) => {
   const description = t(`ivr.nodes.${id}.description`, data.description) as string;
   const selectedPath = data.selectedPath; // 'yes' | 'no'
 
+  const errors = data.validationErrors || [];
+  const isDesigner = data.mode === 'designer';
+  const hasErrors = isDesigner && errors.some((e: any) => e.severity === 'error');
+  const hasWarnings = isDesigner && errors.some((e: any) => e.severity === 'warning');
+
   return (
     <div className={cn(
       "px-4 py-3 rounded-2xl border-2 shadow-2xl w-[240px] transition-all duration-500",
       "glass backdrop-blur-xl relative group",
+      !hasErrors && !hasWarnings && "overflow-hidden",
       isCompleted ? "border-purple-500/40 bg-purple-500/5 shadow-purple-500/10" :
       isInProgress ? "border-primary/50 bg-primary/10 shadow-primary/30 animate-pulse-slow" :
       isFailed ? "border-red-500/40 bg-red-500/5 shadow-red-500/10" :
+      hasErrors ? "border-red-500/50 bg-red-500/5 shadow-lg shadow-red-500/10 animate-pulse-slow" :
+      hasWarnings ? "border-amber-500/50 bg-amber-500/5 shadow-lg shadow-amber-500/10" :
       "border-border/40 bg-secondary/20 opacity-60 grayscale-[0.5]"
     )}>
+      <NodeValidationBadge errors={errors} t={t} />
+
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-background !border-2 !border-primary !shadow-glow" isConnectable={isConnectable} />
 
       {isInProgress && (
@@ -268,6 +333,8 @@ export const ConditionalNode = ({ id, data, isConnectable }: any) => {
           isCompleted ? "bg-purple-500/20 text-purple-400" :
           isInProgress ? "bg-primary/20 text-primary" :
           isFailed ? "bg-red-500/20 text-red-400" :
+          hasErrors ? "bg-red-500/20 text-red-400" :
+          hasWarnings ? "bg-amber-500/20 text-amber-400" :
           "bg-secondary/50 text-text-secondary"
         )}>
           <Icon size={22} className={cn(isInProgress && "animate-bounce-slow")} />
@@ -278,6 +345,8 @@ export const ConditionalNode = ({ id, data, isConnectable }: any) => {
             isCompleted ? "text-purple-400" :
             isInProgress ? "text-white" :
             isFailed ? "text-red-400" :
+            hasErrors ? "text-red-400" :
+            hasWarnings ? "text-amber-400" :
             "text-text-secondary"
           )}>{label}</h3>
           <p className="text-[11px] text-text-secondary mt-1 leading-tight font-medium opacity-80">{description}</p>
@@ -330,15 +399,25 @@ export const ConditionNode = ({ id, data, isConnectable }: any) => {
   const description = t(`ivr.nodes.${id}.description`, data.description) as string;
   const selectedPath = data.selectedPath;
 
+  const errors = data.validationErrors || [];
+  const isDesigner = data.mode === 'designer';
+  const hasErrors = isDesigner && errors.some((e: any) => e.severity === 'error');
+  const hasWarnings = isDesigner && errors.some((e: any) => e.severity === 'warning');
+
   return (
     <div className={cn(
       "px-4 py-3 rounded-2xl border-2 shadow-2xl w-[240px] transition-all duration-500",
       "glass backdrop-blur-xl relative group",
+      !hasErrors && !hasWarnings && "overflow-hidden",
       isCompleted ? "border-purple-500/40 bg-purple-500/5 shadow-purple-500/10" :
       isInProgress ? "border-primary/50 bg-primary/10 shadow-primary/30 animate-pulse-slow" :
       isFailed ? "border-red-500/40 bg-red-500/5 shadow-red-500/10" :
+      hasErrors ? "border-purple-500/50 bg-purple-500/5 shadow-lg shadow-purple-500/10 animate-pulse-slow" :
+      hasWarnings ? "border-amber-500/50 bg-amber-500/5 shadow-lg shadow-amber-500/10" :
       "border-border/40 bg-secondary/20 opacity-60 grayscale-[0.5]"
     )}>
+      <NodeValidationBadge errors={errors} t={t} />
+
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-background !border-2 !border-primary !shadow-glow" isConnectable={isConnectable} />
 
       {isInProgress && (
@@ -351,6 +430,8 @@ export const ConditionNode = ({ id, data, isConnectable }: any) => {
           isCompleted ? "bg-purple-500/20 text-purple-400" :
           isInProgress ? "bg-primary/20 text-primary" :
           isFailed ? "bg-red-500/20 text-red-400" :
+          hasErrors ? "bg-red-500/20 text-red-400" :
+          hasWarnings ? "bg-amber-500/20 text-amber-400" :
           "bg-secondary/50 text-text-secondary"
         )}>
           <Icon size={22} className={cn(isInProgress && "animate-bounce-slow")} />
@@ -361,6 +442,8 @@ export const ConditionNode = ({ id, data, isConnectable }: any) => {
             isCompleted ? "text-purple-400" :
             isInProgress ? "text-white" :
             isFailed ? "text-red-400" :
+            hasErrors ? "text-red-400" :
+            hasWarnings ? "text-amber-400" :
             "text-text-secondary"
           )}>{label}</h3>
           <p className="text-[11px] text-text-secondary mt-1 leading-tight font-medium opacity-80">{description}</p>
@@ -421,15 +504,25 @@ export const TimeRouteNode = ({ id, data, isConnectable }: any) => {
   const selectedPath = data.selectedPath;
   const timeWindow = data.timeWindow || '09:00 - 18:00';
 
+  const errors = data.validationErrors || [];
+  const isDesigner = data.mode === 'designer';
+  const hasErrors = isDesigner && errors.some((e: any) => e.severity === 'error');
+  const hasWarnings = isDesigner && errors.some((e: any) => e.severity === 'warning');
+
   return (
     <div className={cn(
       "px-4 py-3 rounded-2xl border-2 shadow-2xl w-[240px] transition-all duration-500",
       "glass backdrop-blur-xl relative group",
+      !hasErrors && !hasWarnings && "overflow-hidden",
       isCompleted ? "border-amber-500/40 bg-amber-500/5 shadow-amber-500/10" :
       isInProgress ? "border-primary/50 bg-primary/10 shadow-primary/30 animate-pulse-slow" :
       isFailed ? "border-red-500/40 bg-red-500/5 shadow-red-500/10" :
+      hasErrors ? "border-amber-500/50 bg-amber-500/5 shadow-lg shadow-amber-500/10 animate-pulse-slow" :
+      hasWarnings ? "border-amber-500/55 bg-amber-500/5 shadow-lg shadow-amber-500/10" :
       "border-border/40 bg-secondary/20 opacity-60 grayscale-[0.5]"
     )}>
+      <NodeValidationBadge errors={errors} t={t} />
+
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-background !border-2 !border-primary !shadow-glow" isConnectable={isConnectable} />
 
       {isInProgress && (
@@ -442,6 +535,8 @@ export const TimeRouteNode = ({ id, data, isConnectable }: any) => {
           isCompleted ? "bg-amber-500/20 text-amber-400" :
           isInProgress ? "bg-primary/20 text-primary" :
           isFailed ? "bg-red-500/20 text-red-400" :
+          hasErrors ? "bg-red-500/20 text-red-400" :
+          hasWarnings ? "bg-amber-500/20 text-amber-400" :
           "bg-secondary/50 text-text-secondary"
         )}>
           <Icon size={22} className={cn(isInProgress && "animate-bounce-slow")} />
@@ -452,6 +547,8 @@ export const TimeRouteNode = ({ id, data, isConnectable }: any) => {
             isCompleted ? "text-amber-400" :
             isInProgress ? "text-white" :
             isFailed ? "text-red-400" :
+            hasErrors ? "text-red-400" :
+            hasWarnings ? "text-amber-400" :
             "text-text-secondary"
           )}>{label}</h3>
           <p className="text-[11px] text-text-secondary mt-1 leading-tight font-medium opacity-80">{description}</p>
@@ -511,15 +608,25 @@ export const APIRequestNode = ({ id, data, isConnectable }: any) => {
   const httpMethod = data.httpMethod || 'POST';
   const apiEndpoint = data.apiEndpoint || 'https://api.voicepay.com/v1/ivr/request';
 
+  const errors = data.validationErrors || [];
+  const isDesigner = data.mode === 'designer';
+  const hasErrors = isDesigner && errors.some((e: any) => e.severity === 'error');
+  const hasWarnings = isDesigner && errors.some((e: any) => e.severity === 'warning');
+
   return (
     <div className={cn(
       "px-4 py-3 rounded-2xl border-2 shadow-2xl w-[240px] transition-all duration-500",
       "glass backdrop-blur-xl relative group",
+      !hasErrors && !hasWarnings && "overflow-hidden",
       isCompleted ? "border-teal-500/40 bg-teal-500/5 shadow-teal-500/10" :
       isInProgress ? "border-primary/50 bg-primary/10 shadow-primary/30 animate-pulse-slow" :
       isFailed ? "border-red-500/40 bg-red-500/5 shadow-red-500/10" :
+      hasErrors ? "border-teal-500/50 bg-teal-500/5 shadow-lg shadow-teal-500/10 animate-pulse-slow" :
+      hasWarnings ? "border-amber-500/50 bg-amber-500/5 shadow-lg shadow-amber-500/10" :
       "border-border/40 bg-secondary/20 opacity-60 grayscale-[0.5]"
     )}>
+      <NodeValidationBadge errors={errors} t={t} />
+
       <Handle type="target" position={Position.Top} className="!w-3 !h-3 !bg-background !border-2 !border-primary !shadow-glow" isConnectable={isConnectable} />
 
       {isInProgress && (
@@ -532,6 +639,8 @@ export const APIRequestNode = ({ id, data, isConnectable }: any) => {
           isCompleted ? "bg-teal-500/20 text-teal-400" :
           isInProgress ? "bg-primary/20 text-primary" :
           isFailed ? "bg-red-500/20 text-red-400" :
+          hasErrors ? "bg-teal-500/20 text-teal-400" :
+          hasWarnings ? "bg-amber-500/20 text-amber-400" :
           "bg-secondary/50 text-text-secondary"
         )}>
           <Icon size={22} className={cn(isInProgress && "animate-bounce-slow")} />
@@ -542,6 +651,8 @@ export const APIRequestNode = ({ id, data, isConnectable }: any) => {
             isCompleted ? "text-teal-400" :
             isInProgress ? "text-white" :
             isFailed ? "text-red-400" :
+            hasErrors ? "text-red-400" :
+            hasWarnings ? "text-amber-400" :
             "text-text-secondary"
           )}>{label}</h3>
           <p className="text-[11px] text-text-secondary mt-1 leading-tight font-medium opacity-80">{description}</p>

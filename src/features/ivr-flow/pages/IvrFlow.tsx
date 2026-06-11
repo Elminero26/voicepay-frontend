@@ -16,6 +16,15 @@ import { ivrService } from '../../../services/api';
 import { useLanguage } from '../../../hooks/useLanguage';
 import { ttsService } from '../../../services/ttsService';
 
+export interface ValidationError {
+  id: string;
+  nodeId: string;
+  type: 'orphan' | 'loop' | 'payment-endpoint';
+  severity: 'error' | 'warning';
+  message: string;
+}
+
+
 const initialNodes: Node[] = [
   // User Flow
   { id: '1', type: 'ivrNode', position: { x: 250, y: 50 }, data: { label: 'Incoming Call', description: 'User dials the IVR system', status: 'pending', icon: 'PhoneCall', voicePrompt: 'Bienvenido al sistema de pagos automáticos VoicePay. Por favor, espere mientras le identificamos.', apiEndpoint: 'https://api.voicepay.com/v1/ivr/welcome' } },
@@ -53,19 +62,14 @@ const initialEdges: Edge[] = [
   { id: 'comm-notif', source: '5', target: 'notification-service', animated: false, style: { stroke: '#3b82f6', strokeWidth: 1, strokeDasharray: '5,5', opacity: 0.3 } },
   { id: 'comm-agent', source: '6', target: 'agent-service', animated: false, style: { stroke: '#3b82f6', strokeWidth: 1, strokeDasharray: '5,5', opacity: 0.3 } }
 ];
-
 export const IvrFlowContent: React.FC = () => {
   const { t, language } = useLanguage();
   const cachedCall = useCallStore((state) => state.cachedCall);
   const { liveCalls, connected } = useLiveCalls();
-  const { screenToFlowPosition } = useReactFlow();
-  
-  // State for Switch Mode
+  const { screenToFlowPosition, fitView } = useReactFlow();
   const [mode, setMode] = useState<'live' | 'designer'>('live');
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
-
-  // Configuration Modal state
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [configNode, setConfigNode] = useState<Node | null>(null);
   const [tempVoicePrompt, setTempVoicePrompt] = useState('');
@@ -873,11 +877,6 @@ export const IvrFlowContent: React.FC = () => {
   const handleImportError = useCallback((errorType: string) => {
     if (toastFn) {
       if (errorType === 'parse_error' || errorType === 'read_error') {
-        toastFn(
-          t('ivr.toasts.flow_import_corrupt'),
-          t('ivr.toasts.flow_import_corrupt_desc'),
-          'error'
-        );
       } else {
         toastFn(
           t('ivr.toasts.flow_import_error'),
@@ -887,6 +886,171 @@ export const IvrFlowContent: React.FC = () => {
       }
     }
   }, [toastFn, t]);
+
+  // Real-time graph static validation
+  const validationErrors = useMemo<ValidationError[]>(() => {
+    const errors: ValidationError[] = [];
+    if (nodes.length === 0) return errors;
+
+    // 1. Find the starting root node (usually ID '1' or node with icon 'PhoneCall')
+    const rootNode = nodes.find(n => n.id === '1') || nodes.find(n => n.data?.icon === 'PhoneCall');
+    const rootId = rootNode?.id;
+
+    // Build adjacency list & in-degree counter
+    const adjList: { [key: string]: string[] } = {};
+    const inDegree: { [key: string]: number } = {};
+    
+    nodes.forEach(node => {
+      adjList[node.id] = [];
+      inDegree[node.id] = 0;
+    });
+
+    edges.forEach(edge => {
+      if (adjList[edge.source] && adjList[edge.target]) {
+        adjList[edge.source].push(edge.target);
+        inDegree[edge.target] = (inDegree[edge.target] || 0) + 1;
+      }
+    });
+
+    // BFS reachability from root
+    const visited = new Set<string>();
+    if (rootId) {
+      const queue = [rootId];
+      visited.add(rootId);
+      while (queue.length > 0) {
+        const current = queue.shift()!;
+        (adjList[current] || []).forEach(neighbor => {
+          if (!visited.has(neighbor)) {
+            visited.add(neighbor);
+            queue.push(neighbor);
+          }
+        });
+      }
+    }
+
+    // 2. Identify orphans: flow nodes unreachable from root, or service nodes with no incoming connections
+    nodes.forEach(node => {
+      const isService = node.type === 'serviceNode';
+      if (isService) {
+        if ((inDegree[node.id] || 0) === 0) {
+          errors.push({
+            id: `orphan-${node.id}`,
+            nodeId: node.id,
+            type: 'orphan',
+            severity: 'warning',
+            message: t('ivr.validation.orphan_service', { label: node.data.label || node.id })
+          });
+        }
+      } else {
+        if (!visited.has(node.id)) {
+          errors.push({
+            id: `orphan-${node.id}`,
+            nodeId: node.id,
+            type: 'orphan',
+            severity: 'error',
+            message: t('ivr.validation.orphan_node', { label: node.data.label || node.id })
+          });
+        }
+      }
+    });
+
+    // 3. Infinite loops without exit:
+    const flowNodes = nodes.filter(n => n.type !== 'serviceNode');
+    const flowNodeIds = new Set(flowNodes.map(n => n.id));
+    
+    const flowAdjReversed: { [key: string]: string[] } = {};
+    flowNodes.forEach(node => {
+      flowAdjReversed[node.id] = [];
+    });
+
+    const flowOutDegree: { [key: string]: number } = {};
+    flowNodes.forEach(node => {
+      flowOutDegree[node.id] = 0;
+    });
+
+    edges.forEach(edge => {
+      if (flowNodeIds.has(edge.source) && flowNodeIds.has(edge.target)) {
+        flowAdjReversed[edge.target].push(edge.source);
+        flowOutDegree[edge.source] = (flowOutDegree[edge.source] || 0) + 1;
+      }
+    });
+
+    const terminalNodes = flowNodes.filter(n => (flowOutDegree[n.id] || 0) === 0);
+    
+    const hasExit = new Set<string>();
+    const exitQueue: string[] = [];
+    
+    terminalNodes.forEach(n => {
+      hasExit.add(n.id);
+      exitQueue.push(n.id);
+    });
+
+    while (exitQueue.length > 0) {
+      const current = exitQueue.shift()!;
+      (flowAdjReversed[current] || []).forEach(pred => {
+        if (!hasExit.has(pred)) {
+          hasExit.add(pred);
+          exitQueue.push(pred);
+        }
+      });
+    }
+
+    flowNodes.forEach(node => {
+      if (!hasExit.has(node.id) && visited.has(node.id)) {
+        errors.push({
+          id: `loop-${node.id}`,
+          nodeId: node.id,
+          type: 'loop',
+          severity: 'error',
+          message: t('ivr.validation.infinite_loop', { label: node.data.label || node.id })
+        });
+      }
+    });
+
+    // 4. Payment nodes without assigned endpoints
+    nodes.forEach(node => {
+      const isPaymentNode = 
+        node.type === 'ivrNode' && 
+        (node.data?.icon === 'CreditCard' || 
+         (typeof node.data?.label === 'string' && 
+          /pago|payment|tarjeta|card|checkout/i.test(node.data.label)));
+      
+      if (isPaymentNode) {
+        const endpoint = node.data?.apiEndpoint;
+        if (!endpoint || typeof endpoint !== 'string' || endpoint.trim() === '') {
+          errors.push({
+            id: `payment-endpoint-${node.id}`,
+            nodeId: node.id,
+            type: 'payment-endpoint',
+            severity: 'error',
+            message: t('ivr.validation.payment_endpoint_missing', { label: node.data.label || node.id })
+          });
+        }
+      }
+    });
+
+    return errors;
+  }, [nodes, edges, t]);
+
+  const validationErrorsByNode = useMemo(() => {
+    const map: { [nodeId: string]: ValidationError[] } = {};
+    validationErrors.forEach(err => {
+      if (!map[err.nodeId]) {
+        map[err.nodeId] = [];
+      }
+      map[err.nodeId].push(err);
+    });
+    return map;
+  }, [validationErrors]);
+
+  const focusNode = useCallback((nodeId: string) => {
+    setSelectedNodeId(nodeId);
+    setNodes(nds => nds.map(node => ({
+      ...node,
+      selected: node.id === nodeId
+    })));
+    fitView({ nodes: [{ id: nodeId }], duration: 500, minZoom: 1.2 });
+  }, [fitView]);
 
   // Memoize properties for designer selector
   const selectedNode = useMemo(() => {
@@ -901,11 +1065,20 @@ export const IvrFlowContent: React.FC = () => {
         data: {
           ...node.data,
           status: 'idle',
+          mode: 'designer',
+          validationErrors: validationErrorsByNode[node.id] || [],
         }
       }));
     }
-    return nodes;
-  }, [nodes, mode]);
+    return nodes.map(node => ({
+      ...node,
+      data: {
+        ...node.data,
+        mode: 'live',
+        validationErrors: validationErrorsByNode[node.id] || [],
+      }
+    }));
+  }, [nodes, mode, validationErrorsByNode]);
 
   const processedEdges = useMemo(() => {
     if (mode === 'designer') {
@@ -1128,6 +1301,8 @@ export const IvrFlowContent: React.FC = () => {
             onImport={handleImportFlow}
             onImportError={handleImportError}
             hasChanges={hasChanges}
+            validationErrors={validationErrors}
+            onFocusNode={focusNode}
           />
         ) : (
           <EventsLogPanel

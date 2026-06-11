@@ -540,6 +540,18 @@
       "flow_import_error_desc": "El archivo JSON seleccionado no tiene un formato de flujo IVR válido.",
       "flow_import_corrupt": "Archivo Corrupto",
       "flow_import_corrupt_desc": "El archivo JSON está dañado o no es un formato JSON válido."
+    },
+    "validation": {
+      "errors_detected": "Errores detectados",
+      "warnings_detected": "Advertencias detectadas",
+      "flow_status": "Validación de Flujo",
+      "no_issues": "No se encontraron problemas estructurales en el flujo.",
+      "issues_count_one": "1 problema detectado",
+      "issues_count_other": "{{count}} problemas detectados",
+      "orphan_node": "El nodo \"{{label}}\" es huérfano (no es alcanzable desde la llamada entrante).",
+      "orphan_service": "El servicio \"{{label}}\" no está conectado por ningún nodo en el flujo.",
+      "infinite_loop": "El nodo \"{{label}}\" está atrapado en un bucle infinito sin salida.",
+      "payment_endpoint_missing": "El nodo de pago \"{{label}}\" requiere un endpoint de API asignado."
     }
   }
 }
