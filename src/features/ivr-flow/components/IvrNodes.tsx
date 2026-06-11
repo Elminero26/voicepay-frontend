@@ -1,12 +1,14 @@
+import { useState, useEffect, useRef } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { 
   HelpCircle, CheckCircle2, Globe, PhoneCall, ShieldCheck, 
   CreditCard, User, Headset, Activity, MessageSquare, Zap, AlertTriangle,
-  Mic, Server, GitFork, Clock, Cpu
+  Server, GitFork, Clock, Cpu, Play, VolumeX, Loader2
 } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import { FloatingSpeechBubbles } from './FloatingSpeechBubbles';
 import { useLanguage } from '../../../hooks/useLanguage';
+import { ttsService } from '../../../services/ttsService';
 
 // Icon mapping dictionary to support serializable node data (strings instead of components)
 export const iconMap: { [key: string]: any } = {
@@ -29,10 +31,52 @@ export const iconMap: { [key: string]: any } = {
 
 // Custom IVR Node
 export const IvrNode = ({ id, data, isConnectable }: any) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const isCompleted = data.status === 'completed';
   const isInProgress = data.status === 'in-progress';
   const isFailed = data.status === 'failed';
+
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+      ttsService.stop();
+    };
+  }, []);
+
+  const handlePlayTts = () => {
+    if (isPlaying || isLoading) {
+      ttsService.stop();
+      return;
+    }
+
+    ttsService.play(
+      data.voicePrompt,
+      language,
+      () => {
+        if (isMounted.current) {
+          setIsLoading(true);
+          setIsPlaying(false);
+        }
+      },
+      () => {
+        if (isMounted.current) {
+          setIsLoading(false);
+          setIsPlaying(true);
+        }
+      },
+      () => {
+        if (isMounted.current) {
+          setIsLoading(false);
+          setIsPlaying(false);
+        }
+      }
+    );
+  };
 
   // Support both component imports and string keys for serializability
   const Icon = typeof data.icon === 'string' 
@@ -99,13 +143,37 @@ export const IvrNode = ({ id, data, isConnectable }: any) => {
       {(data.voicePrompt || data.apiEndpoint) && (
         <div className="mt-2 pt-2 border-t border-white/5 flex flex-wrap items-center gap-1.5 relative z-10">
           {data.voicePrompt && (
-            <div 
-              className="flex items-center space-x-1 bg-primary/10 border border-primary/20 text-primary rounded-full px-2 py-0.5 text-[8px] font-black uppercase tracking-wider animate-in fade-in zoom-in duration-300 hover:scale-105 transition-transform"
-              title={data.voicePrompt}
+            <button 
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePlayTts();
+              }}
+              className={cn(
+                "flex items-center space-x-1 border rounded-full px-2 py-0.5 text-[8px] font-black uppercase tracking-wider animate-in fade-in zoom-in duration-300 hover:scale-105 transition-all shadow-sm cursor-pointer",
+                isLoading 
+                  ? "bg-amber-500/10 border-amber-500/30 text-amber-400" 
+                  : isPlaying
+                    ? "bg-red-500/10 border-red-500/30 text-red-400"
+                    : "bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
+              )}
+              title={isPlaying ? t('ivr.tts_stop') : t('ivr.tts_play')}
             >
-              <Mic size={10} className="shrink-0" />
-              <span>Prompt</span>
-            </div>
+              {isLoading ? (
+                <Loader2 size={10} className="shrink-0 animate-spin" />
+              ) : isPlaying ? (
+                <VolumeX size={10} className="shrink-0" />
+              ) : (
+                <Play size={10} className="shrink-0" />
+              )}
+              <span>
+                {isLoading 
+                  ? t('common.loading').split('...')[0] 
+                  : isPlaying 
+                    ? t('ivr.tts_btn_stop') 
+                    : t('ivr.tts_btn_play')}
+              </span>
+            </button>
           )}
           {data.apiEndpoint && (
             <div 

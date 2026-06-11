@@ -1,16 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../../../components/Card';
-import { useCallStore } from '../../../stores/useCallStore';
 import { 
   Sliders, Trash2, Save, RotateCcw, Info,
   PhoneCall, Globe, ShieldCheck, CreditCard, CheckCircle2, 
   User, Headset, MessageSquare, Zap, AlertTriangle, GripVertical, GitFork,
-  Volume2, VolumeX, Upload, Download, Clock, Cpu
+  Volume2, VolumeX, Upload, Download, Clock, Cpu, Loader2
 } from 'lucide-react';
 import { cn } from '../../../utils/cn';
 import { useLanguage } from '../../../hooks/useLanguage';
 import { PromptAutocompleteInput } from './PromptAutocompleteInput';
-import { resolvePromptVariables } from '../utils/resolveVariables';
+import { ttsService } from '../../../services/ttsService';
 
 interface DesignerPanelProps {
   selectedNode: any | null;
@@ -97,6 +96,7 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
   const [apiEndpoint, setApiEndpoint] = useState('');
   const [ruleType, setRuleType] = useState('business_hours');
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isTtsLoading, setIsTtsLoading] = useState(false);
   const [timeWindow, setTimeWindow] = useState('09:00 - 18:00');
   const [httpMethod, setHttpMethod] = useState('POST');
 
@@ -177,57 +177,38 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
   // Cancel speech synthesis on unmount
   useEffect(() => {
     return () => {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
+      ttsService.stop();
     };
   }, []);
 
   // Cancel speech synthesis when selectedNode changes
   useEffect(() => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-    setIsPlaying(false);
+    ttsService.stop();
   }, [selectedNode?.id]);
 
   const handlePlayTts = () => {
     if (!voicePrompt) return;
-    if (isPlaying) {
-      window.speechSynthesis.cancel();
-      setIsPlaying(false);
+    if (isPlaying || isTtsLoading) {
+      ttsService.stop();
       return;
     }
 
-    const cachedCall = useCallStore.getState().cachedCall;
-    window.speechSynthesis.cancel();
-    const resolvedPrompt = resolvePromptVariables(voicePrompt, cachedCall);
-    const utterance = new SpeechSynthesisUtterance(resolvedPrompt);
-    
-    // Set language matching UI
-    const voiceLang = language === 'es' ? 'es-ES' : 'en-US';
-    utterance.lang = voiceLang;
-    
-    // Find matching voice
-    const voices = window.speechSynthesis.getVoices();
-    const matchedVoice = voices.find(v => 
-      v.lang.toLowerCase().startsWith(voiceLang.toLowerCase()) || 
-      v.lang.toLowerCase().includes(language.toLowerCase())
+    ttsService.play(
+      voicePrompt,
+      language,
+      () => {
+        setIsTtsLoading(true);
+        setIsPlaying(false);
+      },
+      () => {
+        setIsTtsLoading(false);
+        setIsPlaying(true);
+      },
+      () => {
+        setIsTtsLoading(false);
+        setIsPlaying(false);
+      }
     );
-    if (matchedVoice) {
-      utterance.voice = matchedVoice;
-    }
-    
-    utterance.onend = () => {
-      setIsPlaying(false);
-    };
-    
-    utterance.onerror = () => {
-      setIsPlaying(false);
-    };
-
-    setIsPlaying(true);
-    window.speechSynthesis.speak(utterance);
   };
 
   // Sync state with selected node
@@ -435,15 +416,30 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
                         type="button"
                         onClick={handlePlayTts}
                         className={cn(
-                          "flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all border shadow-sm",
-                          isPlaying
-                            ? "bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20"
-                            : "bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
+                          "flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all border shadow-sm cursor-pointer",
+                          isTtsLoading
+                            ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                            : isPlaying
+                              ? "bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20"
+                              : "bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
                         )}
                         title={isPlaying ? t('ivr.tts_stop') : t('ivr.tts_play')}
+                        disabled={isTtsLoading && !isPlaying}
                       >
-                        {isPlaying ? <VolumeX size={10} /> : <Volume2 size={10} />}
-                        <span>{isPlaying ? t('ivr.tts_btn_stop') : t('ivr.tts_btn_play')}</span>
+                        {isTtsLoading ? (
+                          <Loader2 size={10} className="animate-spin" />
+                        ) : isPlaying ? (
+                          <VolumeX size={10} />
+                        ) : (
+                          <Volume2 size={10} />
+                        )}
+                        <span>
+                          {isTtsLoading 
+                            ? t('common.loading').split('...')[0] 
+                            : isPlaying 
+                              ? t('ivr.tts_btn_stop') 
+                              : t('ivr.tts_btn_play')}
+                        </span>
                       </button>
                     </div>
                   )}

@@ -5,7 +5,7 @@ import '@xyflow/react/dist/style.css';
 import { Card } from '../../../components/Card';
 import { Modal } from '../../../components/Modal';
 import { 
-  Activity, Sparkles, Volume2, VolumeX
+  Activity, Sparkles, Volume2, VolumeX, Loader2
 } from 'lucide-react';
 import { useLiveCalls } from '../hooks/useLiveCalls';
 import type { Call } from '../../../types';
@@ -14,7 +14,7 @@ import { useCallStore } from '../../../stores/useCallStore';
 import { cn } from '../../../utils/cn';
 import { ivrService } from '../../../services/api';
 import { useLanguage } from '../../../hooks/useLanguage';
-import { resolvePromptVariables } from '../utils/resolveVariables';
+import { ttsService } from '../../../services/ttsService';
 
 const initialNodes: Node[] = [
   // User Flow
@@ -71,63 +71,46 @@ export const IvrFlowContent: React.FC = () => {
   const [tempVoicePrompt, setTempVoicePrompt] = useState('');
   const [tempApiEndpoint, setTempApiEndpoint] = useState('');
   const [isTtsPlaying, setIsTtsPlaying] = useState(false);
+  const [isTtsLoading, setIsTtsLoading] = useState(false);
 
   // Cancel speech synthesis on modal close or state change
   useEffect(() => {
     if (!isConfigModalOpen) {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
-      setIsTtsPlaying(false);
+      ttsService.stop();
     }
   }, [isConfigModalOpen]);
 
   // Cancel speech synthesis on unmount
   useEffect(() => {
     return () => {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
+      ttsService.stop();
     };
   }, []);
 
   const handlePlayTts = useCallback(() => {
     if (!tempVoicePrompt) return;
-    if (isTtsPlaying) {
-      window.speechSynthesis.cancel();
-      setIsTtsPlaying(false);
+    if (isTtsPlaying || isTtsLoading) {
+      ttsService.stop();
       return;
     }
 
-    window.speechSynthesis.cancel();
-    const resolvedPrompt = resolvePromptVariables(tempVoicePrompt, cachedCall);
-    const utterance = new SpeechSynthesisUtterance(resolvedPrompt);
-    
-    // Set language matching UI
-    const voiceLang = language === 'es' ? 'es-ES' : 'en-US';
-    utterance.lang = voiceLang;
-    
-    // Find matching voice
-    const voices = window.speechSynthesis.getVoices();
-    const matchedVoice = voices.find(v => 
-      v.lang.toLowerCase().startsWith(voiceLang.toLowerCase()) || 
-      v.lang.toLowerCase().includes(language.toLowerCase())
+    ttsService.play(
+      tempVoicePrompt,
+      language,
+      () => {
+        setIsTtsLoading(true);
+        setIsTtsPlaying(false);
+      },
+      () => {
+        setIsTtsLoading(false);
+        setIsTtsPlaying(true);
+      },
+      () => {
+        setIsTtsLoading(false);
+        setIsTtsPlaying(false);
+      }
     );
-    if (matchedVoice) {
-      utterance.voice = matchedVoice;
-    }
-    
-    utterance.onend = () => {
-      setIsTtsPlaying(false);
-    };
-    
-    utterance.onerror = () => {
-      setIsTtsPlaying(false);
-    };
-
-    setIsTtsPlaying(true);
-    window.speechSynthesis.speak(utterance);
-  }, [tempVoicePrompt, language, isTtsPlaying, cachedCall]);
+  }, [tempVoicePrompt, language, isTtsPlaying, isTtsLoading]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -1183,15 +1166,30 @@ export const IvrFlowContent: React.FC = () => {
                     type="button"
                     onClick={handlePlayTts}
                     className={cn(
-                      "flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all border shadow-sm",
-                      isTtsPlaying
-                        ? "bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20"
-                        : "bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
+                      "flex items-center space-x-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all border shadow-sm cursor-pointer",
+                      isTtsLoading
+                        ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                        : isTtsPlaying
+                          ? "bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20"
+                          : "bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
                     )}
                     title={isTtsPlaying ? t('ivr.tts_stop') : t('ivr.tts_play')}
+                    disabled={isTtsLoading && !isTtsPlaying}
                   >
-                    {isTtsPlaying ? <VolumeX size={10} /> : <Volume2 size={10} />}
-                    <span>{isTtsPlaying ? t('ivr.tts_btn_stop') : t('ivr.tts_btn_play')}</span>
+                    {isTtsLoading ? (
+                      <Loader2 size={10} className="animate-spin" />
+                    ) : isTtsPlaying ? (
+                      <VolumeX size={10} />
+                    ) : (
+                      <Volume2 size={10} />
+                    )}
+                    <span>
+                      {isTtsLoading 
+                        ? t('common.loading').split('...')[0] 
+                        : isTtsPlaying 
+                          ? t('ivr.tts_btn_stop') 
+                          : t('ivr.tts_btn_play')}
+                    </span>
                   </button>
                 </div>
               )}
