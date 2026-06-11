@@ -281,7 +281,10 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
   ];
 
   return (
-    <Card className="flex-1 glass-dark border-white/5 p-6 flex flex-col overflow-hidden shadow-2xl max-h-[85vh]">
+    <Card 
+      className="flex-1 glass-dark border-white/5 p-6 flex flex-col overflow-hidden shadow-2xl max-h-[85vh]"
+      contentClassName="flex flex-col flex-1 overflow-hidden h-full"
+    >
       <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-primary/20 rounded-lg text-primary">

@@ -17,7 +17,10 @@ export const EventsLogPanel: React.FC<EventsLogPanelProps> = ({
   const { t } = useLanguage();
 
   return (
-    <Card className="flex-1 glass-dark border-white/5 p-6 flex flex-col overflow-hidden shadow-2xl">
+    <Card 
+      className="flex-1 glass-dark border-white/5 p-6 flex flex-col overflow-hidden shadow-2xl"
+      contentClassName="flex flex-col flex-1 overflow-hidden h-full"
+    >
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-primary/20 rounded-lg text-primary">
