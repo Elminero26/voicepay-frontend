@@ -870,9 +870,21 @@ export const IvrFlowContent: React.FC = () => {
     }
   }, [toastFn, t, mode]);
 
-  const handleImportError = useCallback((_errorType: string) => {
+  const handleImportError = useCallback((errorType: string) => {
     if (toastFn) {
-      toastFn(t('ivr.toasts.flow_import_error'), t('ivr.toasts.flow_import_error_desc'), 'error');
+      if (errorType === 'parse_error' || errorType === 'read_error') {
+        toastFn(
+          t('ivr.toasts.flow_import_corrupt'),
+          t('ivr.toasts.flow_import_corrupt_desc'),
+          'error'
+        );
+      } else {
+        toastFn(
+          t('ivr.toasts.flow_import_error'),
+          t('ivr.toasts.flow_import_error_desc'),
+          'error'
+        );
+      }
     }
   }, [toastFn, t]);
 

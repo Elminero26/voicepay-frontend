@@ -537,7 +537,9 @@
       "flow_imported": "Flow Imported",
       "flow_imported_desc": "The IVR flow has been successfully imported into the designer.",
       "flow_import_error": "Import Error",
-      "flow_import_error_desc": "The selected JSON file does not have a valid IVR flow format."
+      "flow_import_error_desc": "The selected JSON file does not have a valid IVR flow format.",
+      "flow_import_corrupt": "Corrupted File",
+      "flow_import_corrupt_desc": "The JSON file is corrupted or is not a valid JSON format."
     }
   }
 }

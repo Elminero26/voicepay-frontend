@@ -26,21 +26,24 @@ interface DesignerPanelProps {
 
 const isValidFlow = (json: any): boolean => {
   if (!json || typeof json !== 'object') return false;
+  if (!('nodes' in json) || !('edges' in json)) return false;
   if (!Array.isArray(json.nodes) || !Array.isArray(json.edges)) return false;
   
   for (const node of json.nodes) {
     if (!node || typeof node !== 'object') return false;
-    if (typeof node.id !== 'string') return false;
-    if (typeof node.type !== 'string') return false;
+    if (typeof node.id !== 'string' || !node.id.trim()) return false;
+    if (typeof node.type !== 'string' || !node.type.trim()) return false;
     if (!node.position || typeof node.position !== 'object') return false;
     if (typeof node.position.x !== 'number' || typeof node.position.y !== 'number') return false;
     if (!node.data || typeof node.data !== 'object') return false;
+    if (typeof node.data.label !== 'string') return false;
   }
 
   for (const edge of json.edges) {
     if (!edge || typeof edge !== 'object') return false;
-    if (typeof edge.id !== 'string') return false;
-    if (typeof edge.source !== 'string' || typeof edge.target !== 'string') return false;
+    if (typeof edge.id !== 'string' || !edge.id.trim()) return false;
+    if (typeof edge.source !== 'string' || !edge.source.trim()) return false;
+    if (typeof edge.target !== 'string' || !edge.target.trim()) return false;
   }
 
   return true;
@@ -77,7 +80,12 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const json = JSON.parse(event.target?.result as string);
+        const result = event.target?.result;
+        if (typeof result !== 'string') {
+          onImportError('read_error');
+          return;
+        }
+        const json = JSON.parse(result);
         if (isValidFlow(json)) {
           onImport(json.nodes, json.edges);
         } else {
@@ -89,6 +97,10 @@ export const DesignerPanel: React.FC<DesignerPanelProps> = ({
       } finally {
         e.target.value = '';
       }
+    };
+    reader.onerror = () => {
+      onImportError('read_error');
+      e.target.value = '';
     };
     reader.readAsText(file);
   };
