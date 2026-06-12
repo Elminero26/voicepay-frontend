@@ -553,5 +553,28 @@
       "infinite_loop": "El nodo \"{{label}}\" está atrapado en un bucle infinito sin salida.",
       "payment_endpoint_missing": "El nodo de pago \"{{label}}\" requiere un endpoint de API asignado."
     }
+  },
+  "agent": {
+    "title": "Teléfono Virtual",
+    "status": "Estado del Agente",
+    "available": "Disponible",
+    "busy": "Ocupado",
+    "offline": "Desconectado",
+    "incoming_call": "Llamada Entrante",
+    "active_call": "Llamada Activa",
+    "webrtc_secure": "Conexión Segura WebRTC",
+    "dial_placeholder": "Número de teléfono...",
+    "accept": "Aceptar",
+    "decline": "Rechazar",
+    "hangup": "Colgar",
+    "mute": "Silenciar",
+    "unmute": "Activar Sonido",
+    "speaker": "Altavoz",
+    "missed_call": "Llamada perdida",
+    "missed_call_desc": "Llamada perdida de {{name}} ({{phone}})",
+    "transcription": "Transcripción en Vivo",
+    "no_transcription": "Esperando audio del cliente...",
+    "calling": "Llamando...",
+    "call_ended": "Llamada finalizada"
   }
 }

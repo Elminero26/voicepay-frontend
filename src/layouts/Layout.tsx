@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Users, PhoneCall, Settings, LogOut, Menu, X, Bell, Network } from 'lucide-react';
+import { LayoutDashboard, Users, PhoneCall, Settings, LogOut, Menu, X, Bell, Network, Headset } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
 import { Button } from '../components/Button';
@@ -10,6 +10,9 @@ import { WebSocketBanner } from '../components/WebSocketBanner';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { ThemeSwitcher } from '../components/ThemeSwitcher';
 import { useLanguage } from '../hooks/useLanguage';
+import { useAgentStore } from '../stores/useAgentStore';
+import { useAgentCallSync } from '../hooks/useAgentCallSync';
+import { Softphone } from '../components/Softphone';
 
 export const Layout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
@@ -17,6 +20,11 @@ export const Layout: React.FC = () => {
   const { connectionState } = useCallStore();
   const [isMobile, setIsMobile] = React.useState(window.innerWidth < 1024);
   const { t } = useLanguage();
+
+  // Run the agent call synchronization hook
+  useAgentCallSync();
+
+  const { softphoneOpen, setSoftphoneOpen, agentStatus } = useAgentStore();
 
   React.useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -161,6 +169,23 @@ export const Layout: React.FC = () => {
           </div>
           
           <div className="flex items-center space-x-4 ml-auto">
+            {/* Softphone Widget Trigger */}
+            <Button
+              variant={softphoneOpen ? "primary" : "ghost"}
+              size="icon"
+              onClick={() => setSoftphoneOpen(!softphoneOpen)}
+              className="relative w-10 h-10 rounded-xl"
+              title={t('agent.title')}
+            >
+              <Headset size={20} className={cn(softphoneOpen ? "text-white" : "text-text-secondary hover:text-text-primary")} />
+              <span className={cn(
+                "absolute bottom-1 right-1 w-2.5 h-2.5 rounded-full border-2 border-background",
+                agentStatus === 'available' ? "bg-emerald-500" :
+                agentStatus === 'busy' ? "bg-amber-500" :
+                "bg-zinc-500"
+              )} />
+            </Button>
+
             {/* VP-19: Light/Dark Theme Switcher */}
             <ThemeSwitcher />
             {/* VP-17: Language switcher */}
@@ -182,6 +207,9 @@ export const Layout: React.FC = () => {
             <Outlet />
           </div>
         </div>
+
+        {/* Softphone Component */}
+        <Softphone />
       </main>
     </div>
   );
