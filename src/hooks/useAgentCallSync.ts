@@ -64,7 +64,15 @@ export const useAgentCallSync = () => {
             amount: 150.00,
             timestamp: new Date().toLocaleTimeString(),
             selectedOption: '2',
-            direction: 'inbound'
+            direction: 'inbound',
+            callEvents: [
+              t('ivr.simulator.step_1', 'Receiving incoming call...'),
+              t('ivr.simulator.step_2', 'Authenticating user via CallerID...'),
+              t('ivr.simulator.step_3', 'Evaluating condition: VIP Customer? -> YES. Routing to pending balance inquiry...'),
+              t('ivr.simulator.step_4', 'Playing IVR options menu...'),
+              t('ivr.simulator.step_5', { opt: '2', defaultValue: 'Selection entered [Option 2]' }),
+              t('ivr.simulator.step_6_agent', 'Connecting directly to agent...')
+            ]
           });
         }
       } else {

@@ -13,6 +13,7 @@ import { useLanguage } from '../hooks/useLanguage';
 import { useAgentStore } from '../stores/useAgentStore';
 import { useAgentCallSync } from '../hooks/useAgentCallSync';
 import { Softphone } from '../components/Softphone';
+import { ScreenPop } from '../components/ScreenPop';
 
 export const Layout: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
@@ -210,6 +211,9 @@ export const Layout: React.FC = () => {
 
         {/* Softphone Component */}
         <Softphone />
+
+        {/* ScreenPop Component */}
+        <ScreenPop />
       </main>
     </div>
   );

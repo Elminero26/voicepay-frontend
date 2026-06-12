@@ -576,5 +576,26 @@
     "no_transcription": "Waiting for customer audio...",
     "calling": "Calling...",
     "call_ended": "Call ended"
+  },
+  "screen_pop": {
+    "title": "Client Context Pop-up (Screen Pop)",
+    "client_info": "Customer Information",
+    "customer_name": "Customer Name",
+    "phone": "Phone",
+    "pending_invoice": "Pending Invoice",
+    "amount": "Invoice Amount",
+    "ivr_choices": "IVR Selected Options",
+    "selected_option": "Selected Option",
+    "ivr_route": "IVR Timeline / Path",
+    "status": "Status",
+    "view_profile": "View Profile",
+    "close": "Close",
+    "option_payment": "Option 1 - Secure card payment",
+    "option_agent": "Option 2 - Support / Transfer to agent",
+    "no_option": "No option selected",
+    "vip_status": "VIP Customer",
+    "regular_status": "Regular Customer",
+    "call_status": "Call Status",
+    "call_context": "Call Context"
   }
 }

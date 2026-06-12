@@ -576,5 +576,26 @@
     "no_transcription": "Esperando audio del cliente...",
     "calling": "Llamando...",
     "call_ended": "Llamada finalizada"
+  },
+  "screen_pop": {
+    "title": "Ventana Emergente de Contexto del Cliente (Screen Pop)",
+    "client_info": "Información del Cliente",
+    "customer_name": "Nombre del Cliente",
+    "phone": "Teléfono",
+    "pending_invoice": "Factura Pendiente",
+    "amount": "Monto de la Factura",
+    "ivr_choices": "Opciones marcadas en el IVR",
+    "selected_option": "Opción Seleccionada",
+    "ivr_route": "Ruta en el IVR",
+    "status": "Estado",
+    "view_profile": "Ver Perfil",
+    "close": "Cerrar",
+    "option_payment": "Opción 1 - Pago seguro con tarjeta",
+    "option_agent": "Opción 2 - Soporte / Transferencia a agente",
+    "no_option": "Ninguna opción",
+    "vip_status": "Cliente VIP",
+    "regular_status": "Cliente Regular",
+    "call_status": "Estado de la llamada",
+    "call_context": "Contexto de la llamada"
   }
 }
