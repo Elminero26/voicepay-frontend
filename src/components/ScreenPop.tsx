@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, CreditCard, Activity, Phone, PhoneOff } from 'lucide-react';
+import { X, User, CreditCard, Activity, Phone, PhoneOff, ShieldCheck } from 'lucide-react';
 import { useAgentStore } from '../stores/useAgentStore';
 import { useLanguage } from '../hooks/useLanguage';
 import { Button } from './Button';
@@ -15,7 +15,8 @@ export const ScreenPop: React.FC = () => {
     setScreenPopOpen,
     acceptCall,
     declineCall,
-    hangUp
+    hangUp,
+    transferToIvr
   } = useAgentStore();
 
   if (!screenPopOpen || !activeCall) return null;
@@ -196,14 +197,24 @@ export const ScreenPop: React.FC = () => {
                 {t('screen_pop.close', 'Cerrar')}
               </Button>
               {callState === 'active' && (
-                <Button 
-                  variant="danger" 
-                  className="flex-1 py-2.5 rounded-xl font-bold flex items-center justify-center text-xs" 
-                  onClick={hangUp}
-                >
-                  <PhoneOff size={14} className="mr-1.5" />
-                  {t('agent.hangup', 'Colgar')}
-                </Button>
+                <>
+                  <Button 
+                    variant="primary" 
+                    className="flex-grow-[1.5] py-2.5 rounded-xl font-bold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 border-0 flex items-center justify-center text-xs text-white shadow-lg shadow-indigo-500/20" 
+                    onClick={transferToIvr}
+                  >
+                    <ShieldCheck size={14} className="mr-1.5 animate-pulse" />
+                    {t('screen_pop.transfer_to_ivr')}
+                  </Button>
+                  <Button 
+                    variant="danger" 
+                    className="flex-1 py-2.5 rounded-xl font-bold flex items-center justify-center text-xs" 
+                    onClick={hangUp}
+                  >
+                    <PhoneOff size={14} className="mr-1.5" />
+                    {t('agent.hangup', 'Colgar')}
+                  </Button>
+                </>
               )}
             </>
           )}

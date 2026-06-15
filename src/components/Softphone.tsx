@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, 
-  X, ChevronDown, Headset, Terminal, ShieldAlert 
+  X, ChevronDown, Headset, Terminal, ShieldAlert, ShieldCheck
 } from 'lucide-react';
 import { useAgentStore } from '../stores/useAgentStore';
 import type { AgentStatus } from '../stores/useAgentStore';
@@ -33,7 +33,8 @@ export const Softphone: React.FC = () => {
     hangUp,
     toggleMute,
     toggleSpeaker,
-    incrementDuration
+    incrementDuration,
+    transferToIvr
   } = useAgentStore();
 
   const transcriptionEndRef = useRef<HTMLDivElement>(null);
@@ -370,6 +371,18 @@ export const Softphone: React.FC = () => {
                   )}
                   <div ref={transcriptionEndRef} />
                 </div>
+              </div>
+
+              {/* Secure Transfer Action */}
+              <div className="mb-3">
+                <Button 
+                  variant="primary" 
+                  className="w-full py-2.5 rounded-xl flex items-center justify-center font-bold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 border-0 text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/35 transition-all text-xs" 
+                  onClick={transferToIvr}
+                >
+                  <ShieldCheck size={14} className="mr-2 animate-pulse" />
+                  {t('agent.transfer_to_ivr')}
+                </Button>
               </div>
 
               {/* Call Controls */}

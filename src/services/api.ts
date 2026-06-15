@@ -362,6 +362,15 @@ export const ivrService = {
       console.error('Error saving IVR flow to backend:', error);
       throw error;
     }
+  },
+  transferToPaymentIvr: async (callId: string): Promise<unknown> => {
+    try {
+      const response = await api.post('/ivr/calls/transfer-back', { callId });
+      return response.data;
+    } catch (error) {
+      console.warn('Backend not available, simulating transfer back to IVR locally');
+      return { success: true };
+    }
   }
 };
 

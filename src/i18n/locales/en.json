@@ -575,9 +575,11 @@
     "transcription": "Live Transcription",
     "no_transcription": "Waiting for customer audio...",
     "calling": "Calling...",
-    "call_ended": "Call ended"
+    "call_ended": "Call ended",
+    "transfer_to_ivr": "Secure IVR Return"
   },
   "screen_pop": {
+    "transfer_to_ivr": "Return to Payment IVR",
     "title": "Client Context Pop-up (Screen Pop)",
     "client_info": "Customer Information",
     "customer_name": "Customer Name",

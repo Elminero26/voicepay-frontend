@@ -33,6 +33,7 @@ interface AgentStoreState {
   incrementDuration: () => void;
   addTranscription: (role: 'bot' | 'user' | 'agent', text: string) => void;
   clearTranscriptionHistory: () => void;
+  transferToIvr: () => Promise<void>;
 }
 
 export const useAgentStore = create<AgentStoreState>((set, get) => ({
@@ -182,5 +183,40 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
     ]
   })),
 
-  clearTranscriptionHistory: () => set({ transcriptionHistory: [] })
+  clearTranscriptionHistory: () => set({ transcriptionHistory: [] }),
+
+  transferToIvr: async () => {
+    const { activeCall } = get();
+    if (!activeCall) return;
+
+    try {
+      if (activeCall.id !== 'sim-call-999') {
+        const { ivrService } = await import('../services/api');
+        await ivrService.transferToPaymentIvr(activeCall.id);
+      }
+
+      set({
+        callState: 'idle',
+        activeCall: null,
+        screenPopOpen: false,
+        callDuration: 0,
+        transcriptionHistory: []
+      });
+
+      if (activeCall.id === 'sim-call-999') {
+        const { useCallStore } = await import('./useCallStore');
+        const callStore = useCallStore.getState();
+        
+        // Change simulation path to payment so it proceeds to complete the payment
+        callStore.startSimulation('payment');
+        callStore.setSimStep(5);
+        
+        setTimeout(() => {
+          callStore.setSimStep(6);
+        }, 1500);
+      }
+    } catch (error) {
+      console.error('Error transferring call back to IVR:', error);
+    }
+  }
 }));

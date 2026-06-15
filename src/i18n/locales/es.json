@@ -575,9 +575,11 @@
     "transcription": "Transcripción en Vivo",
     "no_transcription": "Esperando audio del cliente...",
     "calling": "Llamando...",
-    "call_ended": "Llamada finalizada"
+    "call_ended": "Llamada finalizada",
+    "transfer_to_ivr": "Retorno Seguro"
   },
   "screen_pop": {
+    "transfer_to_ivr": "Retornar a Pago IVR",
     "title": "Ventana Emergente de Contexto del Cliente (Screen Pop)",
     "client_info": "Información del Cliente",
     "customer_name": "Nombre del Cliente",
