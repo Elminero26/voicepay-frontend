@@ -31,7 +31,8 @@
     "notifications": "Notificaciones",
     "settings": "Configuración",
     "logout": "Cerrar sesión",
-    "system_overview": "Vista General del Sistema"
+    "system_overview": "Vista General del Sistema",
+    "agent_console": "Consola de Agente"
   },
   "connection": {
     "live": "Señal en Vivo",
@@ -576,7 +577,20 @@
     "no_transcription": "Esperando audio del cliente...",
     "calling": "Llamando...",
     "call_ended": "Llamada finalizada",
-    "transfer_to_ivr": "Retorno Seguro"
+    "transfer_to_ivr": "Retorno Seguro",
+    "dock": "Acoplar",
+    "float": "Desacoplar",
+    "collapse": "Colapsar",
+    "expand": "Expandir",
+    "agent_console_title": "Consola de Sesión de Agente",
+    "waiting_for_calls": "Esperando llamadas entrantes...",
+    "live_transcription": "Transcripción de la Sesión en Vivo",
+    "caller_details": "Detalles del Cliente",
+    "session_actions": "Acciones de la Sesión",
+    "agent_notes": "Notas de Sesión del Agente",
+    "notes_placeholder": "Escribe tus notas de la sesión aquí...",
+    "ivr_timeline": "Historial de Eventos IVR",
+    "no_active_session": "Esperando Canal Telefónico"
   },
   "screen_pop": {
     "transfer_to_ivr": "Retornar a Pago IVR",

@@ -31,7 +31,8 @@
     "notifications": "Notifications",
     "settings": "Settings",
     "logout": "Logout",
-    "system_overview": "System Overview"
+    "system_overview": "System Overview",
+    "agent_console": "Agent Console"
   },
   "connection": {
     "live": "Live Feed",
@@ -576,7 +577,20 @@
     "no_transcription": "Waiting for customer audio...",
     "calling": "Calling...",
     "call_ended": "Call ended",
-    "transfer_to_ivr": "Secure IVR Return"
+    "transfer_to_ivr": "Secure IVR Return",
+    "dock": "Dock",
+    "float": "Float",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "agent_console_title": "Agent Session Console",
+    "waiting_for_calls": "Waiting for incoming calls...",
+    "live_transcription": "Live Session Transcription",
+    "caller_details": "Customer Details",
+    "session_actions": "Session Actions",
+    "agent_notes": "Agent Session Notes",
+    "notes_placeholder": "Write your session notes here...",
+    "ivr_timeline": "IVR Event History",
+    "no_active_session": "Awaiting Telephony Stream"
   },
   "screen_pop": {
     "transfer_to_ivr": "Return to Payment IVR",

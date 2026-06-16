@@ -17,6 +17,7 @@ const CallsPage = React.lazy(() => import('./features/calls').then(m => ({ defau
 const IvrFlow = React.lazy(() => import('./features/ivr-flow').then(m => ({ default: m.IvrFlow })));
 const Notifications = React.lazy(() => import('./features/notifications').then(m => ({ default: m.Notifications })));
 const Settings = React.lazy(() => import('./features/settings').then(m => ({ default: m.Settings })));
+const AgentConsole = React.lazy(() => import('./features/agent-console').then(m => ({ default: m.AgentConsole })));
 
 // VP-18: Render floating switcher on public auth pages
 const GlobalFloatingSwitcher: React.FC = () => {
@@ -41,6 +42,7 @@ function App() {
                 <Route path="users" element={<UsersPage />} />
                 <Route path="calls" element={<CallsPage />} />
                 <Route path="ivr-flow" element={<IvrFlow />} />
+                <Route path="agent-console" element={<AgentConsole />} />
                 <Route path="notifications" element={<Notifications />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="access-denied" element={<AccessDenied />} />

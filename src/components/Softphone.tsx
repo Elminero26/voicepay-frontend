@@ -2,8 +2,9 @@ import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, 
-  X, ChevronDown, Headset, Terminal, ShieldAlert, ShieldCheck
+  X, ChevronDown, Headset, Terminal, ShieldAlert, ShieldCheck, Minimize2
 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { useAgentStore } from '../stores/useAgentStore';
 import type { AgentStatus } from '../stores/useAgentStore';
 import { useLanguage } from '../hooks/useLanguage';
@@ -12,6 +13,8 @@ import { cn } from '../utils/cn';
 
 export const Softphone: React.FC = () => {
   const { t } = useLanguage();
+  const location = useLocation();
+  const isAgentConsolePage = location.pathname === '/agent-console';
   const {
     agentStatus,
     softphoneOpen,
@@ -34,7 +37,9 @@ export const Softphone: React.FC = () => {
     toggleMute,
     toggleSpeaker,
     incrementDuration,
-    transferToIvr
+    transferToIvr,
+    isSoftphoneDocked,
+    setSoftphoneDocked
   } = useAgentStore();
 
   const transcriptionEndRef = useRef<HTMLDivElement>(null);
@@ -60,10 +65,9 @@ export const Softphone: React.FC = () => {
   useEffect(() => {
     if (callState !== 'ringing') return;
 
-    let intervalId: any;
     const playRingTone = () => {
       try {
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
         if (!AudioContextClass) return;
         const ctx = new AudioContextClass();
         const osc = ctx.createOscillator();
@@ -96,7 +100,7 @@ export const Softphone: React.FC = () => {
     };
 
     playRingTone();
-    intervalId = setInterval(playRingTone, 2500);
+    const intervalId = setInterval(playRingTone, 2500);
 
     return () => {
       clearInterval(intervalId);
@@ -106,7 +110,7 @@ export const Softphone: React.FC = () => {
   // DTMF Tone Generator
   const playDTMFTone = (digit: string) => {
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!AudioContextClass) return;
       const ctx = new AudioContextClass();
       
@@ -170,6 +174,7 @@ export const Softphone: React.FC = () => {
   };
 
   if (!softphoneOpen) return null;
+  if (isAgentConsolePage && isSoftphoneDocked) return null;
 
   return (
     <AnimatePresence>
@@ -226,6 +231,16 @@ export const Softphone: React.FC = () => {
                 )}
               </AnimatePresence>
             </div>
+
+            {isAgentConsolePage && !isSoftphoneDocked && (
+              <button 
+                onClick={() => setSoftphoneDocked(true)}
+                className="p-1 rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/5 transition-all"
+                title={t('agent.dock', 'Dock')}
+              >
+                <Minimize2 size={16} />
+              </button>
+            )}
 
             <button 
               onClick={() => setSoftphoneOpen(false)}

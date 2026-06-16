@@ -15,10 +15,12 @@ interface AgentStoreState {
   dialNumber: string;
   callDuration: number; // in seconds
   transcriptionHistory: { role: 'bot' | 'user' | 'agent'; text: string; timestamp: string }[];
+  isSoftphoneDocked: boolean;
 
   // Actions
   setAgentStatus: (status: AgentStatus) => void;
   setSoftphoneOpen: (open: boolean) => void;
+  setSoftphoneDocked: (docked: boolean) => void;
   setScreenPopOpen: (open: boolean) => void;
   dialDigit: (digit: string) => void;
   clearDial: () => void;
@@ -47,6 +49,7 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
   dialNumber: '',
   callDuration: 0,
   transcriptionHistory: [],
+  isSoftphoneDocked: true,
 
   setAgentStatus: (status) => {
     set({ agentStatus: status });
@@ -60,6 +63,8 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
   },
 
   setSoftphoneOpen: (open) => set({ softphoneOpen: open }),
+
+  setSoftphoneDocked: (isSoftphoneDocked) => set({ isSoftphoneDocked }),
 
   setScreenPopOpen: (open) => set({ screenPopOpen: open }),
 
@@ -217,6 +222,19 @@ export const useAgentStore = create<AgentStoreState>((set, get) => ({
       }
     } catch (error) {
       console.error('Error transferring call back to IVR:', error);
+      try {
+        const { useCallStore } = await import('./useCallStore');
+        const toastFn = useCallStore.getState().toastFn;
+        if (toastFn) {
+          toastFn(
+            'Error de Transferencia',
+            'No se pudo retornar la llamada al IVR seguro (Acceso Denegado / ID no válido).',
+            'error'
+          );
+        }
+      } catch (toastErr) {
+        console.error('Failed to trigger toast alert:', toastErr);
+      }
     }
   }
 }));

@@ -101,7 +101,8 @@ api.interceptors.response.use(
     if (status === 403) {
       // Prohibido - Falta de permisos
       console.error('Access forbidden. Not enough permissions.');
-      if (!window.location.pathname.includes('/access-denied')) {
+      const isTransferBack = originalRequest.url?.includes('/ivr/calls/transfer-back');
+      if (!isTransferBack && !window.location.pathname.includes('/access-denied')) {
         window.location.href = '/access-denied';
       }
     }

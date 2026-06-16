@@ -42,6 +42,7 @@ export const Layout: React.FC = () => {
     { icon: Users, label: t('nav.users'), path: '/users' },
     { icon: PhoneCall, label: t('nav.calls'), path: '/calls' },
     { icon: Network, label: t('nav.ivr_flow'), path: '/ivr-flow' },
+    { icon: Headset, label: t('nav.agent_console'), path: '/agent-console' },
     { icon: Bell, label: t('nav.notifications'), path: '/notifications' },
     { icon: Settings, label: t('nav.settings'), path: '/settings' },
   ];
