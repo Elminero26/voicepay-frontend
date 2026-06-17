@@ -2,7 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, 
-  X, ChevronDown, Headset, Terminal, ShieldAlert, ShieldCheck, Minimize2
+  X, ChevronDown, Headset, Terminal, ShieldAlert, ShieldCheck, Minimize2,
+  Pause, Play, ArrowLeftRight
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { useAgentStore } from '../stores/useAgentStore';
@@ -54,11 +55,23 @@ export const Softphone: React.FC = () => {
     incrementDuration,
     transferToIvr,
     isSoftphoneDocked,
-    setSoftphoneDocked
+    setSoftphoneDocked,
+    isHeld,
+    toggleHold,
+    isConsulting,
+    consultationState,
+    consultationNumber,
+    initiateBlindTransfer,
+    initiateAssistedTransfer,
+    completeAssistedTransfer,
+    cancelAssistedTransfer
   } = useAgentStore();
 
   const transcriptionEndRef = useRef<HTMLDivElement>(null);
   const [showStatusDropdown, setShowStatusDropdown] = React.useState(false);
+  const [showTransferMenu, setShowTransferMenu] = React.useState(false);
+  const [transferNum, setTransferNum] = React.useState('');
+  const [transferType, setTransferType] = React.useState<'blind' | 'assisted'>('blind');
 
   // Auto-scroll transcriptions
   useEffect(() => {
@@ -126,6 +139,47 @@ export const Softphone: React.FC = () => {
       clearInterval(intervalId);
     };
   }, [callState]);
+
+  // Hold beep synthesizer trigger
+  useEffect(() => {
+    if (callState !== 'active' || !isHeld) return;
+
+    const playHoldTone = () => {
+      try {
+        const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(350, ctx.currentTime);
+
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 0.05);
+        gain.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 0.15);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.2);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+        setTimeout(() => {
+          osc.stop();
+          ctx.close();
+        }, 300);
+      } catch (e) {
+        console.warn('Hold tone play failed:', e);
+      }
+    };
+
+    playHoldTone();
+    const intervalId = setInterval(playHoldTone, 3000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [callState, isHeld]);
 
   // DTMF Tone Generator
   const playDTMFTone = (digit: string) => {
@@ -353,109 +407,282 @@ export const Softphone: React.FC = () => {
           {/* 3. ACTIVE CALL STATE */}
           {callState === 'active' && activeCall && (
             <div className="flex-1 flex flex-col justify-between h-full">
-              {/* Header Info */}
-              <div className="flex items-center justify-between bg-white/5 border border-white/5 rounded-2xl p-3 mb-3">
-                <div>
-                  <h4 className="text-xs font-bold text-white leading-tight truncate max-w-[150px]">{activeCall.customerName}</h4>
-                  <p className="text-[10px] text-text-secondary font-mono">{activeCall.phoneNumber}</p>
-                </div>
-                <div className="text-right">
-                  <span className="text-[10px] font-black tracking-widest text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 uppercase">
-                    Live
-                  </span>
-                  <div className="text-xs font-bold font-mono text-white mt-1">
-                    {formatTime(callDuration)}
+              {isConsulting ? (
+                <div className="flex-grow flex flex-col justify-between py-2">
+                  {/* Consultation header */}
+                  <div className="flex flex-col items-center justify-center text-center py-4 border-b border-border/30 mb-4">
+                    <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center justify-center text-amber-400 mb-2 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
+                      <ArrowLeftRight size={20} className="animate-pulse" />
+                    </div>
+                    <h4 className="text-sm font-bold text-white uppercase tracking-wider">{t('agent.active_consultation', 'Consulta Activa')}</h4>
+                    <p className="text-[10px] text-amber-500 mt-1 font-black tracking-widest uppercase">{t('agent.on_hold', 'EN ESPERA')}</p>
+                  </div>
+
+                  {/* Dual party cards */}
+                  <div className="space-y-3 mb-6">
+                    {/* Customer on hold */}
+                    <div className="glass p-3.5 rounded-2xl border border-amber-500/20 bg-amber-500/5 flex items-center justify-between">
+                      <div className="flex items-center space-x-2.5">
+                        <div className="w-7 h-7 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 text-xs font-bold">C</div>
+                        <div className="min-w-0 text-left">
+                          <p className="text-xs font-bold text-white truncate max-w-[120px]">{activeCall.customerName}</p>
+                          <p className="text-[10px] text-text-secondary font-mono">{activeCall.phoneNumber}</p>
+                        </div>
+                      </div>
+                      <span className="text-[9px] font-black bg-amber-500/25 text-amber-300 px-2 py-0.5 rounded uppercase tracking-wider animate-pulse">{t('agent.on_hold', 'Hold')}</span>
+                    </div>
+
+                    {/* Operator target */}
+                    <div className="glass p-3.5 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 flex items-center justify-between">
+                      <div className="flex items-center space-x-2.5">
+                        <div className="w-7 h-7 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-xs font-bold font-mono">D</div>
+                        <div className="min-w-0 text-left">
+                          <p className="text-xs font-bold text-white truncate max-w-[120px]">{t('agent.transfer_dest', 'Destino')}</p>
+                          <p className="text-[10px] text-text-secondary font-mono">{consultationNumber}</p>
+                        </div>
+                      </div>
+                      <span className={cn(
+                        "text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider",
+                        consultationState === 'connected' ? "bg-emerald-500/25 text-emerald-300 animate-pulse" : "bg-primary/25 text-primary-light animate-pulse"
+                      )}>
+                        {consultationState === 'connected' ? 'Connected' : 'Calling...'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Consultation Actions */}
+                  <div className="space-y-2 mt-auto">
+                    <Button 
+                      variant="primary" 
+                      className="w-full py-3 rounded-xl flex items-center justify-center font-bold bg-emerald-500 hover:bg-emerald-600 border-0 text-white text-xs shadow-lg shadow-emerald-500/10" 
+                      onClick={completeAssistedTransfer}
+                      disabled={consultationState !== 'connected'}
+                    >
+                      <ShieldCheck size={14} className="mr-2" />
+                      {t('agent.complete_transfer', 'Completar Transferencia')}
+                    </Button>
+
+                    <Button 
+                      variant="outline" 
+                      className="w-full py-3 rounded-xl flex items-center justify-center font-bold border-red-500/35 hover:bg-red-500/10 text-red-500 text-xs" 
+                      onClick={cancelAssistedTransfer}
+                    >
+                      <PhoneOff size={14} className="mr-2" />
+                      {t('agent.cancel_consultation', 'Cancelar')}
+                    </Button>
                   </div>
                 </div>
-              </div>
-
-              {/* Transcription Area */}
-              <div className="flex-1 flex flex-col bg-black/30 rounded-2xl border border-border/40 overflow-hidden h-[180px] p-3 mb-3">
-                <div className="flex items-center space-x-1.5 mb-2 px-1 border-b border-border/30 pb-1.5">
-                  <Terminal size={11} className="text-primary" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
-                    {t('agent.transcription')}
-                  </span>
-                </div>
-                
-                <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar text-[11px]">
-                  {transcriptionHistory.map((item, index) => (
-                    <div 
-                      key={index}
-                      className={cn(
-                        "flex flex-col max-w-[85%] rounded-xl px-2.5 py-1.5 animate-bubble-in",
-                        item.role === 'agent' ? "bg-primary/20 border border-primary/20 text-white ml-auto" :
-                        item.role === 'bot' ? "bg-white/5 text-zinc-300 mr-auto border border-white/5 italic" :
-                        "bg-secondary/40 border border-border/40 text-text-primary mr-auto"
-                      )}
-                    >
-                      <span className="text-[9px] font-bold opacity-60 capitalize mb-0.5">
-                        {item.role === 'agent' ? t('common.role') : item.role === 'bot' ? 'System' : 'Client'}
+              ) : (
+                <>
+                  {/* Header Info */}
+                  <div className="flex items-center justify-between bg-white/5 border border-white/5 rounded-2xl p-3 mb-3 relative">
+                    <div>
+                      <h4 className="text-xs font-bold text-white leading-tight truncate max-w-[150px]">{activeCall.customerName}</h4>
+                      <p className="text-[10px] text-text-secondary font-mono">{activeCall.phoneNumber}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className={cn(
+                        "text-[9px] font-black tracking-widest px-2 py-0.5 rounded border uppercase",
+                        isHeld 
+                          ? "text-amber-400 bg-amber-500/10 border-amber-500/25 animate-pulse"
+                          : "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
+                      )}>
+                        {isHeld ? t('agent.on_hold') : 'Live'}
                       </span>
-                      <span>{item.text}</span>
-                    </div>
-                  ))}
-                  {transcriptionHistory.length === 0 && (
-                    <div className="flex flex-col items-center justify-center h-full text-center opacity-40 py-8">
-                      <div className="flex h-1.5 w-1.5 relative mb-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
+                      <div className="text-xs font-bold font-mono text-white mt-1">
+                        {formatTime(callDuration)}
                       </div>
-                      <span className="text-[10px] uppercase font-bold tracking-wider">{t('agent.no_transcription')}</span>
                     </div>
-                  )}
-                  <div ref={transcriptionEndRef} />
-                </div>
-              </div>
+                  </div>
 
-              {/* Secure Transfer Action */}
-              <div className="mb-3">
-                <Button 
-                  variant="primary" 
-                  className="w-full py-2.5 rounded-xl flex items-center justify-center font-bold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 border-0 text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/35 transition-all text-xs" 
-                  onClick={transferToIvr}
-                >
-                  <ShieldCheck size={14} className="mr-2 animate-pulse" />
-                  {t('agent.transfer_to_ivr')}
-                </Button>
-              </div>
+                  {/* Transcription Area */}
+                  <div className="flex-1 flex flex-col bg-black/30 rounded-2xl border border-border/40 overflow-hidden h-[180px] p-3 mb-3">
+                    <div className="flex items-center space-x-1.5 mb-2 px-1 border-b border-border/30 pb-1.5">
+                      <Terminal size={11} className="text-primary" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+                        {t('agent.transcription')}
+                      </span>
+                    </div>
+                    
+                    <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar text-[11px]">
+                      {transcriptionHistory.map((item, index) => (
+                        <div 
+                          key={index}
+                          className={cn(
+                            "flex flex-col max-w-[85%] rounded-xl px-2.5 py-1.5 animate-bubble-in text-left",
+                            item.role === 'agent' ? "bg-primary/20 border border-primary/20 text-white ml-auto" :
+                            item.role === 'bot' ? "bg-white/5 text-zinc-300 mr-auto border border-white/5 italic" :
+                            "bg-secondary/40 border border-border/40 text-text-primary mr-auto"
+                          )}
+                        >
+                          <span className="text-[9px] font-bold opacity-60 capitalize mb-0.5">
+                            {item.role === 'agent' ? t('common.role') : item.role === 'bot' ? 'System' : 'Client'}
+                          </span>
+                          <span>{item.text}</span>
+                        </div>
+                      ))}
+                      {transcriptionHistory.length === 0 && (
+                        <div className="flex flex-col items-center justify-center h-full text-center opacity-40 py-8">
+                          <div className="flex h-1.5 w-1.5 relative mb-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
+                          </div>
+                          <span className="text-[10px] uppercase font-bold tracking-wider">{t('agent.no_transcription')}</span>
+                        </div>
+                      )}
+                      <div ref={transcriptionEndRef} />
+                    </div>
+                  </div>
 
-              {/* Call Controls */}
-              <div className="flex items-center justify-between pt-1">
-                <div className="flex space-x-2">
-                  <Button 
-                    variant={isMuted ? 'primary' : 'outline'} 
-                    size="icon" 
-                    onClick={toggleMute}
-                    className={cn(
-                      "w-9 h-9 rounded-xl", 
-                      isMuted ? "bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20" : "text-text-secondary hover:text-text-primary"
-                    )}
-                    title={isMuted ? t('agent.unmute') : t('agent.mute')}
-                  >
-                    {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
-                  </Button>
+                  {/* Secure Transfer Action */}
+                  <div className="mb-3 space-y-2">
+                    <Button 
+                      variant="primary" 
+                      className="w-full py-2.5 rounded-xl flex items-center justify-center font-bold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 border-0 text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/35 transition-all text-xs" 
+                      onClick={transferToIvr}
+                    >
+                      <ShieldCheck size={14} className="mr-2 animate-pulse" />
+                      {t('agent.transfer_to_ivr')}
+                    </Button>
 
-                  <Button 
-                    variant={isSpeakerOn ? 'outline' : 'ghost'} 
-                    size="icon" 
-                    onClick={toggleSpeaker}
-                    className="w-9 h-9 rounded-xl text-text-secondary hover:text-text-primary"
-                    title={t('agent.speaker')}
-                  >
-                    {isSpeakerOn ? <Volume2 size={16} /> : <VolumeX size={16} />}
-                  </Button>
-                </div>
+                    <Button
+                      variant="outline"
+                      className="w-full py-2.5 rounded-xl flex items-center justify-center font-bold text-xs border-primary/20 hover:bg-primary/5 text-primary"
+                      onClick={() => setShowTransferMenu(!showTransferMenu)}
+                    >
+                      <ArrowLeftRight size={14} className="mr-2" />
+                      {t('agent.transfer_title')}
+                    </Button>
 
-                <Button 
-                  variant="danger" 
-                  className="px-4 py-2.5 rounded-xl flex items-center font-bold text-xs" 
-                  onClick={hangUp}
-                >
-                  <PhoneOff size={14} className="mr-1.5" />
-                  {t('agent.hangup')}
-                </Button>
-              </div>
+                    {/* Transfer Options Panel */}
+                    <AnimatePresence>
+                      {showTransferMenu && (
+                        <motion.div 
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="glass p-3 rounded-2xl border border-border/40 space-y-2.5 mt-2 overflow-hidden text-left bg-black/20"
+                        >
+                          <div className="flex border-b border-border/30 pb-1.5 mb-1.5">
+                            <button
+                              type="button"
+                              className={cn(
+                                "flex-1 text-[10px] uppercase font-bold py-0.5 text-center transition-all",
+                                transferType === 'blind' ? "text-primary border-b border-primary" : "text-text-secondary hover:text-text-primary"
+                              )}
+                              onClick={() => setTransferType('blind')}
+                            >
+                              {t('agent.blind_transfer')}
+                            </button>
+                            <button
+                              type="button"
+                              className={cn(
+                                "flex-1 text-[10px] uppercase font-bold py-0.5 text-center transition-all",
+                                transferType === 'assisted' ? "text-primary border-b border-primary" : "text-text-secondary hover:text-text-primary"
+                              )}
+                              onClick={() => setTransferType('assisted')}
+                            >
+                              {t('agent.assisted_transfer')}
+                            </button>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-bold text-text-secondary uppercase tracking-wide">
+                              {t('agent.transfer_dest')}
+                            </label>
+                            <input 
+                              type="text" 
+                              value={transferNum}
+                              onChange={(e) => setTransferNum(e.target.value.replace(/[^0-9+]/g, ''))}
+                              placeholder="e.g. +34 600..."
+                              className="w-full bg-black/40 border border-border/40 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-primary/50 font-mono"
+                            />
+                          </div>
+
+                          <div className="flex space-x-2 pt-1">
+                            <Button
+                              variant="ghost"
+                              className="flex-1 py-1.5 rounded-xl text-[10px]"
+                              onClick={() => {
+                                setShowTransferMenu(false);
+                                setTransferNum('');
+                              }}
+                            >
+                              {t('common.cancel')}
+                            </Button>
+                            <Button
+                              variant="primary"
+                              className="flex-1 py-1.5 rounded-xl text-[10px]"
+                              disabled={!transferNum.trim()}
+                              onClick={() => {
+                                if (transferType === 'blind') {
+                                  initiateBlindTransfer(transferNum);
+                                } else {
+                                  initiateAssistedTransfer(transferNum);
+                                }
+                                setShowTransferMenu(false);
+                                setTransferNum('');
+                              }}
+                            >
+                              {transferType === 'blind' ? t('agent.blind_transfer') : 'Consult'}
+                            </Button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Call Controls */}
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant={isMuted ? 'primary' : 'outline'} 
+                        size="icon" 
+                        onClick={toggleMute}
+                        className={cn(
+                          "w-9 h-9 rounded-xl", 
+                          isMuted ? "bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20" : "text-text-secondary hover:text-text-primary"
+                        )}
+                        title={isMuted ? t('agent.unmute') : t('agent.mute')}
+                      >
+                        {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
+                      </Button>
+
+                      <Button 
+                        variant={isHeld ? 'primary' : 'outline'} 
+                        size="icon" 
+                        onClick={toggleHold}
+                        className={cn(
+                          "w-9 h-9 rounded-xl", 
+                          isHeld ? "bg-amber-500/15 text-amber-500 border border-amber-500/30 hover:bg-amber-500/25 animate-pulse" : "text-text-secondary hover:text-text-primary"
+                        )}
+                        title={isHeld ? t('agent.resume') : t('agent.hold')}
+                      >
+                        {isHeld ? <Play size={16} /> : <Pause size={16} />}
+                      </Button>
+
+                      <Button 
+                        variant={isSpeakerOn ? 'outline' : 'ghost'} 
+                        size="icon" 
+                        onClick={toggleSpeaker}
+                        className="w-9 h-9 rounded-xl text-text-secondary hover:text-text-primary"
+                        title={t('agent.speaker')}
+                      >
+                        {isSpeakerOn ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                      </Button>
+                    </div>
+
+                    <Button 
+                      variant="danger" 
+                      className="px-4 py-2.5 rounded-xl flex items-center font-bold text-xs" 
+                      onClick={hangUp}
+                    >
+                      <PhoneOff size={14} className="mr-1.5" />
+                      {t('agent.hangup')}
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           )}
 

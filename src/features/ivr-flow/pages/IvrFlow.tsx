@@ -246,7 +246,11 @@ export const IvrFlowContent: React.FC = () => {
       setSimStep((prevStep: number) => {
         const nextStep = prevStep + 1;
         if (nextStep > 6) {
-          stopSimulation();
+          // Si es la ruta del agente, mantenemos la simulación activa en el paso 6
+          // para dar tiempo al agente de interactuar (silenciar, retener, transferir)
+          if (simPath !== 'agent') {
+            stopSimulation();
+          }
           return prevStep;
         }
         return nextStep;
@@ -258,7 +262,7 @@ export const IvrFlowContent: React.FC = () => {
     return () => {
       if (simTimerRef.current) clearInterval(simTimerRef.current);
     };
-  }, [isSimulating, stopSimulation, setSimStep]);
+  }, [isSimulating, simPath, stopSimulation, setSimStep]);
 
   // Construct simulated Call object depending on step and path
   useEffect(() => {

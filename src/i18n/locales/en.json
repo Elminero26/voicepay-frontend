@@ -590,7 +590,19 @@
     "agent_notes": "Agent Session Notes",
     "notes_placeholder": "Write your session notes here...",
     "ivr_timeline": "IVR Event History",
-    "no_active_session": "Awaiting Telephony Stream"
+    "no_active_session": "Awaiting Telephony Stream",
+    "hold": "Hold",
+    "resume": "Resume",
+    "blind_transfer": "Blind Transfer",
+    "assisted_transfer": "Assisted Transfer",
+    "consulting": "Consulting with {{number}}...",
+    "complete_transfer": "Complete Transfer",
+    "cancel_consultation": "Cancel",
+    "transfer_dest": "Destination Number",
+    "transfer_to_number": "Transfer to Number",
+    "transfer_title": "Transfer Options",
+    "on_hold": "ON HOLD",
+    "active_consultation": "Active Consultation"
   },
   "screen_pop": {
     "transfer_to_ivr": "Return to Payment IVR",

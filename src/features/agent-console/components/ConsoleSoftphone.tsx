@@ -2,7 +2,8 @@ import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, 
-  ChevronDown, Headset, ShieldAlert, ShieldCheck, AppWindow, ArrowLeftRight
+  ChevronDown, Headset, ShieldAlert, ShieldCheck, AppWindow, ArrowLeftRight,
+  Pause, Play
 } from 'lucide-react';
 import { useAgentStore } from '../../../stores/useAgentStore';
 import type { AgentStatus } from '../../../stores/useAgentStore';
@@ -52,10 +53,22 @@ export const ConsoleSoftphone: React.FC<ConsoleSoftphoneProps> = ({ onCollapseTo
     toggleMute,
     toggleSpeaker,
     incrementDuration,
-    transferToIvr
+    transferToIvr,
+    isHeld,
+    toggleHold,
+    isConsulting,
+    consultationState,
+    consultationNumber,
+    initiateBlindTransfer,
+    initiateAssistedTransfer,
+    completeAssistedTransfer,
+    cancelAssistedTransfer
   } = useAgentStore();
 
   const [showStatusDropdown, setShowStatusDropdown] = React.useState(false);
+  const [showTransferMenu, setShowTransferMenu] = React.useState(false);
+  const [transferNum, setTransferNum] = React.useState('');
+  const [transferType, setTransferType] = React.useState<'blind' | 'assisted'>('blind');
 
   // Duration timer - only runs if docked
   useEffect(() => {
@@ -115,6 +128,47 @@ export const ConsoleSoftphone: React.FC<ConsoleSoftphoneProps> = ({ onCollapseTo
       clearInterval(intervalId);
     };
   }, [callState]);
+
+  // Hold beep synthesizer trigger
+  useEffect(() => {
+    if (callState !== 'active' || !isHeld) return;
+
+    const playHoldTone = () => {
+      try {
+        const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(350, ctx.currentTime);
+
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 0.05);
+        gain.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 0.15);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.2);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+        setTimeout(() => {
+          osc.stop();
+          ctx.close();
+        }, 300);
+      } catch (e) {
+        console.warn('Hold tone play failed:', e);
+      }
+    };
+
+    playHoldTone();
+    const intervalId = setInterval(playHoldTone, 3000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [callState, isHeld]);
 
   // DTMF Tone Generator
   const playDTMFTone = (digit: string) => {
@@ -337,73 +391,248 @@ export const ConsoleSoftphone: React.FC<ConsoleSoftphoneProps> = ({ onCollapseTo
         {/* ACTIVE CALL VIEW */}
         {callState === 'active' && activeCall && (
           <div className="flex-1 flex flex-col justify-between h-full py-2">
-            
-            {/* Header info */}
-            <div className="flex flex-col items-center justify-center text-center py-6 border-b border-border/30 mb-6">
-              <div className="w-14 h-14 bg-gradient-to-tr from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 rounded-full flex items-center justify-center text-emerald-400 mb-3 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
-                <Phone size={24} className="animate-pulse" />
+            {isConsulting ? (
+              <div className="flex-grow flex flex-col justify-between py-2">
+                {/* Consultation header */}
+                <div className="flex flex-col items-center justify-center text-center py-4 border-b border-border/30 mb-4">
+                  <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center justify-center text-amber-400 mb-2 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
+                    <ArrowLeftRight size={20} className="animate-pulse" />
+                  </div>
+                  <h4 className="text-sm font-bold text-white uppercase tracking-wider">{t('agent.active_consultation', 'Consulta Activa')}</h4>
+                  <p className="text-[10px] text-amber-500 mt-1 font-black tracking-widest uppercase">{t('agent.on_hold', 'EN ESPERA')}</p>
+                </div>
+
+                {/* Dual party cards */}
+                <div className="space-y-3 mb-6">
+                  {/* Customer on hold */}
+                  <div className="glass p-3.5 rounded-2xl border border-amber-500/20 bg-amber-500/5 flex items-center justify-between">
+                    <div className="flex items-center space-x-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 text-xs font-bold">C</div>
+                      <div className="min-w-0 text-left">
+                        <p className="text-xs font-bold text-white truncate max-w-[120px]">{activeCall.customerName}</p>
+                        <p className="text-[10px] text-text-secondary font-mono">{activeCall.phoneNumber}</p>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-black bg-amber-500/25 text-amber-300 px-2 py-0.5 rounded uppercase tracking-wider animate-pulse">{t('agent.on_hold', 'Hold')}</span>
+                  </div>
+
+                  {/* Operator target */}
+                  <div className="glass p-3.5 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 flex items-center justify-between">
+                    <div className="flex items-center space-x-2.5">
+                      <div className="w-7 h-7 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-xs font-bold font-mono">D</div>
+                      <div className="min-w-0 text-left">
+                        <p className="text-xs font-bold text-white truncate max-w-[120px]">{t('agent.transfer_dest', 'Destino')}</p>
+                        <p className="text-[10px] text-text-secondary font-mono">{consultationNumber}</p>
+                      </div>
+                    </div>
+                    <span className={cn(
+                      "text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider",
+                      consultationState === 'connected' ? "bg-emerald-500/25 text-emerald-300 animate-pulse" : "bg-primary/25 text-primary-light animate-pulse"
+                    )}>
+                      {consultationState === 'connected' ? 'Connected' : 'Calling...'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Consultation Actions */}
+                <div className="space-y-2 mt-auto">
+                  <Button 
+                    variant="primary" 
+                    className="w-full py-3 rounded-xl flex items-center justify-center font-bold bg-emerald-500 hover:bg-emerald-600 border-0 text-white text-xs shadow-lg shadow-emerald-500/10" 
+                    onClick={completeAssistedTransfer}
+                    disabled={consultationState !== 'connected'}
+                  >
+                    <ShieldCheck size={14} className="mr-2" />
+                    {t('agent.complete_transfer', 'Completar Transferencia')}
+                  </Button>
+
+                  <Button 
+                    variant="outline" 
+                    className="w-full py-3 rounded-xl flex items-center justify-center font-bold border-red-500/35 hover:bg-red-500/10 text-red-500 text-xs" 
+                    onClick={cancelAssistedTransfer}
+                  >
+                    <PhoneOff size={14} className="mr-2" />
+                    {t('agent.cancel_consultation', 'Cancelar')}
+                  </Button>
+                </div>
               </div>
-              <h4 className="text-lg font-bold text-white truncate max-w-full">{activeCall.customerName}</h4>
-              <p className="text-xs text-text-secondary font-mono mt-0.5">{activeCall.phoneNumber}</p>
-              
-              <div className="mt-4 flex items-center space-x-3">
-                <span className="text-[10px] font-black tracking-widest text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded border border-emerald-500/25 uppercase">
-                  Connected
-                </span>
-                <span className="text-sm font-bold font-mono text-white tracking-wider">
-                  {formatTime(callDuration)}
-                </span>
-              </div>
-            </div>
+            ) : (
+              <>
+                {/* Header info */}
+                <div className="flex flex-col items-center justify-center text-center py-6 border-b border-border/30 mb-6">
+                  <div className="w-14 h-14 bg-gradient-to-tr from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 rounded-full flex items-center justify-center text-emerald-400 mb-3 shadow-[0_0_15px_rgba(16,185,129,0.1)] relative">
+                    {isHeld && (
+                      <div className="absolute inset-0 rounded-full bg-amber-500/20 animate-ping" />
+                    )}
+                    <Phone size={24} className={cn("animate-pulse", isHeld && "text-amber-400")} />
+                  </div>
+                  <h4 className="text-lg font-bold text-white truncate max-w-full">{activeCall.customerName}</h4>
+                  <p className="text-xs text-text-secondary font-mono mt-0.5">{activeCall.phoneNumber}</p>
+                  
+                  <div className="mt-4 flex items-center space-x-3">
+                    <span className={cn(
+                      "text-[10px] font-black tracking-widest px-2.5 py-1 rounded border uppercase",
+                      isHeld 
+                        ? "text-amber-400 bg-amber-500/10 border-amber-500/25"
+                        : "text-emerald-400 bg-emerald-500/10 border-emerald-500/25"
+                    )}>
+                      {isHeld ? t('agent.on_hold') : 'Connected'}
+                    </span>
+                    <span className="text-sm font-bold font-mono text-white tracking-wider">
+                      {formatTime(callDuration)}
+                    </span>
+                  </div>
+                </div>
 
-            {/* Quick Actions / Secure Transfer */}
-            <div className="space-y-4 mb-6">
-              <Button 
-                variant="primary" 
-                className="w-full py-3 rounded-xl flex items-center justify-center font-bold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 border-0 text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/35 transition-all text-xs tracking-wider" 
-                onClick={transferToIvr}
-              >
-                <ShieldCheck size={16} className="mr-2 animate-pulse" />
-                {t('agent.transfer_to_ivr')}
-              </Button>
-            </div>
+                {/* Quick Actions / Secure Transfer */}
+                <div className="space-y-3 mb-6">
+                  <Button 
+                    variant="primary" 
+                    className="w-full py-3 rounded-xl flex items-center justify-center font-bold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 border-0 text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/35 transition-all text-xs tracking-wider" 
+                    onClick={transferToIvr}
+                  >
+                    <ShieldCheck size={16} className="mr-2 animate-pulse" />
+                    {t('agent.transfer_to_ivr')}
+                  </Button>
 
-            {/* Call Controls */}
-            <div className="flex items-center justify-between border-t border-border/30 pt-4 mt-auto">
-              <div className="flex space-x-2">
-                <Button 
-                  variant={isMuted ? 'primary' : 'outline'} 
-                  size="icon" 
-                  onClick={toggleMute}
-                  className={cn(
-                    "w-10 h-10 rounded-xl", 
-                    isMuted ? "bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20" : "text-text-secondary hover:text-text-primary"
-                  )}
-                  title={isMuted ? t('agent.unmute') : t('agent.mute')}
-                >
-                  {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
-                </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full py-3 rounded-xl flex items-center justify-center font-bold text-xs border-primary/20 hover:bg-primary/5 text-primary tracking-wider"
+                    onClick={() => setShowTransferMenu(!showTransferMenu)}
+                  >
+                    <ArrowLeftRight size={14} className="mr-2" />
+                    {t('agent.transfer_title')}
+                  </Button>
 
-                <Button 
-                  variant={isSpeakerOn ? 'outline' : 'ghost'} 
-                  size="icon" 
-                  onClick={toggleSpeaker}
-                  className="w-10 h-10 rounded-xl text-text-secondary hover:text-text-primary"
-                  title={t('agent.speaker')}
-                >
-                  {isSpeakerOn ? <Volume2 size={18} /> : <VolumeX size={18} />}
-                </Button>
-              </div>
+                  {/* Transfer Options Panel */}
+                  <AnimatePresence>
+                    {showTransferMenu && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="glass p-3.5 rounded-2xl border border-border/40 space-y-3 mt-3 overflow-hidden text-left bg-black/20"
+                      >
+                        <div className="flex border-b border-border/30 pb-2 mb-2">
+                          <button
+                            type="button"
+                            className={cn(
+                              "flex-1 text-[10px] uppercase font-bold py-1 text-center transition-all",
+                              transferType === 'blind' ? "text-primary border-b border-primary" : "text-text-secondary hover:text-text-primary"
+                            )}
+                            onClick={() => setTransferType('blind')}
+                          >
+                            {t('agent.blind_transfer')}
+                          </button>
+                          <button
+                            type="button"
+                            className={cn(
+                              "flex-1 text-[10px] uppercase font-bold py-1 text-center transition-all",
+                              transferType === 'assisted' ? "text-primary border-b border-primary" : "text-text-secondary hover:text-text-primary"
+                            )}
+                            onClick={() => setTransferType('assisted')}
+                          >
+                            {t('agent.assisted_transfer')}
+                          </button>
+                        </div>
 
-              <Button 
-                variant="danger" 
-                className="px-5 py-2.5 rounded-xl flex items-center font-bold text-xs" 
-                onClick={hangUp}
-              >
-                <PhoneOff size={14} className="mr-1.5" />
-                {t('agent.hangup')}
-              </Button>
-            </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wide">
+                            {t('agent.transfer_dest')}
+                          </label>
+                          <input 
+                            type="text" 
+                            value={transferNum}
+                            onChange={(e) => setTransferNum(e.target.value.replace(/[^0-9+]/g, ''))}
+                            placeholder="e.g. +34 600..."
+                            className="w-full bg-black/40 border border-border/40 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary/50 font-mono focus:ring-1 focus:ring-primary/20"
+                          />
+                        </div>
+
+                        <div className="flex space-x-2 pt-1">
+                          <Button
+                            variant="ghost"
+                            className="flex-1 py-2 rounded-xl text-[11px]"
+                            onClick={() => {
+                              setShowTransferMenu(false);
+                              setTransferNum('');
+                            }}
+                          >
+                            {t('common.cancel')}
+                          </Button>
+                          <Button
+                            variant="primary"
+                            className="flex-1 py-2 rounded-xl text-[11px]"
+                            disabled={!transferNum.trim()}
+                            onClick={() => {
+                              if (transferType === 'blind') {
+                                initiateBlindTransfer(transferNum);
+                              } else {
+                                initiateAssistedTransfer(transferNum);
+                              }
+                              setShowTransferMenu(false);
+                              setTransferNum('');
+                            }}
+                          >
+                            {transferType === 'blind' ? t('agent.blind_transfer') : 'Consult'}
+                          </Button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Call Controls */}
+                <div className="flex items-center justify-between border-t border-border/30 pt-4 mt-auto">
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant={isMuted ? 'primary' : 'outline'} 
+                      size="icon" 
+                      onClick={toggleMute}
+                      className={cn(
+                        "w-10 h-10 rounded-xl", 
+                        isMuted ? "bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20" : "text-text-secondary hover:text-text-primary"
+                      )}
+                      title={isMuted ? t('agent.unmute') : t('agent.mute')}
+                    >
+                      {isMuted ? <MicOff size={18} /> : <Mic size={18} />}
+                    </Button>
+
+                    <Button 
+                      variant={isHeld ? 'primary' : 'outline'} 
+                      size="icon" 
+                      onClick={toggleHold}
+                      className={cn(
+                        "w-10 h-10 rounded-xl", 
+                        isHeld ? "bg-amber-500/15 text-amber-500 border border-amber-500/30 hover:bg-amber-500/25 animate-pulse" : "text-text-secondary hover:text-text-primary"
+                      )}
+                      title={isHeld ? t('agent.resume') : t('agent.hold')}
+                    >
+                      {isHeld ? <Play size={18} /> : <Pause size={18} />}
+                    </Button>
+
+                    <Button 
+                      variant={isSpeakerOn ? 'outline' : 'ghost'} 
+                      size="icon" 
+                      onClick={toggleSpeaker}
+                      className="w-10 h-10 rounded-xl text-text-secondary hover:text-text-primary"
+                      title={t('agent.speaker')}
+                    >
+                      {isSpeakerOn ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                    </Button>
+                  </div>
+
+                  <Button 
+                    variant="danger" 
+                    className="px-5 py-2.5 rounded-xl flex items-center font-bold text-xs" 
+                    onClick={hangUp}
+                  >
+                    <PhoneOff size={14} className="mr-1.5" />
+                    {t('agent.hangup')}
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         )}
 

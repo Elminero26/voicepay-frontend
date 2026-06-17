@@ -590,7 +590,19 @@
     "agent_notes": "Notas de Sesión del Agente",
     "notes_placeholder": "Escribe tus notas de la sesión aquí...",
     "ivr_timeline": "Historial de Eventos IVR",
-    "no_active_session": "Esperando Canal Telefónico"
+    "no_active_session": "Esperando Canal Telefónico",
+    "hold": "Poner en Espera",
+    "resume": "Reanudar",
+    "blind_transfer": "Transferencia Ciega",
+    "assisted_transfer": "Transferencia Asistida",
+    "consulting": "Consultando con {{number}}...",
+    "complete_transfer": "Completar Transferencia",
+    "cancel_consultation": "Cancelar",
+    "transfer_dest": "Número Destino",
+    "transfer_to_number": "Transferir al Número",
+    "transfer_title": "Opciones de Transferencia",
+    "on_hold": "EN ESPERA",
+    "active_consultation": "Consulta Activa"
   },
   "screen_pop": {
     "transfer_to_ivr": "Retornar a Pago IVR",
