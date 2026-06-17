@@ -359,13 +359,17 @@ export const IvrFlowContent: React.FC = () => {
     if (isSimulating && simulatedCall) {
       return simulatedCall;
     }
+    return liveCalls.find(c => c.id === selectedCallId) || liveCalls[0] || cachedCall;
+  }, [isSimulating, simulatedCall, liveCalls, selectedCallId, cachedCall]);
+
+  // Synchronize cached call side-effect outside the render phase
+  useEffect(() => {
+    if (isSimulating) return;
     const current = liveCalls.find(c => c.id === selectedCallId) || liveCalls[0] || null;
-    if (current) {
+    if (current && cachedCall?.id !== current.id) {
       setCachedCall(current);
-      return current;
     }
-    return cachedCall;
-  }, [isSimulating, simulatedCall, liveCalls, selectedCallId, cachedCall, setCachedCall]);
+  }, [liveCalls, selectedCallId, isSimulating, cachedCall, setCachedCall]);
 
   useEffect(() => {
     if (activeCall && !selectedCallId) {

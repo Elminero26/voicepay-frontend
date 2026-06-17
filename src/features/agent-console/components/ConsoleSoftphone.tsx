@@ -10,6 +10,21 @@ import { useLanguage } from '../../../hooks/useLanguage';
 import { Button } from '../../../components/Button';
 import { cn } from '../../../utils/cn';
 
+let userInteracted = false;
+if (typeof window !== 'undefined') {
+  const handleInteraction = () => {
+    userInteracted = true;
+    window.removeEventListener('click', handleInteraction);
+    window.removeEventListener('keydown', handleInteraction);
+    window.removeEventListener('touchstart', handleInteraction);
+    window.removeEventListener('mousedown', handleInteraction);
+  };
+  window.addEventListener('click', handleInteraction, { capture: true, passive: true });
+  window.addEventListener('keydown', handleInteraction, { capture: true, passive: true });
+  window.addEventListener('touchstart', handleInteraction, { capture: true, passive: true });
+  window.addEventListener('mousedown', handleInteraction, { capture: true, passive: true });
+}
+
 interface ConsoleSoftphoneProps {
   onCollapseToggle: () => void;
 }
@@ -57,6 +72,11 @@ export const ConsoleSoftphone: React.FC<ConsoleSoftphoneProps> = ({ onCollapseTo
 
     const playRingTone = () => {
       try {
+        const hasInteraction = (navigator.userActivation && navigator.userActivation.hasBeenActive) || userInteracted;
+        if (!hasInteraction) {
+          console.warn('AudioContext playback deferred: Awaiting user interaction on the page.');
+          return;
+        }
         const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
         if (!AudioContextClass) return;
         const ctx = new AudioContextClass();
