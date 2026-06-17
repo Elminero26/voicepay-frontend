@@ -214,7 +214,7 @@ export const useCallStore = create<CallStoreState>((set, get) => ({
               phoneNumber: c.phoneNumber || '-',
               status: c.status === 'COMPLETED' ? 'completed'
                     : c.status === 'FAILED'    ? 'failed'
-                    : c.status === 'TRANSFERRED' ? 'completed'
+                    : c.status === 'TRANSFERRED' ? 'in-progress'
                     : 'in-progress',
               amount: Number(c.callAmount) || 0,
               duration: c.timestamp

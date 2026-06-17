@@ -117,6 +117,18 @@ export const useAgentCallSync = () => {
   useEffect(() => {
     if (isSimulating) return; // Ignore live sync if simulating
 
+    // Clean up handledCallsRef for calls that are no longer waiting for the agent
+    const activeTransferredCallIds = new Set(
+      liveCalls
+        .filter((call) => call.status === 'in-progress' && call.selectedOption === '2')
+        .map((call) => call.id)
+    );
+    handledCallsRef.current.forEach((id) => {
+      if (!activeTransferredCallIds.has(id)) {
+        handledCallsRef.current.delete(id);
+      }
+    });
+
     // Find any live call that is transferred to agent
     // E.g. in-progress call and selectedOption is '2' (agent)
     liveCalls.forEach((call) => {
