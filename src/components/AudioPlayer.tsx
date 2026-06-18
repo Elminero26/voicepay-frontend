@@ -4,7 +4,7 @@ import {
   Play, Pause, Volume2, VolumeX, Download, 
   RotateCcw, Loader2, AlertCircle, Sparkles,
   Network, Hash, ShieldCheck, PhoneForwarded, AlertTriangle,
-  MessageSquareText, Bot, User
+  MessageSquareText, Bot, User, Frown, Smile, Meh
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useLanguage } from '../hooks/useLanguage';
@@ -25,28 +25,29 @@ interface TranscriptUtterance {
   end: number;
   textEs: string;
   textEn: string;
+  sentiment?: 'anger' | 'satisfaction' | 'neutral';
 }
 
 const COMPLETED_TRANSCRIPT: TranscriptUtterance[] = [
-  { id: 1, speaker: 'bot', start: 0, end: 3.5, textEs: "Bienvenido al sistema de pagos automáticos VoicePay. Por favor, espere mientras le identificamos.", textEn: "Welcome to the VoicePay automated payment system. Please hold while we identify you." },
-  { id: 2, speaker: 'client', start: 3.8, end: 7.2, textEs: "Hola, buenas. Quería pagar una factura pendiente.", textEn: "Hello, hello. I wanted to pay a pending invoice." },
-  { id: 3, speaker: 'bot', start: 7.5, end: 11.2, textEs: "Para garantizar su seguridad, estamos verificando el número de teléfono desde el que nos llama.", textEn: "To ensure your security, we are verifying the phone number you are calling from." },
-  { id: 4, speaker: 'client', start: 11.5, end: 14.5, textEs: "De acuerdo. Estoy llamando desde mi móvil de empresa.", textEn: "Alright. I'm calling from my business mobile phone." },
-  { id: 5, speaker: 'bot', start: 14.8, end: 20.0, textEs: "Hemos detectado una factura pendiente de ciento cincuenta euros. Pulse uno para proceder con el pago seguro con tarjeta.", textEn: "We have detected a pending invoice of one hundred and fifty euros. Press one to proceed with secure card payment." },
-  { id: 6, speaker: 'client', start: 20.2, end: 24.5, textEs: "Quiero hacer el pago de la factura de ciento cincuenta euros con mi tarjeta bancaria.", textEn: "I want to pay the invoice of one hundred and fifty euros with my bank card." },
-  { id: 7, speaker: 'bot', start: 24.8, end: 28.5, textEs: "Su pago de ciento cincuenta euros ha sido procesado y aprobado correctamente. Muchas gracias por utilizar VoicePay. Hasta pronto.", textEn: "Your payment of one hundred and fifty euros has been successfully processed and approved. Thank you very much for using VoicePay. See you soon." },
-  { id: 8, speaker: 'client', start: 28.8, end: 31.5, textEs: "Perfecto, pago confirmado. Muchas gracias por la rapidez. Adiós.", textEn: "Perfect, payment confirmed. Thank you very much for the speed. Goodbye." }
+  { id: 1, speaker: 'bot', start: 0, end: 3.5, textEs: "Bienvenido al sistema de pagos automáticos VoicePay. Por favor, espere mientras le identificamos.", textEn: "Welcome to the VoicePay automated payment system. Please hold while we identify you.", sentiment: 'neutral' },
+  { id: 2, speaker: 'client', start: 3.8, end: 7.2, textEs: "Hola, buenas. Quería pagar una factura pendiente.", textEn: "Hello, hello. I wanted to pay a pending invoice.", sentiment: 'neutral' },
+  { id: 3, speaker: 'bot', start: 7.5, end: 11.2, textEs: "Para garantizar su seguridad, estamos verificando el número de teléfono desde el que nos llama.", textEn: "To ensure your security, we are verifying the phone number you are calling from.", sentiment: 'neutral' },
+  { id: 4, speaker: 'client', start: 11.5, end: 14.5, textEs: "De acuerdo. Estoy llamando desde mi móvil de empresa.", textEn: "Alright. I'm calling from my business mobile phone.", sentiment: 'neutral' },
+  { id: 5, speaker: 'bot', start: 14.8, end: 20.0, textEs: "Hemos detectado una factura pendiente de ciento cincuenta euros. Pulse uno para proceder con el pago seguro con tarjeta.", textEn: "We have detected a pending invoice of one hundred and fifty euros. Press one to proceed with secure card payment.", sentiment: 'neutral' },
+  { id: 6, speaker: 'client', start: 20.2, end: 24.5, textEs: "Quiero hacer el pago de la factura de ciento cincuenta euros con mi tarjeta bancaria.", textEn: "I want to pay the invoice of one hundred and fifty euros with my bank card.", sentiment: 'neutral' },
+  { id: 7, speaker: 'bot', start: 24.8, end: 28.5, textEs: "Su pago de ciento cincuenta euros ha sido procesado y aprobado correctamente. Muchas gracias por utilizar VoicePay. Hasta pronto.", textEn: "Your payment of one hundred and fifty euros has been successfully processed and approved. Thank you very much for using VoicePay. See you soon.", sentiment: 'neutral' },
+  { id: 8, speaker: 'client', start: 28.8, end: 31.5, textEs: "Perfecto, pago confirmado. Muchas gracias por la rapidez. Adiós.", textEn: "Perfect, payment confirmed. Thank you very much for the speed. Goodbye.", sentiment: 'satisfaction' }
 ];
 
 const FAILED_TRANSCRIPT: TranscriptUtterance[] = [
-  { id: 1, speaker: 'bot', start: 0, end: 3.5, textEs: "Bienvenido al sistema de pagos automáticos VoicePay. Por favor, espere mientras le identificamos.", textEn: "Welcome to the VoicePay automated payment system. Please hold while we identify you." },
-  { id: 2, speaker: 'client', start: 3.8, end: 7.2, textEs: "Hola, buenas. Quería pagar una factura pendiente.", textEn: "Hello, hello. I wanted to pay a pending invoice." },
-  { id: 3, speaker: 'bot', start: 7.5, end: 11.2, textEs: "Para garantizar su seguridad, estamos verificando el número de teléfono desde el que nos llama.", textEn: "To ensure your security, we are verifying the phone number you are calling from." },
-  { id: 4, speaker: 'client', start: 11.5, end: 14.5, textEs: "De acuerdo. Estoy llamando desde mi móvil de empresa.", textEn: "Alright. I'm calling from my business mobile phone." },
-  { id: 5, speaker: 'bot', start: 14.8, end: 20.0, textEs: "Hemos detectado una factura pendiente de ciento cincuenta euros. Pulse uno para proceder con el pago seguro con tarjeta.", textEn: "We have detected a pending invoice of one hundred and fifty euros. Press one to proceed with secure card payment." },
-  { id: 6, speaker: 'client', start: 20.2, end: 23.5, textEs: "Sí, procedo al pago con la tarjeta terminada en 4321.", textEn: "Yes, I proceed with the payment with the card ending in 4321." },
-  { id: 7, speaker: 'bot', start: 23.8, end: 28.2, textEs: "Lo sentimos, la transacción ha sido rechazada por fondos insuficientes o tarjeta declinada. Por favor, intente con otra tarjeta.", textEn: "We are sorry, the transaction has been rejected due to insufficient funds or card declined. Please try with another card." },
-  { id: 8, speaker: 'client', start: 28.5, end: 32.0, textEs: "Vaya, qué raro. De acuerdo, tendré que llamar al banco. Gracias de todos modos.", textEn: "Oh, how strange. Alright, I'll have to call the bank. Thanks anyway." }
+  { id: 1, speaker: 'bot', start: 0, end: 3.5, textEs: "Bienvenido al sistema de pagos automáticos VoicePay. Por favor, espere mientras le identificamos.", textEn: "Welcome to the VoicePay automated payment system. Please hold while we identify you.", sentiment: 'neutral' },
+  { id: 2, speaker: 'client', start: 3.8, end: 7.2, textEs: "Hola, buenas. Quería pagar una factura pendiente.", textEn: "Hello, hello. I wanted to pay a pending invoice.", sentiment: 'neutral' },
+  { id: 3, speaker: 'bot', start: 7.5, end: 11.2, textEs: "Para garantizar su seguridad, estamos verificando el número de teléfono desde el que nos llama.", textEn: "To ensure your security, we are verifying the phone number you are calling from.", sentiment: 'neutral' },
+  { id: 4, speaker: 'client', start: 11.5, end: 14.5, textEs: "De acuerdo. Estoy llamando desde mi móvil de empresa.", textEn: "Alright. I'm calling from my business mobile phone.", sentiment: 'neutral' },
+  { id: 5, speaker: 'bot', start: 14.8, end: 20.0, textEs: "Hemos detectado una factura pendiente de ciento cincuenta euros. Pulse uno para proceder con el pago seguro con tarjeta.", textEn: "We have detected a pending invoice of one hundred and fifty euros. Press one to proceed with secure card payment.", sentiment: 'neutral' },
+  { id: 6, speaker: 'client', start: 20.2, end: 23.5, textEs: "Sí, procedo al pago con la tarjeta terminada en 4321.", textEn: "Yes, I proceed with the payment with the card ending in 4321.", sentiment: 'neutral' },
+  { id: 7, speaker: 'bot', start: 23.8, end: 28.2, textEs: "Lo sentimos, la transacción ha sido rechazada por fondos insuficientes o tarjeta declinada. Por favor, intente con otra tarjeta.", textEn: "We are sorry, the transaction has been rejected due to insufficient funds or card declined. Please try with another card.", sentiment: 'neutral' },
+  { id: 8, speaker: 'client', start: 28.5, end: 32.0, textEs: "¡No puede ser! Es la tercera vez que me rechazan la tarjeta y tengo saldo de sobra. Esto es desesperante. Tendré que llamar al banco y reclamar.", textEn: "This is unbelievable! It's the third time my card is declined and I have plenty of funds. This is so frustrating. I'll have to call the bank and complain.", sentiment: 'anger' }
 ];
 
 export const AudioPlayer: React.FC<AudioPlayerProps> = ({ 
@@ -436,6 +437,125 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         </div>
       </div>
 
+      {/* Sentiment Timeline Section */}
+      {!isLoading && !hasError && totalDuration > 0 && (
+        <div className="space-y-2 border-t border-white/5 pt-3 mt-1">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <span className="text-[10px] font-black uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+              <Sparkles size={12} className="text-indigo-400" />
+              {t('calls.drawer.sentiment_timeline')}
+            </span>
+            
+            {/* Legend */}
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-[8px] font-bold text-text-secondary uppercase tracking-widest">
+                {t('calls.drawer.sentiment_legend')}:
+              </span>
+              <span className="flex items-center gap-1 text-[9px] font-bold text-rose-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                {t('calls.drawer.sentiment_anger')}
+              </span>
+              <span className="flex items-center gap-1 text-[9px] font-bold text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                {t('calls.drawer.sentiment_satisfaction')}
+              </span>
+              <span className="flex items-center gap-1 text-[9px] font-bold text-slate-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-550 bg-slate-500" />
+                {t('calls.drawer.sentiment_neutrality')}
+              </span>
+            </div>
+          </div>
+          
+          <div className="relative w-full h-8 bg-black/45 border border-white/5 rounded-xl overflow-hidden flex items-center shadow-inner">
+            {transcript.map((utterance) => {
+              const startPct = totalDuration > 0 ? (utterance.start / totalDuration) * 100 : 0;
+              const durationPct = totalDuration > 0 ? ((utterance.end - utterance.start) / totalDuration) * 100 : 0;
+              const sentiment = utterance.sentiment || 'neutral';
+              
+              let colorClass = '';
+              let icon = null;
+              let label = '';
+              
+              if (sentiment === 'anger') {
+                colorClass = 'from-rose-500/20 via-red-500/30 to-rose-600/20 border-rose-500/30 hover:from-rose-400 hover:to-red-500 hover:text-white shadow-[0_0_10px_rgba(244,63,94,0.1)]';
+                icon = <Frown size={12} className="text-rose-400 shrink-0 group-hover/sentiment:scale-110 transition-transform" />;
+                label = t('calls.drawer.sentiment_anger');
+              } else if (sentiment === 'satisfaction') {
+                colorClass = 'from-emerald-500/20 via-emerald-600/30 to-teal-500/20 border-emerald-500/30 hover:from-emerald-400 hover:to-teal-500 hover:text-white shadow-[0_0_10px_rgba(16,185,129,0.1)]';
+                icon = <Smile size={12} className="text-emerald-400 shrink-0 group-hover/sentiment:scale-110 transition-transform" />;
+                label = t('calls.drawer.sentiment_satisfaction');
+              } else {
+                colorClass = 'from-slate-600/10 via-slate-700/20 to-slate-800/10 border-white/5 hover:from-slate-500/20 hover:to-slate-600/20 hover:text-white';
+                icon = <Meh size={12} className="text-slate-400 shrink-0 group-hover/sentiment:scale-110 transition-transform" />;
+                label = t('calls.drawer.sentiment_neutrality');
+              }
+              
+              return (
+                <div
+                  key={utterance.id}
+                  role="button"
+                  onClick={() => handleUtteranceClick(utterance.start)}
+                  className={cn(
+                    "absolute top-0 bottom-0 border-l border-r flex items-center justify-center cursor-pointer transition-all duration-200 group/sentiment select-none bg-gradient-to-b",
+                    colorClass
+                  )}
+                  style={{
+                    left: `${startPct}%`,
+                    width: `${durationPct}%`,
+                  }}
+                >
+                  {/* Display icon inside if there's enough space */}
+                  {durationPct > 5 && (
+                    <span className="flex items-center gap-1">
+                      {icon}
+                      {durationPct > 10 && (
+                        <span className="text-[9px] font-black uppercase tracking-wider opacity-85 group-hover/sentiment:opacity-100 truncate max-w-[70px]">
+                          {label}
+                        </span>
+                      )}
+                    </span>
+                  )}
+                  
+                  {/* Tooltip detail popup */}
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 rounded-xl bg-neutral-950/95 backdrop-blur-md border border-white/10 shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover/sentiment:opacity-100 group-hover/sentiment:translate-y-0 transition-all duration-200 z-50">
+                    <div className="flex items-center justify-between mb-1.5 border-b border-white/5 pb-1">
+                      <span className="flex items-center gap-1.5">
+                        {icon}
+                        <span className={cn(
+                          "text-[9px] font-black uppercase tracking-wider",
+                          sentiment === 'anger' ? "text-rose-400" : sentiment === 'satisfaction' ? "text-emerald-400" : "text-slate-300"
+                        )}>
+                          {label}
+                        </span>
+                      </span>
+                      <span className="text-[9px] font-mono text-white/45">
+                        {formatTime(utterance.start)} - {formatTime(utterance.end)}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-white/70 leading-relaxed font-medium text-left italic">
+                      "{language === 'es' ? utterance.textEs : utterance.textEn}"
+                    </p>
+                    <div className="text-[8px] text-indigo-405 mt-2 font-bold uppercase tracking-widest flex items-center gap-1 border-t border-white/5 pt-1 text-indigo-400">
+                      <span>⚡ {t('calls.drawer.sentiment_jump_critical')}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Playhead marker */}
+            {totalDuration > 0 && (
+              <div 
+                className="absolute top-0 bottom-0 w-[2px] bg-indigo-500 shadow-[0_0_8px_#6366f1] pointer-events-none z-10 transition-all duration-100 ease-out"
+                style={{ left: `${(currentTime / totalDuration) * 100}%` }}
+              >
+                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-indigo-400" />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Control bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-1">
         
@@ -569,6 +689,37 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             const isActive = activeUtteranceId === u.id;
             const isBot = u.speaker === 'bot';
             
+            // Determine bubble styling classes based on speaker and sentiment
+            let bubbleStyleClass = "";
+            if (isBot) {
+              bubbleStyleClass = cn(
+                "self-start text-left bg-indigo-500/5 hover:bg-indigo-500/10 border-indigo-500/10",
+                isActive && "bg-indigo-600/15 border-indigo-500/50 shadow-lg shadow-indigo-500/5 scale-[1.01]"
+              );
+            } else {
+              switch (u.sentiment) {
+                case 'anger':
+                  bubbleStyleClass = cn(
+                    "self-end text-left bg-rose-500/5 hover:bg-rose-500/10 border-rose-500/15",
+                    isActive && "bg-rose-600/15 border-rose-500/50 shadow-lg shadow-rose-500/5 scale-[1.01]"
+                  );
+                  break;
+                case 'satisfaction':
+                  bubbleStyleClass = cn(
+                    "self-end text-left bg-emerald-500/5 hover:bg-emerald-500/10 border-emerald-500/15",
+                    isActive && "bg-emerald-600/15 border-emerald-500/50 shadow-lg shadow-emerald-500/5 scale-[1.01]"
+                  );
+                  break;
+                case 'neutral':
+                default:
+                  bubbleStyleClass = cn(
+                    "self-end text-left bg-slate-500/5 hover:bg-slate-500/10 border-slate-500/15",
+                    isActive && "bg-slate-600/15 border-slate-500/50 shadow-lg shadow-slate-500/5 scale-[1.01]"
+                  );
+                  break;
+              }
+            }
+
             return (
               <div
                 key={u.id}
@@ -576,14 +727,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                 onClick={() => handleUtteranceClick(u.start)}
                 className={cn(
                   "flex flex-col space-y-1 p-3 rounded-2xl cursor-pointer transition-all duration-300 border relative group max-w-[85%]",
-                  isBot 
-                    ? "self-start text-left bg-indigo-500/5 hover:bg-indigo-500/10 border-indigo-500/10" 
-                    : "self-end text-left bg-emerald-500/5 hover:bg-emerald-500/10 border-emerald-500/10",
-                  isActive && (
-                    isBot 
-                      ? "bg-indigo-600/15 border-indigo-500/50 shadow-lg shadow-indigo-500/5 scale-[1.01]" 
-                      : "bg-emerald-600/15 border-emerald-500/50 shadow-lg shadow-emerald-500/5 scale-[1.01]"
-                  )
+                  bubbleStyleClass
                 )}
               >
                 {/* Utterance Header */}
@@ -604,15 +748,27 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                         </span>
                       </>
                     )}
+
+                    {!isBot && u.sentiment && (
+                      <span className={cn(
+                        "text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded-md flex items-center gap-1 tracking-wider border",
+                        u.sentiment === 'anger' ? "bg-rose-500/10 text-rose-400 border-rose-500/20" :
+                        u.sentiment === 'satisfaction' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                        "bg-slate-500/10 text-slate-400 border-slate-500/20"
+                      )}>
+                        {u.sentiment === 'anger' ? <Frown size={8} /> : u.sentiment === 'satisfaction' ? <Smile size={8} /> : <Meh size={8} />}
+                        {t(`calls.drawer.sentiment_${u.sentiment}`)}
+                      </span>
+                    )}
                   </div>
                   
                   {/* Timestamp & Active Wave indicator */}
                   <div className="flex items-center space-x-1.5">
                     {isActive && (
                       <div className="flex items-end space-x-0.5 h-2.5 px-0.5">
-                        <div className={cn("w-0.5 rounded-full h-2 origin-bottom animate-wave-bar-1", isBot ? "bg-indigo-400" : "bg-emerald-400")} />
-                        <div className={cn("w-0.5 rounded-full h-2 origin-bottom animate-wave-bar-2", isBot ? "bg-indigo-400" : "bg-emerald-400")} />
-                        <div className={cn("w-0.5 rounded-full h-2 origin-bottom animate-wave-bar-3", isBot ? "bg-indigo-400" : "bg-emerald-400")} />
+                        <div className={cn("w-0.5 rounded-full h-2 origin-bottom animate-wave-bar-1", isBot ? "bg-indigo-400" : (u.sentiment === 'anger' ? "bg-rose-400" : u.sentiment === 'satisfaction' ? "bg-emerald-400" : "bg-slate-400"))} />
+                        <div className={cn("w-0.5 rounded-full h-2 origin-bottom animate-wave-bar-2", isBot ? "bg-indigo-400" : (u.sentiment === 'anger' ? "bg-rose-400" : u.sentiment === 'satisfaction' ? "bg-emerald-400" : "bg-slate-400"))} />
+                        <div className={cn("w-0.5 rounded-full h-2 origin-bottom animate-wave-bar-3", isBot ? "bg-indigo-400" : (u.sentiment === 'anger' ? "bg-rose-400" : u.sentiment === 'satisfaction' ? "bg-emerald-400" : "bg-slate-400"))} />
                       </div>
                     )}
                     <span className="font-mono text-[9px] text-text-secondary select-none">

@@ -213,7 +213,14 @@
       "synchronized_transcript": "Transcripción Sincronizada",
       "autoscroll": "Desplazamiento Automático",
       "client": "Cliente",
-      "voice_assistant": "Asistente de Voz"
+      "voice_assistant": "Asistente de Voz",
+      "sentiment_analysis": "Análisis de Sentimiento",
+      "sentiment_timeline": "Línea de Tiempo de Sentimiento",
+      "sentiment_anger": "Enojo",
+      "sentiment_satisfaction": "Satisfacción",
+      "sentiment_neutrality": "Neutralidad",
+      "sentiment_jump_critical": "Saltar a momento crítico",
+      "sentiment_legend": "Leyenda de Sentimientos"
     },
     "view_audit": "Ver Auditoría Completa",
     "view_ivr": "Ver Árbol IVR"

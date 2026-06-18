@@ -213,7 +213,14 @@
       "synchronized_transcript": "Synchronized Transcript",
       "autoscroll": "Autoscroll",
       "client": "Client",
-      "voice_assistant": "Voice Assistant"
+      "voice_assistant": "Voice Assistant",
+      "sentiment_analysis": "Sentiment Analysis",
+      "sentiment_timeline": "Sentiment Timeline",
+      "sentiment_anger": "Anger",
+      "sentiment_satisfaction": "Satisfaction",
+      "sentiment_neutrality": "Neutrality",
+      "sentiment_jump_critical": "Jump to critical moment",
+      "sentiment_legend": "Sentiment Legend"
     },
     "view_audit": "View Full Audit",
     "view_ivr": "View IVR Tree"
