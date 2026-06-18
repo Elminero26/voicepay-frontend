@@ -209,7 +209,11 @@
       "ivr_flow_log": "Ruta del Flujo de Voz (IVR Flow Log)",
       "active_call_title": "📞 Llamada Activa / En Proceso",
       "active_call_desc": "Esta sesión de audio se está transmitiendo en vivo. La grabación final e interactiva estará disponible para auditoría al completarse.",
-      "close_audit": "Cerrar Auditoría"
+      "close_audit": "Cerrar Auditoría",
+      "synchronized_transcript": "Transcripción Sincronizada",
+      "autoscroll": "Desplazamiento Automático",
+      "client": "Cliente",
+      "voice_assistant": "Asistente de Voz"
     },
     "view_audit": "Ver Auditoría Completa",
     "view_ivr": "Ver Árbol IVR"

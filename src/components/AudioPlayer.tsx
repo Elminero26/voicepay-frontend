@@ -3,9 +3,11 @@ import WaveSurfer from 'wavesurfer.js';
 import { 
   Play, Pause, Volume2, VolumeX, Download, 
   RotateCcw, Loader2, AlertCircle, Sparkles,
-  Network, Hash, ShieldCheck, PhoneForwarded, AlertTriangle
+  Network, Hash, ShieldCheck, PhoneForwarded, AlertTriangle,
+  MessageSquareText, Bot, User
 } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { useLanguage } from '../hooks/useLanguage';
 
 interface AudioPlayerProps {
   audioUrl: string;
@@ -15,6 +17,37 @@ interface AudioPlayerProps {
   status?: string;
   amount?: number;
 }
+
+interface TranscriptUtterance {
+  id: number;
+  speaker: 'bot' | 'client';
+  start: number;
+  end: number;
+  textEs: string;
+  textEn: string;
+}
+
+const COMPLETED_TRANSCRIPT: TranscriptUtterance[] = [
+  { id: 1, speaker: 'bot', start: 0, end: 3.5, textEs: "Bienvenido al sistema de pagos automáticos VoicePay. Por favor, espere mientras le identificamos.", textEn: "Welcome to the VoicePay automated payment system. Please hold while we identify you." },
+  { id: 2, speaker: 'client', start: 3.8, end: 7.2, textEs: "Hola, buenas. Quería pagar una factura pendiente.", textEn: "Hello, hello. I wanted to pay a pending invoice." },
+  { id: 3, speaker: 'bot', start: 7.5, end: 11.2, textEs: "Para garantizar su seguridad, estamos verificando el número de teléfono desde el que nos llama.", textEn: "To ensure your security, we are verifying the phone number you are calling from." },
+  { id: 4, speaker: 'client', start: 11.5, end: 14.5, textEs: "De acuerdo. Estoy llamando desde mi móvil de empresa.", textEn: "Alright. I'm calling from my business mobile phone." },
+  { id: 5, speaker: 'bot', start: 14.8, end: 20.0, textEs: "Hemos detectado una factura pendiente de ciento cincuenta euros. Pulse uno para proceder con el pago seguro con tarjeta.", textEn: "We have detected a pending invoice of one hundred and fifty euros. Press one to proceed with secure card payment." },
+  { id: 6, speaker: 'client', start: 20.2, end: 24.5, textEs: "Quiero hacer el pago de la factura de ciento cincuenta euros con mi tarjeta bancaria.", textEn: "I want to pay the invoice of one hundred and fifty euros with my bank card." },
+  { id: 7, speaker: 'bot', start: 24.8, end: 28.5, textEs: "Su pago de ciento cincuenta euros ha sido procesado y aprobado correctamente. Muchas gracias por utilizar VoicePay. Hasta pronto.", textEn: "Your payment of one hundred and fifty euros has been successfully processed and approved. Thank you very much for using VoicePay. See you soon." },
+  { id: 8, speaker: 'client', start: 28.8, end: 31.5, textEs: "Perfecto, pago confirmado. Muchas gracias por la rapidez. Adiós.", textEn: "Perfect, payment confirmed. Thank you very much for the speed. Goodbye." }
+];
+
+const FAILED_TRANSCRIPT: TranscriptUtterance[] = [
+  { id: 1, speaker: 'bot', start: 0, end: 3.5, textEs: "Bienvenido al sistema de pagos automáticos VoicePay. Por favor, espere mientras le identificamos.", textEn: "Welcome to the VoicePay automated payment system. Please hold while we identify you." },
+  { id: 2, speaker: 'client', start: 3.8, end: 7.2, textEs: "Hola, buenas. Quería pagar una factura pendiente.", textEn: "Hello, hello. I wanted to pay a pending invoice." },
+  { id: 3, speaker: 'bot', start: 7.5, end: 11.2, textEs: "Para garantizar su seguridad, estamos verificando el número de teléfono desde el que nos llama.", textEn: "To ensure your security, we are verifying the phone number you are calling from." },
+  { id: 4, speaker: 'client', start: 11.5, end: 14.5, textEs: "De acuerdo. Estoy llamando desde mi móvil de empresa.", textEn: "Alright. I'm calling from my business mobile phone." },
+  { id: 5, speaker: 'bot', start: 14.8, end: 20.0, textEs: "Hemos detectado una factura pendiente de ciento cincuenta euros. Pulse uno para proceder con el pago seguro con tarjeta.", textEn: "We have detected a pending invoice of one hundred and fifty euros. Press one to proceed with secure card payment." },
+  { id: 6, speaker: 'client', start: 20.2, end: 23.5, textEs: "Sí, procedo al pago con la tarjeta terminada en 4321.", textEn: "Yes, I proceed with the payment with the card ending in 4321." },
+  { id: 7, speaker: 'bot', start: 23.8, end: 28.2, textEs: "Lo sentimos, la transacción ha sido rechazada por fondos insuficientes o tarjeta declinada. Por favor, intente con otra tarjeta.", textEn: "We are sorry, the transaction has been rejected due to insufficient funds or card declined. Please try with another card." },
+  { id: 8, speaker: 'client', start: 28.5, end: 32.0, textEs: "Vaya, qué raro. De acuerdo, tendré que llamar al banco. Gracias de todos modos.", textEn: "Oh, how strange. Alright, I'll have to call the bank. Thanks anyway." }
+];
 
 export const AudioPlayer: React.FC<AudioPlayerProps> = ({ 
   audioUrl, 
@@ -35,6 +68,46 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+
+  // Synchronized Transcript Hooks & States
+  const { t, language } = useLanguage();
+  const [autoscroll, setAutoscroll] = useState(true);
+  const transcriptContainerRef = useRef<HTMLDivElement>(null);
+
+  const transcript = useMemo(() => {
+    const isFailed = status?.toLowerCase() === 'failed' || status === 'FAILED';
+    return isFailed ? FAILED_TRANSCRIPT : COMPLETED_TRANSCRIPT;
+  }, [status]);
+
+  const activeUtteranceId = useMemo(() => {
+    const current = transcript.find(
+      (u) => currentTime >= u.start && currentTime <= u.end
+    );
+    return current ? current.id : null;
+  }, [currentTime, transcript]);
+
+  // Handle click to seek to dynamic timestamp
+  const handleUtteranceClick = (startTime: number) => {
+    if (!wavesurferRef.current || isLoading || hasError) return;
+    wavesurferRef.current.setTime(startTime);
+    if (!isPlaying) {
+      wavesurferRef.current.play();
+    }
+  };
+
+  // Scroll active utterance into view
+  useEffect(() => {
+    if (!autoscroll || activeUtteranceId === null || !transcriptContainerRef.current) return;
+    const activeEl = transcriptContainerRef.current.querySelector(
+      `[data-utterance-id="${activeUtteranceId}"]`
+    );
+    if (activeEl) {
+      activeEl.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    }
+  }, [activeUtteranceId, autoscroll]);
 
   // Helper to map color to explicit Tailwind classes for markers
   const getMarkerClasses = (color: string, isActive: boolean) => {
@@ -451,6 +524,119 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
           </div>
         </div>
 
+      </div>
+
+      {/* Diatonic Transcript Section */}
+      <div className="border-t border-white/5 pt-4 mt-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2 text-text-secondary">
+            <MessageSquareText size={15} className="text-indigo-400" />
+            <h4 className="text-xs font-black uppercase tracking-wider text-white">
+              {t('calls.drawer.synchronized_transcript')}
+            </h4>
+          </div>
+          
+          {/* Autoscroll Toggle */}
+          <label className="flex items-center space-x-2 cursor-pointer select-none">
+            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">
+              {t('calls.drawer.autoscroll')}
+            </span>
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={autoscroll}
+                onChange={(e) => setAutoscroll(e.target.checked)}
+                className="sr-only"
+              />
+              <div className={cn(
+                "w-8 h-4 rounded-full transition-colors duration-200",
+                autoscroll ? "bg-indigo-600" : "bg-neutral-800"
+              )} />
+              <div className={cn(
+                "absolute left-0.5 top-0.5 w-3 h-3 bg-white rounded-full transition-transform duration-200",
+                autoscroll ? "translate-x-4" : "translate-x-0"
+              )} />
+            </div>
+          </label>
+        </div>
+
+        {/* Utterance Bubbles */}
+        <div 
+          ref={transcriptContainerRef}
+          className="max-h-[220px] overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-indigo-500/20 scrollbar-track-transparent custom-scrollbar flex flex-col"
+        >
+          {transcript.map((u) => {
+            const isActive = activeUtteranceId === u.id;
+            const isBot = u.speaker === 'bot';
+            
+            return (
+              <div
+                key={u.id}
+                data-utterance-id={u.id}
+                onClick={() => handleUtteranceClick(u.start)}
+                className={cn(
+                  "flex flex-col space-y-1 p-3 rounded-2xl cursor-pointer transition-all duration-300 border relative group max-w-[85%]",
+                  isBot 
+                    ? "self-start text-left bg-indigo-500/5 hover:bg-indigo-500/10 border-indigo-500/10" 
+                    : "self-end text-left bg-emerald-500/5 hover:bg-emerald-500/10 border-emerald-500/10",
+                  isActive && (
+                    isBot 
+                      ? "bg-indigo-600/15 border-indigo-500/50 shadow-lg shadow-indigo-500/5 scale-[1.01]" 
+                      : "bg-emerald-600/15 border-emerald-500/50 shadow-lg shadow-emerald-500/5 scale-[1.01]"
+                  )
+                )}
+              >
+                {/* Utterance Header */}
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center space-x-1.5">
+                    {isBot ? (
+                      <>
+                        <Bot size={12} className={cn("shrink-0", isActive ? "text-indigo-400" : "text-neutral-400")} />
+                        <span className={cn("text-[9px] font-black tracking-widest uppercase", isActive ? "text-indigo-400" : "text-neutral-400")}>
+                          {t('calls.drawer.voice_assistant')}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <User size={12} className={cn("shrink-0", isActive ? "text-emerald-400" : "text-neutral-400")} />
+                        <span className={cn("text-[9px] font-black tracking-widest uppercase", isActive ? "text-emerald-400" : "text-neutral-400")}>
+                          {t('calls.drawer.client')}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  
+                  {/* Timestamp & Active Wave indicator */}
+                  <div className="flex items-center space-x-1.5">
+                    {isActive && (
+                      <div className="flex items-end space-x-0.5 h-2.5 px-0.5">
+                        <div className={cn("w-0.5 rounded-full h-2 origin-bottom animate-wave-bar-1", isBot ? "bg-indigo-400" : "bg-emerald-400")} />
+                        <div className={cn("w-0.5 rounded-full h-2 origin-bottom animate-wave-bar-2", isBot ? "bg-indigo-400" : "bg-emerald-400")} />
+                        <div className={cn("w-0.5 rounded-full h-2 origin-bottom animate-wave-bar-3", isBot ? "bg-indigo-400" : "bg-emerald-400")} />
+                      </div>
+                    )}
+                    <span className="font-mono text-[9px] text-text-secondary select-none">
+                      {formatTime(u.start)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Utterance Text */}
+                <p className={cn(
+                  "text-[11px] leading-relaxed",
+                  isActive ? "text-white font-medium" : "text-text-primary"
+                )}>
+                  {language === 'es' ? u.textEs : u.textEn}
+                </p>
+
+                {/* Click to jump overlay hint on hover */}
+                <div className="absolute right-3 bottom-1.5 opacity-0 group-hover:opacity-100 transition-opacity text-[8px] font-bold uppercase tracking-widest text-indigo-400 flex items-center gap-1 select-none pointer-events-none">
+                  <span>⚡ Saltar a {formatTime(u.start)}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

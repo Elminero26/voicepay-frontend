@@ -209,7 +209,11 @@
       "ivr_flow_log": "Voice Flow Route (IVR Flow Log)",
       "active_call_title": "📞 Active Call / In Progress",
       "active_call_desc": "This audio session is being streamed live. The final interactive recording will be available for audit once completed.",
-      "close_audit": "Close Audit"
+      "close_audit": "Close Audit",
+      "synchronized_transcript": "Synchronized Transcript",
+      "autoscroll": "Autoscroll",
+      "client": "Client",
+      "voice_assistant": "Voice Assistant"
     },
     "view_audit": "View Full Audit",
     "view_ivr": "View IVR Tree"
