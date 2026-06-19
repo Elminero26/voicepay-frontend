@@ -220,7 +220,13 @@
       "sentiment_satisfaction": "Satisfacción",
       "sentiment_neutrality": "Neutralidad",
       "sentiment_jump_critical": "Saltar a momento crítico",
-      "sentiment_legend": "Leyenda de Sentimientos"
+      "sentiment_legend": "Leyenda de Sentimientos",
+      "audit_classification": "Clasificación de Auditoría",
+      "comments_title": "Comentarios de Supervisión",
+      "comments_placeholder": "Escriba un comentario sobre esta llamada...",
+      "tag_fraud": "Riesgo de fraude",
+      "tag_misunderstanding": "Malentendido",
+      "tag_success": "Éxito técnico"
     },
     "view_audit": "Ver Auditoría Completa",
     "view_ivr": "Ver Árbol IVR"

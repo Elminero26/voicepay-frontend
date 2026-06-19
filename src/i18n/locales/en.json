@@ -220,7 +220,13 @@
       "sentiment_satisfaction": "Satisfaction",
       "sentiment_neutrality": "Neutrality",
       "sentiment_jump_critical": "Jump to critical moment",
-      "sentiment_legend": "Sentiment Legend"
+      "sentiment_legend": "Sentiment Legend",
+      "audit_classification": "Audit Classification",
+      "comments_title": "Supervisor Comments",
+      "comments_placeholder": "Write a comment about this call...",
+      "tag_fraud": "Fraud risk",
+      "tag_misunderstanding": "Misunderstanding",
+      "tag_success": "Technical success"
     },
     "view_audit": "View Full Audit",
     "view_ivr": "View IVR Tree"

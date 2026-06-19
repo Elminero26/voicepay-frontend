@@ -3,7 +3,7 @@ import { useDebounce } from '../../../hooks/useDebounce';
 import { 
   Phone, Search, Download, ArrowUpRight, Clock, Network, 
   ShieldCheck, Filter, DollarSign, X, 
-  Info, Lock
+  Info, Lock, MessageSquare
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -15,6 +15,26 @@ import { cn } from '../../../utils/cn';
 import { AudioPlayer } from '../../../components/AudioPlayer';
 import { WaveformCanvas } from '../../../components/WaveformCanvas';
 import { useLanguage } from '../../../hooks/useLanguage';
+
+const getPersistedAuditData = () => {
+  try {
+    const data = localStorage.getItem('voicepay_audit_notes');
+    return data ? JSON.parse(data) : {};
+  } catch (e) {
+    console.error('Error reading audit notes from localStorage', e);
+    return {};
+  }
+};
+
+const persistAuditData = (callId: string, tags: string[], comments: string) => {
+  try {
+    const data = getPersistedAuditData();
+    data[callId] = { tags, comments };
+    localStorage.setItem('voicepay_audit_notes', JSON.stringify(data));
+  } catch (e) {
+    console.error('Error writing audit notes to localStorage', e);
+  }
+};
 
 export const CallsPage: React.FC = () => {
   const { t } = useLanguage();
@@ -37,12 +57,23 @@ export const CallsPage: React.FC = () => {
   // State para la llamada seleccionada en el Cajón de Auditoría (Drawer)
   const [selectedCall, setSelectedCall] = useState<Call | null>(null);
 
+  const handleUpdateAudit = (callId: string, tags: string[], comments: string) => {
+    setCalls(prev => prev.map(c => c.id === callId ? { ...c, tags, comments } : c));
+    setSelectedCall(prev => prev && prev.id === callId ? { ...prev, tags, comments } : prev);
+    persistAuditData(callId, tags, comments);
+  };
+
   useEffect(() => {
     const fetchCalls = async () => {
       try {
         const data = await paymentService.getCalls();
-        // Para demostrar la virtualización correctamente con un scroll fluido,
-        // expandimos los datos mockeados si es un entorno de desarrollo.
+        const auditMap = getPersistedAuditData();
+        const mergeAudit = (cList: Call[]) => cList.map(c => ({
+          ...c,
+          tags: auditMap[c.id]?.tags || [],
+          comments: auditMap[c.id]?.comments || ''
+        }));
+
         if (data.length < 50) {
           const expandedCalls: Call[] = [...data];
           const firstNames = ['Alice', 'Michael', 'Dwight', 'Jim', 'Pam', 'Andy', 'Angela', 'Stanley', 'Ryan', 'Kelly', 'Toby', 'Creed', 'Oscar', 'Kevin', 'Meredith'];
@@ -75,9 +106,9 @@ export const CallsPage: React.FC = () => {
               audioUrl: status !== 'in-progress' ? '/call_recording.mp3' : undefined
             });
           }
-          setCalls(expandedCalls);
+          setCalls(mergeAudit(expandedCalls));
         } else {
-          setCalls(data);
+          setCalls(mergeAudit(data));
         }
       } catch (error) {
         console.error('Error fetching calls:', error);
@@ -154,7 +185,7 @@ export const CallsPage: React.FC = () => {
   const handleExportCSV = () => {
     if (filteredCalls.length === 0) return;
 
-    // Encabezados del archivo CSV
+    // Encabezados del archivo CSV con columnas de auditoria
     const headers = [
       t('calls.table.audit_id'),
       t('calls.table.client'),
@@ -162,7 +193,9 @@ export const CallsPage: React.FC = () => {
       t('calls.table.amount'),
       t('calls.table.duration'),
       t('calls.table.status'),
-      t('calls.table.timestamp')
+      t('calls.table.timestamp'),
+      'Tags',
+      'Comments'
     ];
     
     const getStatusKey = (status: string) => {
@@ -170,7 +203,7 @@ export const CallsPage: React.FC = () => {
       return status;
     };
 
-    // Contenido de las filas
+    // Contenido de las filas con columnas de auditoria
     const rows = filteredCalls.map(c => [
       `AUD-${c.id}`,
       c.customerName,
@@ -178,7 +211,9 @@ export const CallsPage: React.FC = () => {
       (c.amount ?? 0).toFixed(2),
       c.duration || '-',
       t(`calls.status.${getStatusKey(c.status)}`).toUpperCase(),
-      c.timestamp
+      c.timestamp,
+      (c.tags || []).join('; '),
+      c.comments || ''
     ]);
 
     // Crear el string de CSV con soporte para caracteres en español (BOM)
@@ -327,6 +362,56 @@ export const CallsPage: React.FC = () => {
                     <WaveformCanvas />
                   </div>
                 )}
+
+                {/* Clasificación de Auditoría y Comentarios */}
+                <div className="space-y-4 bg-white/5 p-5 rounded-2xl border border-white/10 shadow-lg backdrop-blur-md">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-text-secondary flex items-center gap-1.5 border-b border-white/5 pb-2">
+                    <ShieldCheck size={14} className="text-indigo-400" />
+                    {t('calls.drawer.audit_classification')}
+                  </h4>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { id: 'fraud', label: t('calls.drawer.tag_fraud'), color: 'border-rose-500/30 text-rose-400 bg-rose-500/10 hover:bg-rose-500/20', activeColor: 'bg-rose-600 text-white border-rose-500 shadow-md shadow-rose-600/30' },
+                      { id: 'misunderstanding', label: t('calls.drawer.tag_misunderstanding'), color: 'border-amber-500/30 text-amber-400 bg-amber-500/10 hover:bg-amber-500/20', activeColor: 'bg-amber-600 text-white border-amber-500 shadow-md shadow-amber-600/30' },
+                      { id: 'success', label: t('calls.drawer.tag_success'), color: 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20', activeColor: 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-600/30' }
+                    ].map(tag => {
+                      const isSelected = selectedCall.tags?.includes(tag.label) || false;
+                      return (
+                        <button
+                          key={tag.id}
+                          onClick={() => {
+                            const currentTags = selectedCall.tags || [];
+                            const newTags = isSelected 
+                              ? currentTags.filter(t => t !== tag.label)
+                              : [...currentTags, tag.label];
+                            handleUpdateAudit(selectedCall.id, newTags, selectedCall.comments || '');
+                          }}
+                          className={cn(
+                            "px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 duration-200",
+                            isSelected ? tag.activeColor : tag.color
+                          )}
+                        >
+                          {tag.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="space-y-2 pt-2">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+                      <MessageSquare size={12} className="text-indigo-400" />
+                      {t('calls.drawer.comments_title')}
+                    </label>
+                    <textarea
+                      rows={3}
+                      placeholder={t('calls.drawer.comments_placeholder')}
+                      value={selectedCall.comments || ''}
+                      onChange={(e) => handleUpdateAudit(selectedCall.id, selectedCall.tags || [], e.target.value)}
+                      className="w-full bg-black/30 border border-white/5 rounded-xl p-3 text-xs text-white placeholder-text-secondary/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all resize-none custom-scrollbar"
+                    />
+                  </div>
+                </div>
 
                 {/* Event Timeline (Voice flow events) */}
                 <div className="space-y-4">
@@ -613,13 +698,32 @@ export const CallsPage: React.FC = () => {
                       </div>
 
                       {/* Column 2: Cliente */}
-                      <div className="flex items-center space-x-3 min-w-0">
+                      <div className="flex items-center space-x-3 min-w-0 py-2">
                         <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500/20 to-secondary flex items-center justify-center text-indigo-400 font-black text-xs border border-indigo-500/10 shrink-0">
                           {call.customerName.charAt(0)}
                         </div>
-                        <span className="font-bold text-white group-hover:text-indigo-400 transition-colors truncate">
-                          {call.customerName}
-                        </span>
+                        <div className="flex flex-col min-w-0">
+                          <span className="font-bold text-white group-hover:text-indigo-400 transition-colors truncate">
+                            {call.customerName}
+                          </span>
+                          {call.tags && call.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {call.tags.map((tag, idx) => (
+                                <span 
+                                  key={idx} 
+                                  className={cn(
+                                    "px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border shadow-sm",
+                                    tag === t('calls.drawer.tag_fraud') ? "bg-rose-500/10 text-rose-400 border-rose-500/20" :
+                                    tag === t('calls.drawer.tag_misunderstanding') ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                                    "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                  )}
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       {/* Column 3: Teléfono */}

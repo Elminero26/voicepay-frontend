@@ -21,6 +21,8 @@ export interface Call {
   option?: string; // Adding this as I saw it used in Dashboard.tsx
   callEvents?: string[];
   audioUrl?: string;
+  tags?: string[];
+  comments?: string;
 }
 
 export interface PaymentStats {
